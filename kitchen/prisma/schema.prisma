@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String
+  defaultServings Int      @default(4)
+  preferredUnits  String   @default("us")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sessions     Session[]
+  magicLinks   MagicLink[]
+  recipes      Recipe[]
+  cookbooks    Cookbook[]
+  memberships  CookbookMember[]
+  notes        RecipeNote[]
+  interview    InterviewResponse?
+  importDrafts ImportDraft[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model MagicLink {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+}
+
+model Recipe {
+  id                String   @id @default(cuid())
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title             String
+  ingredients       String
+  steps             String
+  bakingSteps       String   @default("")
+  recipeType        String   @default("cooking")
+  servings          Int?
+  sourceType        String   @default("typed")
+  sourceUrl         String?
+  sourceAttribution String?
+  tags              String   @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  photos          RecipePhoto[]
+  cookbookRecipes CookbookRecipe[]
+  notes           RecipeNote[]
+  importDrafts    ImportDraft[]
+
+  @@index([ownerId])
+  @@index([title])
+  @@index([recipeType])
+}
+
+model RecipePhoto {
+  id        String   @id @default(cuid())
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  path      String
+  alt       String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipeId])
+}
+
+model Cookbook {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @default("")
+  visibility  String   @default("private")
+  slug        String   @unique
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recipes CookbookRecipe[]
+  members CookbookMember[]
+  invites CookbookInvite[]
+
+  @@index([ownerId])
+  @@index([visibility])
+}
+
+model CookbookRecipe {
+  id         String   @id @default(cuid())
+  cookbookId String
+  recipeId   String
+  cookbook   Cookbook @relation(fields: [cookbookId], references: [id], onDelete: Cascade)
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([cookbookId, recipeId])
+  @@index([recipeId])
+}
+
+model CookbookMember {
+  id         String   @id @default(cuid())
+  cookbookId String
+  userId     String
+  cookbook   Cookbook @relation(fields: [cookbookId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       String   @default("viewer")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([cookbookId, userId])
+  @@index([userId])
+}
+
+model CookbookInvite {
+  id         String   @id @default(cuid())
+  cookbookId String
+  cookbook   Cookbook @relation(fields: [cookbookId], references: [id], onDelete: Cascade)
+  email      String?
+  token      String   @unique
+  role       String   @default("viewer")
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([cookbookId])
+}
+
+model RecipeNote {
+  id        String   @id @default(cuid())
+  recipeId  String
+  userId    String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipeId])
+}
+
+model ImportDraft {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId     String?
+  recipe       Recipe?  @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  sourceUrl    String
+  sourceType   String
+  rawPayload   String
+  title        String
+  ingredients  String
+  steps        String
+  attribution  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model InterviewResponse {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

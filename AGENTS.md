@@ -1,8 +1,10 @@
-# AstroWind Agent Instructions
+# Love the Laus — Agent Instructions
+
+**Family recipe product lives in [`kitchen/`](kitchen/).** This repo root is the **Love the Laus marketing site** (Astro). Do not turn it into the recipe app. See [`kitchen/AGENTS.md`](kitchen/AGENTS.md) for the Kitchen app.
 
 ## Project Overview
 
-AstroWind is a free, open-source website template built with **Astro v7** and **Tailwind CSS v4**. It generates a fully static site optimized for performance, SEO, and accessibility.
+Static marketing site built on **Astro v7** and **Tailwind CSS v4** (AstroWind template base). Pages: home (`/`), privacy, terms, 404. Landing CTAs link to Kitchen via `PUBLIC_KITCHEN_URL`.
 
 **Stack:** Astro v7 | Tailwind CSS v4 | TypeScript 5.9 | MDX | Sharp
 
@@ -28,14 +30,12 @@ src/
   components/
     common/        # Shared: Image, Metadata, Analytics, ToggleTheme
     ui/            # Primitives: Button, Form, Headline, Timeline, WidgetWrapper
-    widgets/       # Page sections: Hero, Features, Pricing, Header, Footer
-    blog/          # Blog: SinglePost, List, Pagination, Tags
+    widgets/       # Page sections: Hero, Features, Steps, Header, Footer
     CustomStyles.astro  # CSS variables for colors and fonts
-  content.config.ts    # Content Collections schema (Astro 5+ location)
-  data/post/           # Blog posts (.md, .mdx)
+  content.config.ts    # Content collections (empty — blog removed)
   layouts/             # Layout.astro, PageLayout.astro, MarkdownLayout.astro
-  pages/               # File-based routing
-  utils/               # blog.ts, images.ts, permalinks.ts, frontmatter.ts
+  pages/               # index.astro, privacy.md, terms.md, 404.astro
+  utils/               # images.ts, permalinks.ts, frontmatter.ts
   config.yaml          # Site configuration (loaded as virtual module)
   navigation.ts        # Navigation structure
   types.d.ts           # TypeScript type definitions
@@ -75,9 +75,11 @@ Components use `twMerge` from `tailwind-merge` v3 for conditional class composit
 
 ## Content Collections
 
-Defined in `src/content.config.ts` using Astro's Content Layer API with `glob()` loader. Posts are in `src/data/post/` as `.md` or `.mdx` files.
+`src/content.config.ts` exports empty collections. Blog and RSS were removed; do not re-add without a product reason.
 
-Post frontmatter: `title` (required), `publishDate`, `updateDate`, `draft`, `excerpt`, `image`, `category`, `tags`, `author`, `metadata`.
+## Kitchen URL
+
+Landing and nav use `import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000'`. Document in root `.env.example`.
 
 ## Component Patterns
 
@@ -115,4 +117,4 @@ After changes, always verify:
 
 1. `npm run build` succeeds
 2. `npm run check` passes (astro check + ESLint + Prettier)
-3. Visual check in browser: homepage, blog, dark mode, mobile menu
+3. Visual check in browser: homepage sections, Open Kitchen CTA, dark mode, mobile menu
