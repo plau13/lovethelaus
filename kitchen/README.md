@@ -24,6 +24,10 @@ Add to iPhone/iPad Home Screen from Safari (Share → Add to Home Screen).
 
 PostgreSQL on Supabase via Prisma. Custom magic-link auth (not Supabase Auth). RLS is enabled on all tables; the app connects with Prisma using your database URL.
 
+**First-time Supabase setup:** see [`supabase/README.md`](supabase/README.md) — SQL files for the SQL Editor, or `npm run db:deploy && npm run db:seed`.
+
+**Seed login emails:** `mom@laus.family`, `dad@laus.family`, `alex@laus.family` — sign in at `/login` (magic link shown on screen in dev).
+
 Supabase JS clients (`@supabase/ssr`) are wired for Data API access and session refresh:
 
 ```typescript
