@@ -24,6 +24,17 @@ Add to iPhone/iPad Home Screen from Safari (Share → Add to Home Screen).
 
 PostgreSQL on Supabase via Prisma. Custom magic-link auth (not Supabase Auth). RLS is enabled on all tables; the app connects with Prisma using your database URL.
 
+Supabase JS clients (`@supabase/ssr`) are wired for Data API access and session refresh:
+
+```typescript
+import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
+
+const supabase = createClient(await cookies());
+```
+
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local` (see `.env.example`).
+
 ## What is in this build
 
 - Home dashboard with recent recipes and cookbooks

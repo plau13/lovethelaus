@@ -2,6 +2,12 @@
 
 **Family recipe product lives in [`kitchen/`](kitchen/).** This repo root is the **Love the Laus marketing site** (Astro). Do not turn it into the recipe app. See [`kitchen/AGENTS.md`](kitchen/AGENTS.md) for the Kitchen app.
 
+## Agent execution
+
+**Always run terminal commands yourself** — installs, builds, tests, migrations, seeds, git, and dev servers. Do not tell the user to run a command you can run unless the environment blocks you (missing credentials, permissions, interactive prompts, or external services only the user can access). If a command fails, diagnose and retry or try an alternative before handing off.
+
+Applies to the whole repo (root marketing site and `kitchen/`).
+
 ## Project Overview
 
 Static marketing site built on **Astro v7** and **Tailwind CSS v4** (AstroWind template base). Pages: home (`/`), privacy, terms, 404. Landing CTAs link to Kitchen via `PUBLIC_KITCHEN_URL`.

@@ -12,6 +12,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 
+**Agent execution:** Run all terminal commands yourself (see root [`AGENTS.md`](../AGENTS.md#agent-execution)). Only ask the user when blocked (e.g. missing Supabase secrets in `.env`).
+
 - PostgreSQL (Supabase) via Prisma (`prisma/schema.prisma`)
 - Magic-link auth in `src/lib/auth.ts`
 - Seed data: `npm run db:seed` (Mom @ `mom@laus.family`)
