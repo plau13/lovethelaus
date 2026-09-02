@@ -14,16 +14,18 @@ export function AuthShell({
   description,
   children,
   footer,
-  footerClassName = "flex justify-center gap-6 text-center text-muted text-sm",
+  footerClassName = "flex flex-wrap justify-center gap-6 text-center text-muted text-sm",
 }: AuthShellProps) {
   return (
-    <main className="mx-auto grid max-w-lg gap-6">
-      <div className="grid gap-2">
-        <h1 className="font-serif text-4xl">{title}</h1>
-        {description ? <p className="text-muted">{description}</p> : null}
+    <main className="mx-auto w-full max-w-md">
+      <div className="grid gap-6 rounded-2xl border border-line bg-white p-7 shadow-[0_0.375rem_1.5rem_rgb(44_24_16/8%)]">
+        <div className="grid gap-2">
+          <h1 className="font-serif text-3xl font-bold">{title}</h1>
+          {description ? <p className="text-muted leading-relaxed">{description}</p> : null}
+        </div>
+        {children}
+        {footer ? <div className={footerClassName}>{footer}</div> : null}
       </div>
-      {children}
-      {footer ? <div className={footerClassName}>{footer}</div> : null}
     </main>
   );
 }
@@ -36,7 +38,7 @@ export function AuthField({
   children: ReactNode;
 }) {
   return (
-    <label className="grid gap-1">
+    <label className="grid gap-1.5 text-[0.9375rem] font-medium">
       <span>{label}</span>
       {children}
     </label>
@@ -44,7 +46,7 @@ export function AuthField({
 }
 
 export const authInputClass =
-  "rounded-xl border border-line bg-white px-3 py-3 w-full";
+  "rounded-xl border border-line bg-white px-3 py-3 w-full text-default focus:outline-none focus:ring-2 focus:ring-clay/35";
 
 export const authOutlineButtonClass =
   "inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-line bg-white px-5 py-3 text-lg text-clay no-underline hover:border-clay";
@@ -53,12 +55,12 @@ export function AuthError({ message }: { message?: string }) {
   if (!message) {
     return null;
   }
-  return <p className="rounded-xl border border-line bg-white p-3 text-clay">{message}</p>;
+  return <p className="rounded-xl border border-line bg-white p-3 text-clay leading-relaxed">{message}</p>;
 }
 
 export function AuthNotice({ message }: { message?: string }) {
   if (!message) {
     return null;
   }
-  return <p className="rounded-xl border border-line bg-white p-3">{message}</p>;
+  return <p className="rounded-xl border border-line bg-white p-3 leading-relaxed">{message}</p>;
 }

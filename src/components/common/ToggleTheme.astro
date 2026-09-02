@@ -10,9 +10,9 @@ export interface Props {
 }
 
 const {
-  label = 'Toggle between Dark and Light mode',
+  label = 'Switch to dark mode',
   class:
-    className = 'text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center',
+    className = 'text-muted hover:bg-[color:var(--aw-color-line)]/40 focus:outline-none focus:ring-4 focus:ring-primary/30 rounded-lg text-sm p-2.5 inline-flex items-center',
   iconClass = 'w-6 h-6',
 } = Astro.props;
 ---
@@ -27,8 +27,8 @@ const {
         aria-pressed="false"
         data-aw-toggle-color-scheme
       >
-        <Icon name="tabler:sun" class:list={[iconClass, 'dark:hidden']} data-aw-icon-light />
-        <Icon name="tabler:moon" class:list={[iconClass, 'hidden dark:inline']} data-aw-icon-dark />
+        <Icon name="tabler:sun" class={iconClass} data-aw-icon-light />
+        <Icon name="tabler:moon" class={iconClass} data-aw-icon-dark />
       </button>
     </aw-theme-toggle>
   )
@@ -38,19 +38,37 @@ const {
   aw-theme-toggle {
     display: contents;
   }
+
+  [data-aw-icon-dark] {
+    display: none;
+  }
+
+  :global(.dark) [data-aw-icon-light] {
+    display: none;
+  }
+
+  :global(.dark) [data-aw-icon-dark] {
+    display: inline-flex;
+  }
 </style>
 
 <script>
   class AwThemeToggle extends HTMLElement {
     connectedCallback() {
       const button = this.querySelector<HTMLButtonElement>('[data-aw-toggle-color-scheme]');
+      const syncLabel = (isDark: boolean) => {
+        button?.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        button?.setAttribute('aria-pressed', String(isDark));
+      };
+
+      syncLabel(document.documentElement.classList.contains('dark'));
+
       button?.addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         localStorage.theme = isDark ? 'dark' : 'light';
-        button?.setAttribute('aria-pressed', String(isDark));
+        syncLabel(isDark);
         document.dispatchEvent(new CustomEvent('aw:theme-change'));
       });
-      button?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')));
     }
   }
 

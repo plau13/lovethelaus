@@ -38,12 +38,12 @@ const headlineClasses = hasImage
   ? {
       container: 'max-w-xl sm:mx-auto lg:max-w-2xl',
       title: 'text-4xl md:text-5xl font-bold tracking-tighter mb-4 font-heading',
-      subtitle: 'max-w-3xl mx-auto sm:text-center text-xl text-muted dark:text-slate-400',
+      subtitle: 'max-w-3xl mx-auto sm:text-center text-xl text-muted',
     }
   : {
       container: 'max-w-3xl mx-auto text-center',
       title: 'text-4xl md:text-5xl font-bold tracking-tighter mb-4 font-heading',
-      subtitle: 'max-w-3xl mx-auto text-center text-xl text-muted dark:text-slate-400',
+      subtitle: 'max-w-3xl mx-auto text-center text-xl text-muted',
     };
 ---
 
@@ -59,7 +59,7 @@ const headlineClasses = hasImage
       hasImage ? (
         <div class={`md:flex ${isReversed ? 'md:flex-row-reverse' : ''} md:gap-16`}>
           <div class="md:basis-1/2 self-center">
-            {content && <div class="mb-12 text-lg dark:text-slate-400" set:html={content} />}
+            {content && <div class="mb-12 text-lg text-muted" set:html={content} />}
             {callToAction && (
               <div class="mt-[-40px] mb-8 text-primary">
                 <Button variant="link" {...callToAction} />
@@ -86,7 +86,7 @@ const headlineClasses = hasImage
                           <p
                             class:list={[
                               { 'mt-3': itemTitle },
-                              'text-muted dark:text-slate-400 ml-2 rtl:ml-0 rtl:mr-2',
+                              'text-muted ml-2 rtl:ml-0 rtl:mr-2',
                             ]}
                             set:html={description}
                           />
@@ -129,7 +129,7 @@ const headlineClasses = hasImage
         </div>
       ) : (
         <div class="mx-auto max-w-3xl text-center">
-          {content && <div class="mb-12 text-lg dark:text-slate-400" set:html={content} />}
+          {content && <div class="mb-12 text-lg text-muted" set:html={content} />}
           {callToAction && (
             <div class="mb-8 text-primary">
               <Button variant="link" {...callToAction} />
@@ -156,7 +156,7 @@ const headlineClasses = hasImage
                         <p
                           class:list={[
                             { 'mt-3': itemTitle },
-                            'text-muted dark:text-slate-400 ml-2 rtl:ml-0 rtl:mr-2',
+                            'text-muted ml-2 rtl:ml-0 rtl:mr-2',
                           ]}
                           set:html={description}
                         />

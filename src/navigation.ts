@@ -14,11 +14,32 @@ export const headerData = {
 };
 
 export const footerData = {
-  links: [],
-  secondaryLinks: [
-    { text: 'Terms', href: getPermalink('/terms') },
-    { text: 'Privacy Policy', href: getPermalink('/privacy') },
+  links: [
+    {
+      title: 'Product',
+      links: [
+        { text: 'Features', href: getPermalink('/#features') },
+        { text: 'How it works', href: getPermalink('/#how-it-works') },
+        { text: 'FAQ', href: getPermalink('/#faq') },
+      ],
+    },
+    {
+      title: 'Account',
+      links: [
+        { text: 'Sign in', href: getPermalink('/sign-in') },
+        { text: 'Create account', href: getPermalink('/sign-up') },
+        { text: 'Open Kitchen', href: kitchenUrl },
+      ],
+    },
+    {
+      title: 'Legal',
+      links: [
+        { text: 'Privacy Policy', href: getPermalink('/privacy') },
+        { text: 'Terms', href: getPermalink('/terms') },
+      ],
+    },
   ],
+  secondaryLinks: [],
   socialLinks: [],
-  footNote: 'Kitchen · Family recipes, yours to keep.',
+  footNote: '',
 };

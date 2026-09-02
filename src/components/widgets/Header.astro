@@ -107,7 +107,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
                         <li>
                           <a
                             class:list={[
-                              'first:rounded-t last:rounded-b md:hover:bg-gray-100 hover:text-link dark:hover:text-white dark:hover:bg-gray-700 py-2 px-5 block whitespace-no-wrap',
+                              'first:rounded-t last:rounded-b md:hover:bg-[color:var(--aw-color-line)]/40 hover:text-primary dark:hover:text-white py-2 px-5 block whitespace-no-wrap',
                               { 'aw-link-active': href2 === currentPath },
                             ]}
                             href={href2}
@@ -146,7 +146,7 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
             {
               showRssFeed && (
                 <a
-                  class="text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center"
+                  class="text-muted hover:bg-[color:var(--aw-color-line)]/40 focus:outline-none focus:ring-4 focus:ring-primary/30 rounded-lg text-sm p-2.5 inline-flex items-center"
                   aria-label="RSS Feed"
                   href={getAsset('/rss.xml')}
                 >

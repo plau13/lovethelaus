@@ -119,3 +119,7 @@
 .dd *:first-child {
   margin-top: 0;
 }
+
+.dark .prose a {
+  color: var(--aw-color-primary);
+}
