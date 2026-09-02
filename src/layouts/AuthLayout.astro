@@ -51,6 +51,30 @@ const { metadata, title, description } = Astro.props;
   .auth-btn:hover {
     background: rgb(110 44 32);
   }
+  .auth-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid var(--aw-color-line, rgb(230 216 204));
+    background: white;
+    color: rgb(139 58 42);
+    padding: 0.75rem 1.25rem;
+    font-size: 1.125rem;
+    min-height: 3rem;
+    text-decoration: none;
+  }
+  .auth-btn-outline:hover {
+    border-color: rgb(139 58 42);
+  }
+  .auth-footer {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--aw-color-muted, rgb(107 93 82));
+  }
   .auth-notice {
     border: 1px solid var(--aw-color-line, rgb(230 216 204));
     border-radius: 0.75rem;

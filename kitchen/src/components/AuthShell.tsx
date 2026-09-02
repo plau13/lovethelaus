@@ -6,9 +6,16 @@ type AuthShellProps = {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
+  footerClassName?: string;
 };
 
-export function AuthShell({ title, description, children, footer }: AuthShellProps) {
+export function AuthShell({
+  title,
+  description,
+  children,
+  footer,
+  footerClassName = "flex justify-center gap-6 text-center text-muted text-sm",
+}: AuthShellProps) {
   return (
     <main className="mx-auto grid max-w-lg gap-6">
       <div className="grid gap-2">
@@ -16,12 +23,7 @@ export function AuthShell({ title, description, children, footer }: AuthShellPro
         {description ? <p className="text-muted">{description}</p> : null}
       </div>
       {children}
-      {footer ? <div className="text-muted text-sm">{footer}</div> : null}
-      <p className="text-muted text-sm">
-        <Link href="/" className="text-clay hover:text-clay-dark">
-          Back to Kitchen home
-        </Link>
-      </p>
+      {footer ? <div className={footerClassName}>{footer}</div> : null}
     </main>
   );
 }
@@ -43,6 +45,9 @@ export function AuthField({
 
 export const authInputClass =
   "rounded-xl border border-line bg-white px-3 py-3 w-full";
+
+export const authOutlineButtonClass =
+  "inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-line bg-white px-5 py-3 text-lg text-clay no-underline hover:border-clay";
 
 export function AuthError({ message }: { message?: string }) {
   if (!message) {

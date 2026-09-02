@@ -26,12 +26,15 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function magicLinkAction(formData: FormData) {
+  const returnTo = String(formData.get("returnTo") ?? "/sign-in");
   try {
     await signInWithMagicLink(String(formData.get("email") ?? ""));
   } catch (error) {
-    redirect(`/sign-in?error=${encodeURIComponent(authErrorMessage(error))}`);
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}error=${encodeURIComponent(authErrorMessage(error))}`);
   }
-  redirect("/sign-in?sent=magic-link");
+  const separator = returnTo.includes("?") ? "&" : "?";
+  redirect(`${returnTo}${separator}sent=magic-link`);
 }
 
 export async function requestPasswordResetAction(formData: FormData) {

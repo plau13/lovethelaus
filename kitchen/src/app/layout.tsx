@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "Kitchen — family recipes",
   description: "A private recipe box for the family.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     title: "Kitchen",

@@ -1,0 +1,30 @@
+---
+import AuthLayout from '~/layouts/AuthLayout.astro';
+
+const error = Astro.url.searchParams.get('error');
+const sent = Astro.url.searchParams.get('sent');
+const metadata = {
+  title: 'One-time login — Kitchen',
+  description: 'Sign in to Kitchen with a one-time email link.',
+};
+---
+
+<AuthLayout
+  metadata={metadata}
+  title="One-time login"
+  description="Enter your email and we'll send you a link to sign in."
+>
+  {error ? <p class="auth-error">{error}</p> : null}
+  {sent === 'magic-link' ? <p class="auth-notice">Check your email for a sign-in link.</p> : null}
+  <form action="/kitchen/api/auth/magic-link" method="post" class="grid gap-4">
+    <input type="hidden" name="returnTo" value="/sign-in/one-time" />
+    <label class="auth-label">
+      <span>Email</span>
+      <input class="auth-input" type="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+    </label>
+    <button type="submit" class="auth-btn">Send one-time login</button>
+  </form>
+  <div class="auth-footer">
+    <a href="/sign-in" class="text-primary hover:underline">Back to sign in</a>
+  </div>
+</AuthLayout>

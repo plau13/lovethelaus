@@ -12,7 +12,7 @@ Family recipe box. This is the product. The marketing site in the parent folder 
 6. `npm run dev` — http://localhost:3000/kitchen
 7. `npm test`
 
-Sign in with email + password at `/kitchen/sign-in`, or click **Try demo** to preview sample content.
+Sign in with email + password at `/kitchen/sign-in`, or visit `/kitchen/api/auth/demo` directly for local demo testing.
 
 ## Database & auth
 
