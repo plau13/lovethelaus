@@ -12,7 +12,7 @@ Project URL (from your dashboard): `https://rwfyzlntdlrjvkyzuuzy.supabase.co`
    - **Transaction pooler** URI → `DATABASE_URL` (port **6543**, add `?pgbouncer=true`)
    - **Direct connection** URI → `DIRECT_URL` (port **5432**)
 
-2. Put both in `kitchen/.env` (replace the old SQLite `file:./dev.db` value):
+2. Put both in `kitchen/.env` — **only one** `DATABASE_URL` line (remove any old `file:./dev.db` SQLite value):
 
 ```env
 DATABASE_URL="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"

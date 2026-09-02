@@ -8,9 +8,9 @@
     "start": "next start --port 3000",
     "lint": "eslint",
     "test": "vitest run",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed",
+    "db:migrate": "bash -c 'set -a && [ -f .env ] && . ./.env; set +a && prisma migrate dev'",
+    "db:deploy": "bash -c 'set -a && [ -f .env ] && . ./.env; set +a && prisma migrate deploy'",
+    "db:seed": "bash -c 'set -a && [ -f .env ] && . ./.env; set +a && prisma db seed'",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate"
   },

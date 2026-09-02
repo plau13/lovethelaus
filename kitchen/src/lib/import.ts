@@ -1,3 +1,4 @@
+import { structureWithOptionalAi } from "@/lib/import-ai";
 import { extractRecipeFromHtml } from "@/lib/import-jsonld";
 import { detectSourceType, draftFromSocial, oembedEndpoint } from "@/lib/import-social";
 import type { ImportDraftShape } from "@/lib/types";
@@ -26,54 +27,6 @@ function ogTitle(html: string): string | undefined {
   const match = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
     ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
   return match?.[1];
-}
-
-async function structureWithOptionalAi(draft: ImportDraftShape): Promise<ImportDraftShape> {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) {
-    return draft;
-  }
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${key}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "Extract a home-cook recipe as JSON with keys title, ingredients (newline-separated), steps (newline-separated). Do not copy prose or download video. Keep attribution out of the body.",
-        },
-        {
-          role: "user",
-          content: `Title: ${draft.title}\nAttribution: ${draft.attribution}\nText:\n${draft.ingredients}\n${draft.steps}`,
-        },
-      ],
-    }),
-  });
-  if (!response.ok) {
-    return draft;
-  }
-  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) {
-    return draft;
-  }
-  try {
-    const parsed = JSON.parse(content) as { title?: string; ingredients?: string; steps?: string };
-    return {
-      ...draft,
-      title: parsed.title?.trim() || draft.title,
-      ingredients: parsed.ingredients?.trim() || draft.ingredients,
-      steps: parsed.steps?.trim() || draft.steps,
-    };
-  } catch {
-    return draft;
-  }
 }
 
 async function importSocial(url: string): Promise<ImportDraftShape> {
