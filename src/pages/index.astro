@@ -5,9 +5,10 @@ import Features from '~/components/widgets/Features.astro';
 import Steps from '~/components/widgets/Steps.astro';
 import Content from '~/components/widgets/Content.astro';
 import FAQs from '~/components/widgets/FAQs.astro';
+import SurveyEmbed from '~/components/widgets/SurveyEmbed.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 
-const kitchenUrl = import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000';
+const kitchenUrl = import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000/kitchen';
 
 const metadata = {
   title: 'Love the Laus — family recipes',
@@ -170,6 +171,13 @@ const metadata = {
         icon: 'tabler:mail',
       },
     ]}
+  />
+
+  <SurveyEmbed
+    id="survey"
+    tagline="Feedback"
+    title="Tell us what you think"
+    subtitle="Help shape Love the Laus — this short survey takes a few minutes."
   />
 
   <CallToAction

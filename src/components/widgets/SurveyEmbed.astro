@@ -1,0 +1,37 @@
+---
+import Headline from '~/components/ui/Headline.astro';
+import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
+import type { Widget } from '~/types';
+
+interface Props extends Widget {
+  title?: string;
+  subtitle?: string;
+  tagline?: string;
+  surveyUrl?: string;
+}
+
+const {
+  title = '',
+  subtitle = '',
+  tagline = '',
+  surveyUrl = 'https://qdemo.ca1.qualtrics.com/jfe/form/SV_6fnDznm4zHa7uyG',
+
+  id,
+  isDark = false,
+  classes = {},
+  bg = await Astro.slots.render('bg'),
+} = Astro.props;
+---
+
+<WidgetWrapper id={id} isDark={isDark} containerClass={`max-w-4xl mx-auto ${classes?.container ?? ''}`} bg={bg}>
+  <Headline title={title} subtitle={subtitle} tagline={tagline} />
+
+  <div class="relative w-full overflow-hidden rounded-xl border border-line bg-white" style="min-height: 720px;">
+    <iframe
+      src={surveyUrl}
+      title="Love the Laus feedback survey"
+      loading="lazy"
+      class="absolute inset-0 h-full w-full border-0"
+      allowfullscreen></iframe>
+  </div>
+</WidgetWrapper>

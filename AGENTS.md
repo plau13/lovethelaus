@@ -8,6 +8,24 @@
 
 Applies to the whole repo (root marketing site and `kitchen/`).
 
+### Commit and deploy (default)
+
+**After completing a task, commit and deploy unless the user says otherwise** (e.g. “don’t commit”, “local only”, “draft”).
+
+1. **Verify** — run the checklist below (`build`, `check` where applicable).
+2. **Commit** — stage relevant changes only; never commit `.env`, secrets, or `.wrangler/` state. Write a concise commit message focused on why.
+3. **Deploy** — push to production using the smallest scope that covers your changes:
+
+| What changed | Deploy command (from repo root) |
+|--------------|----------------------------------|
+| Marketing site only (`src/`, `dist/`, Astro) | `npm run deploy:router` |
+| Kitchen only (`kitchen/`) | `cd kitchen && npm run deploy` |
+| Both, or unsure | `npm run deploy:all` |
+
+Requires `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
+
+If deploy is blocked (missing credentials, failed build), commit anyway when possible and report what blocked deploy.
+
 ## Project Overview
 
 Static marketing site built on **Astro v7** and **Tailwind CSS v4** (AstroWind template base). Pages: home (`/`), privacy, terms, 404. Landing CTAs link to Kitchen via `PUBLIC_KITCHEN_URL`.
@@ -85,7 +103,7 @@ Components use `twMerge` from `tailwind-merge` v3 for conditional class composit
 
 ## Kitchen URL
 
-Landing and nav use `import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000'`. Document in root `.env.example`.
+Landing and nav use `import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000/kitchen'`. Document in root `.env.example`.
 
 ## Component Patterns
 

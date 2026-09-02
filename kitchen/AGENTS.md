@@ -12,11 +12,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 
-**Agent execution:** Run all terminal commands yourself (see root [`AGENTS.md`](../AGENTS.md#agent-execution)). Only ask the user when blocked (e.g. missing Supabase secrets in `.env`).
+**Agent execution:** Run all terminal commands yourself (see root [`AGENTS.md`](../AGENTS.md#agent-execution)). **Commit and deploy after each task** unless the user opts out. Only ask when blocked (e.g. missing Supabase secrets in `.env`).
 
 - PostgreSQL (Supabase) via Prisma (`prisma/schema.prisma`)
-- Magic-link auth in `src/lib/auth.ts`
-- Seed data: `npm run db:seed` (Mom @ `mom@laus.family`)
+- Supabase Auth in `src/lib/auth.ts`
+- Demo seed: `npm run db:seed:demo` (`demo@lovethelaus.com` + sample recipes)
+- Purge legacy seed users: `npm run db:purge-seed-users`
 - Tests: `npm test` (permissions, JSON-LD, social import)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
 - Nav: Home, Recipes, Cookbooks + user menu (Settings)
