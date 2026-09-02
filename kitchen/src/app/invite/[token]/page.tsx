@@ -1,11 +1,12 @@
 import { joinFromInviteForm } from "@/app/actions/cookbooks";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  const prisma = await getPrisma();
   const invite = await prisma.cookbookInvite.findUnique({
     where: { token },
     include: { cookbook: true },
@@ -28,7 +29,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         </form>
       ) : (
         <p>
-          <Link href={`/login`}>Sign in</Link> first, then open this invite link again.
+          <Link href="/sign-in">Sign in</Link> first, then open this invite link again.
         </p>
       )}
     </main>

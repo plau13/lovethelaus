@@ -1,6 +1,8 @@
 # Supabase setup for Kitchen
 
-Kitchen uses **PostgreSQL on Supabase** via Prisma. Sign-in is **magic-link** (app `User` table), not Supabase Auth — you log in at `/login` with the emails below; the link appears on screen (no SMTP in dev).
+Kitchen uses **PostgreSQL on Supabase** via Prisma and **Supabase Auth** for sign-in. See [`AUTH.md`](./AUTH.md) for dashboard setup.
+
+Sign in at `/kitchen/sign-in` or `lovethelaus.com/sign-in` with email + password.
 
 Project URL (from your dashboard): `https://rwfyzlntdlrjvkyzuuzy.supabase.co`
 
@@ -24,11 +26,13 @@ APP_URL="http://localhost:3000"
 
 ```bash
 npm run db:deploy   # creates all tables + RLS
-npm run db:seed     # Mom, Dad, Alex + 8 recipes + cookbooks
+npm run db:seed:demo   # demo account + 8 recipes + cookbooks
 npm run dev
 ```
 
-4. Open http://localhost:3000/login and sign in with any seed email below.
+4. Open http://localhost:3000/kitchen/sign-in and click **Try demo**, or sign in with `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD`.
+
+See [`AUTH.md`](./AUTH.md) for Supabase Auth dashboard settings and demo env vars.
 
 ---
 
@@ -40,7 +44,7 @@ Run these **in order** in [SQL Editor](https://supabase.com/dashboard/project/rw
 |------|---------|
 | [`01_schema.sql`](./01_schema.sql) | All Kitchen tables, indexes, foreign keys, RLS |
 | [`02_storage.sql`](./02_storage.sql) | Private `recipe-photos` bucket |
-| [`03_seed.sql`](./03_seed.sql) | Family users, cookbooks, sample recipes |
+| [`03_seed.sql`](./03_seed.sql) | **Deprecated** — use `npm run db:seed:demo` instead |
 
 After running SQL manually, mark the Prisma migration as applied (so `db:deploy` does not re-run):
 
@@ -51,20 +55,18 @@ npx prisma migrate resolve --applied 20260901152000_init
 
 ---
 
-## Seed login emails
+## Demo account
 
 | Email | Display name | Notes |
 |-------|--------------|-------|
-| `mom@laus.family` | Mom | Owner; default cookbook + most recipes |
-| `dad@laus.family` | Dad | Editor on **Family Dinners** |
-| `alex@laus.family` | Alex | Viewer on **Family Dinners** |
+| `demo@lovethelaus.com` | Demo Kitchen | Owner of 8 sample recipes + 3 cookbooks |
 
 **How to sign in**
 
-1. Go to `/login`
-2. Enter email (e.g. `mom@laus.family`) and name (e.g. `Mom`)
-3. Submit — the **magic link URL is shown on the page** (dev mode, no email sent)
-4. Click the link → signed in
+1. Go to `/kitchen/sign-in` (or `lovethelaus.com/sign-in`)
+2. Click **Try demo**, or sign in with `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` after `npm run db:seed:demo`
+
+To remove legacy `@laus.family` users: `npm run db:purge-seed-users` (once).
 
 ---
 
@@ -89,4 +91,4 @@ cd kitchen
 npx prisma db execute --stdin <<< 'SELECT email, name FROM "User";'
 ```
 
-You should see the three `@laus.family` users after seeding.
+You should see `demo@lovethelaus.com` after `db:seed:demo`.

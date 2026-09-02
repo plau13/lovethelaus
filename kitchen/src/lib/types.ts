@@ -29,6 +29,10 @@ export const COOKBOOK_LIST_FILTERS = ["all", "private", "shared", "public"] as c
 
 export type CookbookListFilter = (typeof COOKBOOK_LIST_FILTERS)[number];
 
+export const RECIPE_COLLAB_ROLES = ["view", "comment", "edit"] as const;
+
+export type RecipeCollabRole = (typeof RECIPE_COLLAB_ROLES)[number];
+
 export type RecipeExport = {
   id: string;
   title: string;

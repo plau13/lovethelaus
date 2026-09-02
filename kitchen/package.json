@@ -3,31 +3,41 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
     "build": "prisma generate && next build",
+    "dev": "next dev --port 3000",
     "start": "next start --port 3000",
     "lint": "eslint",
     "test": "vitest run",
     "db:migrate": "bash -c 'set -a && [ -f .env ] && . ./.env; set +a && prisma migrate dev'",
     "db:deploy": "bash -c 'set -a && [ -f .env ] && . ./.env; set +a && prisma migrate deploy'",
     "db:seed": "bash -c 'set -a && [ -f .env ] && . ./.env; set +a && prisma db seed'",
+    "db:seed:demo": "bash -c 'set -a && [ -f .env ] && . ./.env; [ -f .env.local ] && . ./.env.local; set +a && tsx prisma/seed-demo.ts'",
+    "db:purge-seed-users": "bash -c 'set -a && [ -f .env ] && . ./.env; [ -f .env.local ] && . ./.env.local; set +a && tsx prisma/purge-seed-users.ts'",
     "db:generate": "prisma generate",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.5",
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^6.19.3",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "next": "16.3.4",
+    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -36,6 +46,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
     "typescript": "^5",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "wrangler": "^4.128.0"
   }
 }

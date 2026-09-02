@@ -1,108 +1,145 @@
-import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { slugify } from "@/lib/slug";
-
-export const SESSION_COOKIE = "kitchen_session";
+import { getPrisma } from "@/lib/prisma";
+import { syncPrismaUserFromSupabase } from "@/lib/supabase-user-sync";
+import { createClient } from "@/utils/supabase/server";
 
 function appUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000";
+  return process.env.APP_URL ?? "http://localhost:3000/kitchen";
 }
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) {
+  const supabase = createClient(cookieStore);
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (!authUser?.email) {
     return null;
   }
-  const session = await prisma.session.findUnique({
-    where: { token },
-    include: { user: true },
+
+  const prisma = await getPrisma();
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ authUserId: authUser.id }, { email: authUser.email.toLowerCase() }],
+    },
   });
-  if (!session || session.expiresAt < new Date()) {
-    return null;
+
+  if (user) {
+    return user;
   }
-  return session.user;
+
+  return syncPrismaUserFromSupabase(authUser);
 }
 
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/login");
+    redirect("/sign-in");
   }
   return user;
 }
 
-export async function requestMagicLink(emailRaw: string, nameRaw: string) {
+export async function signUp(nameRaw: string, emailRaw: string, password: string) {
+  const name = nameRaw.trim() || emailRaw.split("@")[0] || "Family cook";
   const email = emailRaw.trim().toLowerCase();
-  const name = nameRaw.trim() || email.split("@")[0] || "Family cook";
   if (!email.includes("@")) {
     throw new Error("Enter a real email address.");
   }
-  const token = randomBytes(24).toString("hex");
-  const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-  await prisma.magicLink.create({
-    data: { email, token, expiresAt },
+  if (password.length < 8) {
+    throw new Error("Use at least 8 characters for your password.");
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { name } },
   });
-  return { email, name, verifyUrl: `${appUrl()}/api/auth/verify?token=${token}&name=${encodeURIComponent(name)}` };
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data.user) {
+    throw new Error("Sign up failed. Try again.");
+  }
+
+  await syncPrismaUserFromSupabase(data.user);
 }
 
-export async function consumeMagicLink(token: string, nameHint: string) {
-  const link = await prisma.magicLink.findUnique({ where: { token } });
-  if (!link || link.expiresAt < new Date()) {
-    throw new Error("This sign-in link expired. Ask for a new one.");
+export async function signIn(emailRaw: string, password: string) {
+  const email = emailRaw.trim().toLowerCase();
+  if (!email.includes("@")) {
+    throw new Error("Enter a real email address.");
   }
-  const email = link.email;
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: nameHint ? { name: nameHint } : {},
-    create: { email, name: nameHint || email.split("@")[0] || "Family cook" },
-  });
-  await prisma.magicLink.delete({ where: { id: link.id } });
-  await ensureDefaultCookbook(user.id, user.name);
-  const sessionToken = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  await prisma.session.create({
-    data: { userId: user.id, token: sessionToken, expiresAt },
-  });
+  if (!password) {
+    throw new Error("Enter your password.");
+  }
+
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, sessionToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: expiresAt,
-  });
-  return user;
+  const supabase = createClient(cookieStore);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data.user) {
+    throw new Error("Sign in failed. Try again.");
+  }
+
+  await syncPrismaUserFromSupabase(data.user);
 }
 
 export async function signOut() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (token) {
-    await prisma.session.deleteMany({ where: { token } });
-  }
-  cookieStore.delete(SESSION_COOKIE);
+  const supabase = createClient(cookieStore);
+  await supabase.auth.signOut();
 }
 
-export async function ensureDefaultCookbook(userId: string, name: string) {
-  const existing = await prisma.cookbook.findFirst({
-    where: { ownerId: userId, isDefault: true },
-  });
-  if (existing) {
-    return existing;
+export async function requestPasswordReset(emailRaw: string) {
+  const email = emailRaw.trim().toLowerCase();
+  if (!email.includes("@")) {
+    throw new Error("Enter a real email address.");
   }
-  const slug = `${slugify(name)}-recipes-${userId.slice(-6)}`;
-  return prisma.cookbook.create({
-    data: {
-      ownerId: userId,
-      title: "My recipes",
-      description: "Private box for your recipes.",
-      visibility: "private",
-      slug,
-      isDefault: true,
-      members: { create: { userId, role: "owner" } },
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${appUrl()}/reset-password`,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function signInWithMagicLink(emailRaw: string) {
+  const email = emailRaw.trim().toLowerCase();
+  if (!email.includes("@")) {
+    throw new Error("Enter a real email address.");
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${appUrl()}/auth/callback`,
     },
   });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
+
+export function authErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Something went wrong. Try again.";
+}
+
+export { ensureDefaultCookbook } from "@/lib/default-cookbook";

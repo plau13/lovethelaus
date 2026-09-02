@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "kitchen",
+	"compatibility_date": "2026-09-02",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "kitchen"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "kitchen-opennext-cache"
+		},
+		{
+			"binding": "RECIPE_PHOTOS",
+			"bucket_name": "kitchen-recipe-photos"
+		}
+	],
+	"images": {
+		"binding": "IMAGES"
+	}
+	// Kitchen is reached via the lovethelaus router Worker (service binding), not a public route.
+}

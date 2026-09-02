@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { getCurrentUser } from "@/lib/auth";
 import { AppHeader } from "@/components/AppHeader";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const sans = Source_Sans_3({
@@ -37,6 +38,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable}`}>
       <body className="min-h-dvh antialiased">
+        <ServiceWorkerRegister />
         <AppHeader userName={user?.name ?? null} />
         <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6">{children}</div>
       </body>

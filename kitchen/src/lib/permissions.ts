@@ -8,6 +8,17 @@ function isVisibility(value: string): value is Visibility {
   return value === "private" || value === "unlisted" || value === "public";
 }
 
+function isCollabRole(value: string): value is "view" | "comment" | "edit" {
+  return value === "view" || value === "comment" || value === "edit";
+}
+
+function collabRank(role: string): number {
+  if (role === "edit") return 3;
+  if (role === "comment") return 2;
+  if (role === "view") return 1;
+  return 0;
+}
+
 export function canViewCookbook(args: {
   userId: string | null;
   ownerId: string;
@@ -27,7 +38,7 @@ export function canViewCookbook(args: {
       }
       return args.ownerId === args.userId || args.memberUserIds.includes(args.userId);
     default: {
-      const _exhaustive: never = args.visibility;
+      const _exhaustive: never = args.visibility as never;
       return _exhaustive;
     }
   }
@@ -44,9 +55,13 @@ export function canEditCookbookContents(role: string | null): boolean {
 export function canViewRecipe(args: {
   userId: string | null;
   recipeOwnerId: string;
+  collaboratorRole?: string | null;
   containingCookbooks: Array<{ visibility: string; ownerId: string; memberUserIds: string[] }>;
 }): boolean {
   if (args.userId && args.userId === args.recipeOwnerId) {
+    return true;
+  }
+  if (args.collaboratorRole && isCollabRole(args.collaboratorRole)) {
     return true;
   }
   return args.containingCookbooks.some((cookbook) =>
@@ -59,12 +74,37 @@ export function canViewRecipe(args: {
   );
 }
 
-export function canEditRecipe(args: { userId: string | null; recipeOwnerId: string }): boolean {
-  return Boolean(args.userId && args.userId === args.recipeOwnerId);
+export function canEditRecipe(args: {
+  userId: string | null;
+  recipeOwnerId: string;
+  collaboratorRole?: string | null;
+}): boolean {
+  if (args.userId && args.userId === args.recipeOwnerId) {
+    return true;
+  }
+  return args.collaboratorRole === "edit";
 }
 
-export function canAddNote(args: { userId: string | null; canView: boolean }): boolean {
-  return Boolean(args.userId && args.canView);
+export function canCommentOnRecipe(args: {
+  userId: string | null;
+  recipeOwnerId: string;
+  collaboratorRole?: string | null;
+  canView: boolean;
+}): boolean {
+  if (!args.userId || !args.canView) {
+    return false;
+  }
+  if (args.userId === args.recipeOwnerId) {
+    return true;
+  }
+  if (args.collaboratorRole === "edit" || args.collaboratorRole === "comment") {
+    return true;
+  }
+  return args.canView;
+}
+
+export function canAddNote(args: { userId: string | null; canComment: boolean }): boolean {
+  return Boolean(args.userId && args.canComment);
 }
 
 export function roleAtLeast(role: string | null, needed: CookbookRole): boolean {
@@ -73,4 +113,12 @@ export function roleAtLeast(role: string | null, needed: CookbookRole): boolean 
   }
   const rank: Record<CookbookRole, number> = { viewer: 1, editor: 2, owner: 3 };
   return rank[role] >= rank[needed];
+}
+
+export function collabRoleAtLeast(role: string | null, needed: "view" | "comment" | "edit"): boolean {
+  if (!role || !isCollabRole(role)) {
+    return false;
+  }
+  const neededRank = collabRank(needed);
+  return collabRank(role) >= neededRank;
 }

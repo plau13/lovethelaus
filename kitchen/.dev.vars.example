@@ -1,0 +1,3 @@
+# Local OpenNext preview only — do NOT put production secrets here.
+# Production secrets are stored as Cloudflare Worker secrets (see docs/CLOUDFLARE.md).
+NEXTJS_ENV=development

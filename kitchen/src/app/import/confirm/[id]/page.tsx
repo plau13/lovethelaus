@@ -2,10 +2,11 @@ import { notFound } from "next/navigation";
 import { confirmImport } from "@/app/actions/import";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 export default async function ConfirmImportPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
+  const prisma = await getPrisma();
   const { id } = await params;
   const draft = await prisma.importDraft.findFirst({
     where: { id, userId: user.id },

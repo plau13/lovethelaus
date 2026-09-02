@@ -1,0 +1,33 @@
+---
+import AuthLayout from '~/layouts/AuthLayout.astro';
+
+const error = Astro.url.searchParams.get('error');
+const metadata = {
+  title: 'Create account — Kitchen',
+  description: 'Create your family Kitchen recipe account.',
+};
+---
+
+<AuthLayout metadata={metadata} title="Create account" description="Start your family recipe box.">
+  {error ? <p class="auth-error">{error}</p> : null}
+  <form action="/kitchen/api/auth/sign-up" method="post" class="grid gap-4">
+    <input type="hidden" name="returnTo" value="/sign-up" />
+    <label class="auth-label">
+      <span>Your name</span>
+      <input class="auth-input" type="text" name="name" autocomplete="name" placeholder="Mom" />
+    </label>
+    <label class="auth-label">
+      <span>Email</span>
+      <input class="auth-input" type="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+    </label>
+    <label class="auth-label">
+      <span>Password</span>
+      <input class="auth-input" type="password" name="password" required minlength="8" autocomplete="new-password" />
+    </label>
+    <button type="submit" class="auth-btn">Create account</button>
+  </form>
+  <p class="text-muted text-sm">
+    Already have an account?
+    <a href="/sign-in" class="text-primary hover:underline">Sign in</a>
+  </p>
+</AuthLayout>

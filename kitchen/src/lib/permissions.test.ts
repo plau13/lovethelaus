@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canAddNote,
+  canCommentOnRecipe,
   canEditCookbookContents,
   canEditRecipe,
   canManageCookbook,
@@ -53,9 +54,12 @@ describe("cookbook roles", () => {
 });
 
 describe("recipes", () => {
-  it("only the recipe owner can edit the card", () => {
+  it("only the recipe owner can edit unless collaborator has edit", () => {
     expect(canEditRecipe({ userId: "mom", recipeOwnerId: "mom" })).toBe(true);
     expect(canEditRecipe({ userId: "aunt", recipeOwnerId: "mom" })).toBe(false);
+    expect(
+      canEditRecipe({ userId: "aunt", recipeOwnerId: "mom", collaboratorRole: "edit" }),
+    ).toBe(true);
   });
 
   it("members can view a private recipe through the book", () => {
@@ -82,8 +86,18 @@ describe("recipes", () => {
     ).toBe(false);
   });
 
-  it("allows notes when the recipe is visible to a signed-in user", () => {
-    expect(canAddNote({ userId: "aunt", canView: true })).toBe(true);
-    expect(canAddNote({ userId: null, canView: true })).toBe(false);
+  it("allows notes when the user can comment", () => {
+    expect(
+      canAddNote({
+        userId: "aunt",
+        canComment: canCommentOnRecipe({
+          userId: "aunt",
+          recipeOwnerId: "mom",
+          collaboratorRole: "comment",
+          canView: true,
+        }),
+      }),
+    ).toBe(true);
+    expect(canAddNote({ userId: null, canComment: true })).toBe(false);
   });
 });

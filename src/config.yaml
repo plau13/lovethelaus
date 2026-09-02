@@ -1,5 +1,5 @@
 site:
-  name: Love the Laus
+  name: Kitchen
   site: 'https://lovethelaus.com'
   base: '/'
   trailingSlash: false
@@ -9,14 +9,14 @@ site:
 # Default SEO metadata
 metadata:
   title:
-    default: Love the Laus
-    template: '%s — Love the Laus'
-  description: 'The recipe box your family actually uses — save from anywhere, cook on iPhone or iPad, share cookbooks with a link, and export everything if you ever leave.'
+    default: Kitchen
+    template: '%s — Kitchen'
+  description: 'The recipe box your family actually uses — save from anywhere, cook on iPhone or iPad, share cookbooks with a link, and export your recipes anytime.'
   robots:
     index: true
     follow: true
   openGraph:
-    site_name: Love the Laus
+    site_name: Kitchen
     images:
       - url: '~/assets/images/default.png'
         width: 1200

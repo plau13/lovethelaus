@@ -11,7 +11,14 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
   const user = await requireUser();
   const { id } = await params;
   const recipe = await getRecipeForUser(id, user.id);
-  if (!recipe || !canEditRecipe({ userId: user.id, recipeOwnerId: recipe.ownerId })) {
+  if (
+    !recipe ||
+    !canEditRecipe({
+      userId: user.id,
+      recipeOwnerId: recipe.ownerId,
+      collaboratorRole: recipe.collaboratorRole ?? null,
+    })
+  ) {
     notFound();
   }
   return (

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { grantRecipeAccess, revokeRecipeAccess } from "@/app/actions/collaborators";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
 import { requireUser } from "@/lib/auth";
-import { canEditRecipe } from "@/lib/permissions";
+import { canCommentOnRecipe, canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import { parseTags } from "@/lib/tags";
+import { RECIPE_COLLAB_ROLES } from "@/lib/types";
 
 function recipeTypeLabel(type: string): string {
   switch (type) {
@@ -19,6 +21,14 @@ function recipeTypeLabel(type: string): string {
   }
 }
 
+function parseRevisionSnapshot(snapshot: string): { title?: string } {
+  try {
+    return JSON.parse(snapshot) as { title?: string };
+  } catch {
+    return {};
+  }
+}
+
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
@@ -26,7 +36,18 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   if (!recipe) {
     notFound();
   }
-  const editable = canEditRecipe({ userId: user.id, recipeOwnerId: recipe.ownerId });
+  const editable = canEditRecipe({
+    userId: user.id,
+    recipeOwnerId: recipe.ownerId,
+    collaboratorRole: recipe.collaboratorRole ?? null,
+  });
+  const canComment = canCommentOnRecipe({
+    userId: user.id,
+    recipeOwnerId: recipe.ownerId,
+    collaboratorRole: recipe.collaboratorRole ?? null,
+    canView: true,
+  });
+  const isOwner = recipe.ownerId === user.id;
   const cookingSteps = recipe.steps.split("\n").filter(Boolean);
   const bakingSteps = recipe.bakingSteps.split("\n").filter(Boolean);
 
@@ -90,9 +111,74 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           </ol>
         </section>
       ) : null}
+
+      {isOwner ? (
+        <section className="grid gap-3 no-print rounded-2xl border border-line bg-white p-5">
+          <h2 className="text-xl font-semibold">Share access</h2>
+          <p className="text-muted text-sm">Grant view, comment, or edit access to this recipe.</p>
+          <ul className="grid gap-2 text-sm">
+            {recipe.collaborators.map((entry) => (
+              <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line px-3 py-2">
+                <span>
+                  {entry.user.name} ({entry.user.email}) — {entry.role}
+                </span>
+                <form action={revokeRecipeAccess}>
+                  <input type="hidden" name="recipeId" value={recipe.id} />
+                  <input type="hidden" name="collaboratorUserId" value={entry.userId} />
+                  <button type="submit" className="text-clay">
+                    Remove
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+          <form action={grantRecipeAccess} className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <input type="hidden" name="recipeId" value={recipe.id} />
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="family@example.com"
+              className="rounded-xl border border-line bg-white px-3 py-2"
+            />
+            <select name="role" className="rounded-xl border border-line bg-white px-3 py-2" defaultValue="view">
+              {RECIPE_COLLAB_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+            <button type="submit" className="rounded-xl bg-clay px-4 py-2 text-white">
+              Invite
+            </button>
+          </form>
+        </section>
+      ) : null}
+
+      {recipe.revisions.length > 0 ? (
+        <section className="grid gap-2 no-print">
+          <h2 className="text-xl font-semibold">Version history</h2>
+          <ul className="grid gap-2 text-sm">
+            {recipe.revisions.map((revision) => {
+              const snap = parseRevisionSnapshot(revision.snapshot);
+              return (
+                <li key={revision.id} className="rounded-xl border border-line bg-white px-3 py-2">
+                  {revision.editor.name} saved &ldquo;{snap.title ?? recipe.title}&rdquo; ·{" "}
+                  {revision.createdAt.toLocaleString()}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="grid gap-3 no-print">
         <h2 className="text-xl font-semibold">Family notes</h2>
-        <p className="text-muted">Notes do not change the recipe. Only {recipe.owner.name} can edit the card.</p>
+        <p className="text-muted">
+          {canComment
+            ? "Notes do not change the recipe unless you have edit access."
+            : "You have view-only access on this recipe."}
+        </p>
         <ul className="grid gap-2">
           {recipe.notes.map((note) => (
             <li key={note.id} className="rounded-xl border border-line bg-white p-3">
@@ -101,14 +187,16 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
             </li>
           ))}
         </ul>
-        <form action={saveNote} className="grid gap-2">
-          <input type="hidden" name="recipeId" value={recipe.id} />
-          <textarea name="body" rows={3} className="rounded-xl border border-line bg-white px-3 py-3" placeholder="Don't skip the rest." />
-          <button type="submit" className="btn w-fit rounded-xl border border-line px-4 py-2">
-            Add note
-          </button>
-        </form>
-        {recipe.ownerId !== user.id ? (
+        {canComment ? (
+          <form action={saveNote} className="grid gap-2">
+            <input type="hidden" name="recipeId" value={recipe.id} />
+            <textarea name="body" rows={3} className="rounded-xl border border-line bg-white px-3 py-3" placeholder="Don't skip the rest." />
+            <button type="submit" className="btn w-fit rounded-xl border border-line px-4 py-2">
+              Add note
+            </button>
+          </form>
+        ) : null}
+        {!isOwner ? (
           <form action={copyToMyBook}>
             <input type="hidden" name="recipeId" value={recipe.id} />
             <button type="submit" className="text-clay">

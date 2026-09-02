@@ -3,7 +3,10 @@ import { deleteAccount, updateProfile } from "@/app/actions/settings";
 import { logOut } from "@/app/actions/auth";
 import { requireUser } from "@/lib/auth";
 import { listMyCookbooks } from "@/lib/cookbooks";
+import { exportSummary, recipesForExport } from "@/lib/export-eligibility";
+import { getPrisma } from "@/lib/prisma";
 import { PREFERRED_UNITS } from "@/lib/types";
+import { isSubscriber } from "@/lib/subscription";
 
 export default async function SettingsPage({
   searchParams,
@@ -14,6 +17,9 @@ export default async function SettingsPage({
   const { saved } = await searchParams;
   const cookbooks = await listMyCookbooks(user.id);
   const defaultCookbook = cookbooks.find((cookbook) => cookbook.isDefault);
+  const prisma = await getPrisma();
+  const exportable = await recipesForExport(user.id);
+  const ownedOnly = await prisma.recipe.count({ where: { ownerId: user.id } });
 
   return (
     <main className="grid gap-8">
@@ -89,6 +95,27 @@ export default async function SettingsPage({
         <Link href="/cookbooks" className="text-clay">
           Manage cookbooks
         </Link>
+      </section>
+
+      <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
+        <h2 className="text-xl font-semibold">Export recipes</h2>
+        <p className="text-muted">{exportSummary(user, exportable.length, ownedOnly)}</p>
+        <div className="flex flex-wrap gap-3">
+          <a href="/api/export?format=json" className="rounded-xl bg-clay px-4 py-2 text-white no-underline">
+            Download JSON
+          </a>
+          <a href="/api/export?format=csv" className="rounded-xl border border-line px-4 py-2 text-clay no-underline">
+            Download CSV
+          </a>
+        </div>
+      </section>
+
+      <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
+        <h2 className="text-xl font-semibold">Plan</h2>
+        <p className="text-muted">
+          Current plan: <strong>{isSubscriber(user) ? "Subscriber" : "Free"}</strong>
+          {isSubscriber(user) ? " — offline cook mode enabled." : " — subscribe to export shared recipes and cook offline."}
+        </p>
       </section>
 
       <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">

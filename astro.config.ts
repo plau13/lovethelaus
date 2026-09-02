@@ -54,18 +54,25 @@ export default defineConfig({
     defaultStrategy: 'viewport',
   },
 
-  // Native Fonts API: self-hosts + subsets + preloads Inter and generates
-  // metric-adjusted fallbacks. Injected via <Font /> in Layout.astro and
-  // consumed through the `--font-inter` CSS variable in CustomStyles.astro.
+  // Native Fonts API: Source Sans 3 + Source Serif 4 (matches Kitchen).
   fonts: [
     {
       provider: fontProviders.fontsource(),
-      name: 'Inter',
-      cssVariable: '--font-inter',
-      weights: ['100 900'],
+      name: 'Source Sans 3',
+      cssVariable: '--font-source-sans',
+      weights: ['400', '600', '700'],
       styles: ['normal'],
       subsets: ['latin'],
       fallbacks: ['sans-serif'],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Source Serif 4',
+      cssVariable: '--font-source-serif',
+      weights: ['400', '600', '700'],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['serif'],
     },
   ],
 

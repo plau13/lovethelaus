@@ -2,10 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { requireUser, signOut } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { PREFERRED_UNITS } from "@/lib/types";
 
 export async function updateProfile(formData: FormData) {
+  const prisma = await getPrisma();
   const user = await requireUser();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) {
@@ -28,6 +29,7 @@ export async function updateProfile(formData: FormData) {
 }
 
 export async function deleteAccount(formData: FormData) {
+  const prisma = await getPrisma();
   const user = await requireUser();
   const confirmEmail = String(formData.get("confirmEmail") ?? "").trim().toLowerCase();
   if (confirmEmail !== user.email) {

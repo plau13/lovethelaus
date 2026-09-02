@@ -5,39 +5,22 @@ Family recipe box. This is the product. The marketing site in the parent folder 
 ## Run
 
 1. `cd kitchen`
-2. Copy `.env.example` to `.env` and set Supabase Postgres URLs:
-   - `DATABASE_URL` — pooled connection (port 6543, `?pgbouncer=true`)
-   - `DIRECT_URL` — direct connection for migrations (port 5432)
+2. Copy `.env.example` to `.env` and set Supabase URLs (see [`supabase/AUTH.md`](supabase/AUTH.md))
 3. `npm install`
 4. `npm run db:deploy` — apply migrations
-5. `npm run db:seed` — sample family data (Mom, Dad, Alex)
-6. `npm run dev` — http://localhost:3000
+5. `npm run db:seed:demo` — demo account + sample recipes (needs `SUPABASE_SERVICE_ROLE_KEY` and `DEMO_USER_PASSWORD`)
+6. `npm run dev` — http://localhost:3000/kitchen
 7. `npm test`
 
-Sign in with email. The magic link is printed on the next screen (no SMTP required in dev).
+Sign in with email + password at `/kitchen/sign-in`, or click **Try demo** to preview sample content.
 
-**Sample sign-in:** use `mom@laus.family` after seeding to see Mom's recipes and cookbooks.
+## Database & auth
 
-Add to iPhone/iPad Home Screen from Safari (Share → Add to Home Screen).
+PostgreSQL on Supabase via Prisma. **Supabase Auth** for sign-in, sign-up, and password reset. Prisma `User` rows sync on login.
 
-## Database
+**Setup:** [`supabase/README.md`](supabase/README.md) and [`supabase/AUTH.md`](supabase/AUTH.md)
 
-PostgreSQL on Supabase via Prisma. Custom magic-link auth (not Supabase Auth). RLS is enabled on all tables; the app connects with Prisma using your database URL.
-
-**First-time Supabase setup:** see [`supabase/README.md`](supabase/README.md) — SQL files for the SQL Editor, or `npm run db:deploy && npm run db:seed`.
-
-**Seed login emails:** `mom@laus.family`, `dad@laus.family`, `alex@laus.family` — sign in at `/login` (magic link shown on screen in dev).
-
-Supabase JS clients (`@supabase/ssr`) are wired for Data API access and session refresh:
-
-```typescript
-import { cookies } from "next/headers";
-import { createClient } from "@/utils/supabase/server";
-
-const supabase = createClient(await cookies());
-```
-
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local` (see `.env.example`).
+**Demo:** `demo@lovethelaus.com` (configurable via `DEMO_USER_EMAIL`) — seed with `npm run db:seed:demo`
 
 ## What is in this build
 

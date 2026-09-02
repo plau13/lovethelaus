@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import type { CookbookListFilter } from "@/lib/types";
 import {
@@ -27,6 +27,7 @@ function parseVisibility(value: string): Visibility {
 }
 
 export async function memberRole(cookbookId: string, userId: string | null) {
+  const prisma = await getPrisma();
   if (!userId) {
     return null;
   }
@@ -37,6 +38,7 @@ export async function memberRole(cookbookId: string, userId: string | null) {
 }
 
 export async function listMyCookbooks(userId: string) {
+  const prisma = await getPrisma();
   return prisma.cookbook.findMany({
     where: { members: { some: { userId } } },
     include: {
@@ -63,6 +65,7 @@ export async function listCookbooksForUser(
   userId: string,
   options: { q?: string; filter?: CookbookListFilter } = {}
 ) {
+  const prisma = await getPrisma();
   const { q = "", filter = "all" } = options;
 
   const memberCookbooks = await prisma.cookbook.findMany({
@@ -113,6 +116,7 @@ export async function listCookbooksForUser(
 }
 
 export async function getCookbookForUser(cookbookId: string, userId: string | null) {
+  const prisma = await getPrisma();
   const cookbook = await prisma.cookbook.findUnique({
     where: { id: cookbookId },
     include: {
@@ -141,6 +145,7 @@ export async function getCookbookForUser(cookbookId: string, userId: string | nu
 }
 
 export async function getPublicCookbook(slug: string) {
+  const prisma = await getPrisma();
   const cookbook = await prisma.cookbook.findUnique({
     where: { slug },
     include: {
@@ -159,6 +164,7 @@ export async function getPublicCookbook(slug: string) {
 }
 
 export async function createCookbook(userId: string, title: string, description: string) {
+  const prisma = await getPrisma();
   const trimmed = title.trim();
   if (!trimmed) {
     throw new Error("Name the cookbook.");
@@ -183,6 +189,7 @@ export async function updateCookbookSettings(args: {
   description: string;
   visibility: string;
 }) {
+  const prisma = await getPrisma();
   const cookbook = await prisma.cookbook.findUnique({ where: { id: args.cookbookId } });
   if (!cookbook) {
     throw new Error("Cookbook not found.");
@@ -202,6 +209,7 @@ export async function updateCookbookSettings(args: {
 }
 
 export async function addRecipeToCookbook(userId: string, cookbookId: string, recipeId: string) {
+  const prisma = await getPrisma();
   const role = await memberRole(cookbookId, userId);
   if (!canEditCookbookContents(role)) {
     throw new Error("You need editor access to add recipes to this book.");
@@ -219,6 +227,7 @@ export async function addRecipeToCookbook(userId: string, cookbookId: string, re
 }
 
 export async function createInvite(userId: string, cookbookId: string, role: string) {
+  const prisma = await getPrisma();
   const member = await memberRole(cookbookId, userId);
   if (!canManageCookbook(member)) {
     throw new Error("Only the owner can invite people.");
@@ -236,6 +245,7 @@ export async function createInvite(userId: string, cookbookId: string, role: str
 }
 
 export async function acceptInvite(userId: string, token: string) {
+  const prisma = await getPrisma();
   const invite = await prisma.cookbookInvite.findUnique({ where: { token } });
   if (!invite || invite.expiresAt < new Date()) {
     throw new Error("This invite expired.");

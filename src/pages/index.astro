@@ -11,9 +11,9 @@ import CallToAction from '~/components/widgets/CallToAction.astro';
 const kitchenUrl = import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000/kitchen';
 
 const metadata = {
-  title: 'Love the Laus — family recipes',
+  title: 'Kitchen — family recipes',
   description:
-    'The recipe box your family actually uses — save from anywhere, cook on iPhone or iPad, share cookbooks with a link, and export everything if you ever leave.',
+    'The recipe box your family actually uses — save from anywhere, cook on iPhone or iPad, share cookbooks with a link, and export your own recipes anytime.',
   ignoreTitleTemplate: true,
 };
 ---
@@ -37,7 +37,7 @@ const metadata = {
 
     <Fragment slot="subtitle">
       The recipe box your family actually uses — save from anywhere, cook on iPhone or iPad, share cookbooks with a
-      link, and export everything if you ever leave.
+      link, and export your own recipes anytime.
     </Fragment>
   </Hero>
 
@@ -51,19 +51,19 @@ const metadata = {
       {
         title: 'Save',
         description:
-          'Type recipes, add photos and tags, or paste a link from a food blog or social post. Every recipe keeps its source. Export JSON or CSV anytime.',
+          'Type recipes, add photos and tags, or paste a link from a food blog or social post. Instagram and TikTok imports read the caption (video analysis coming). Free: 3 social imports; subscribers get more.',
         icon: 'tabler:bookmark',
       },
       {
         title: 'Cook',
         description:
-          'Kitchen mode on iPhone or iPad: large type, check off ingredients, screen stays awake. No ads between you and dinner.',
+          'Kitchen mode on iPhone or iPad: large type, check off ingredients, screen stays awake. Subscribers can cook offline. No ads between you and dinner.',
         icon: 'tabler:device-mobile',
       },
       {
         title: 'Share',
         description:
-          'Personal cookbooks with invite links. Family leaves notes without changing your recipe. Public books only when you choose.',
+          'Invite family with view, comment, or edit access per recipe. Version history tracks every change. Public cookbooks only when you choose.',
         icon: 'tabler:users',
       },
     ]}
@@ -79,7 +79,7 @@ const metadata = {
       {
         title: 'Add recipes',
         description:
-          'Type them in, paste a food-blog URL, or import from Instagram or TikTok — then fix the draft before you save.',
+          'Type them in, paste a food-blog URL, or import from Instagram or TikTok — caption today, video analysis planned — then fix the draft before you save.',
         icon: 'tabler:plus',
       },
       {
@@ -91,7 +91,7 @@ const metadata = {
       {
         title: 'Share the cookbook',
         description:
-          'Invite family with a link. They can view, leave notes, or copy a recipe into their own book — without overwriting yours.',
+          'Invite family with a link. Grant view, comment, or edit access per recipe — with version history for every change.',
         icon: 'tabler:link',
       },
     ]}
@@ -101,7 +101,7 @@ const metadata = {
     id="kitchen"
     tagline="Built for real kitchens"
     title="Made for the counter, not the desk"
-    subtitle="Mom cooks from an iPhone in one hand and an iPad on the counter. Kitchen is designed for that."
+    subtitle="Designed for cooking from an iPhone in one hand and an iPad on the counter."
     columns={2}
     items={[
       {
@@ -110,8 +110,9 @@ const metadata = {
         icon: 'tabler:device-tablet',
       },
       {
-        title: 'Export is always free',
-        description: 'Download every recipe as JSON or CSV. Your collection is yours, even if you stop using the site.',
+        title: 'Export your recipes',
+        description:
+          'Download recipes you own as JSON or CSV anytime. Export others&apos; shared recipes with a subscription.',
         icon: 'tabler:download',
       },
       {
@@ -122,7 +123,8 @@ const metadata = {
       },
       {
         title: 'Private by default',
-        description: 'Family recipes stay in your account until you share a cookbook or make one public on purpose.',
+        description:
+          'Family recipes stay in your account until you share a cookbook, grant recipe access, or make one public.',
         icon: 'tabler:lock',
       },
     ]}
@@ -137,25 +139,26 @@ const metadata = {
     items={[
       {
         title: 'Can I get my recipes out if I leave?',
-        description: 'Yes. Export JSON or CSV from Kitchen anytime. That is a core promise — not a paid upgrade.',
+        description:
+          'Yes. Export JSON or CSV for recipes you own — always free. With a subscription you can also export shared recipes others have granted you access to.',
         icon: 'tabler:download',
       },
       {
         title: 'Does Instagram or TikTok import work automatically?',
         description:
-          'Paste a link and Kitchen drafts ingredients and steps from the caption. You confirm before saving. We keep the original link; we do not re-host the video.',
+          'Paste a link and Kitchen drafts ingredients and steps from the caption. Video analysis is planned. Free accounts get 3 social imports (lifetime); subscribers get about 5–10 per month. You confirm before saving.',
         icon: 'tabler:brand-instagram',
       },
       {
         title: 'Can my sister edit my recipes?',
         description:
-          'Only if you own the recipe. Shared cookbooks let family leave notes or copy a recipe into their own book — they cannot change your version.',
+          'You choose per recipe: view, comment, or edit access. Editors can change the card; everyone else can leave notes. Version history keeps a record of changes.',
         icon: 'tabler:notes',
       },
       {
         title: 'Do I need Wi-Fi while I cook?',
         description:
-          'Cook mode works best online today. Offline support is on the roadmap; export gives you a backup until then.',
+          'Subscribers can use offline cook mode — recipes cache on your device. Free accounts need a connection today.',
         icon: 'tabler:wifi',
       },
       {
@@ -167,7 +170,7 @@ const metadata = {
       {
         title: 'How do I sign in?',
         description:
-          'Email magic link — no password to forget. Add Kitchen to your iPhone or iPad home screen from Safari.',
+          'Email and password, or a magic link to your inbox. Sign in with Apple or Google is coming soon. Add Kitchen to your home screen from Safari.',
         icon: 'tabler:mail',
       },
     ]}
@@ -177,7 +180,7 @@ const metadata = {
     id="survey"
     tagline="Feedback"
     title="Tell us what you think"
-    subtitle="Help shape Love the Laus — this short survey takes a few minutes."
+    subtitle="Help shape Kitchen — this short survey takes a few minutes."
   />
 
   <CallToAction

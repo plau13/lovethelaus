@@ -1,0 +1,22 @@
+{
+  "$schema": "../../kitchen/node_modules/wrangler/config-schema.json",
+  "name": "lovethelaus",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-02",
+  "assets": {
+    "directory": "../../dist",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "KITCHEN",
+      "service": "kitchen"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "lovethelaus.com",
+      "custom_domain": true
+    }
+  ]
+}

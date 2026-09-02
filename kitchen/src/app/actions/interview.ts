@@ -2,10 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { INTERVIEW_QUESTIONS } from "@/lib/types";
 
 export async function saveInterview(formData: FormData) {
+  const prisma = await getPrisma();
   const user = await requireUser();
   const answers: Record<string, string> = {};
   for (const question of INTERVIEW_QUESTIONS) {

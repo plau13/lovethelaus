@@ -7,7 +7,6 @@ export interface Props {
   label?: string;
   class?: string;
   iconClass?: string;
-  iconName?: string;
 }
 
 const {
@@ -15,15 +14,21 @@ const {
   class:
     className = 'text-muted dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center',
   iconClass = 'w-6 h-6',
-  iconName = 'tabler:sun',
 } = Astro.props;
 ---
 
 {
   !(UI.theme && UI.theme.endsWith(':only')) && (
     <aw-theme-toggle>
-      <button type="button" class={className} aria-label={label} data-aw-toggle-color-scheme>
-        <Icon name={iconName} class={iconClass} />
+      <button
+        type="button"
+        class={className}
+        aria-label={label}
+        aria-pressed="false"
+        data-aw-toggle-color-scheme
+      >
+        <Icon name="tabler:sun" class:list={[iconClass, 'dark:hidden']} data-aw-icon-light />
+        <Icon name="tabler:moon" class:list={[iconClass, 'hidden dark:inline']} data-aw-icon-dark />
       </button>
     </aw-theme-toggle>
   )
@@ -38,13 +43,14 @@ const {
 <script>
   class AwThemeToggle extends HTMLElement {
     connectedCallback() {
-      this.querySelector('[data-aw-toggle-color-scheme]')?.addEventListener('click', () => {
+      const button = this.querySelector<HTMLButtonElement>('[data-aw-toggle-color-scheme]');
+      button?.addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         localStorage.theme = isDark ? 'dark' : 'light';
-        // Let the reveal-on-scroll controller drop its stagger delay so the
-        // theme change doesn't flicker mid-animation (see REF #643).
+        button?.setAttribute('aria-pressed', String(isDark));
         document.dispatchEvent(new CustomEvent('aw:theme-change'));
       });
+      button?.setAttribute('aria-pressed', String(document.documentElement.classList.contains('dark')));
     }
   }
 

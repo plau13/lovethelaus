@@ -1,11 +1,16 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomBytes } from "crypto";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
+import { uploadRecipePhoto } from "@/lib/recipe-photos";
 import { parseTags, recipeMatchesQuery } from "@/lib/tags";
-import { canEditRecipe, canViewRecipe } from "@/lib/permissions";
+import {
+  canCommentOnRecipe,
+  canEditRecipe,
+  canViewRecipe,
+} from "@/lib/permissions";
 import { ensureDefaultCookbook } from "@/lib/auth";
-import type { RecipeType } from "@/lib/types";
+import type { RecipeCollabRole, RecipeType } from "@/lib/types";
 
 const PHOTO_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -18,7 +23,28 @@ export type ListRecipesOptions = {
   cookbookId?: string;
 };
 
+function recipeSnapshot(recipe: {
+  title: string;
+  ingredients: string;
+  steps: string;
+  bakingSteps: string;
+  recipeType: string;
+  tags: string;
+  servings: number | null;
+}) {
+  return JSON.stringify({
+    title: recipe.title,
+    ingredients: recipe.ingredients,
+    steps: recipe.steps,
+    bakingSteps: recipe.bakingSteps,
+    recipeType: recipe.recipeType,
+    tags: recipe.tags,
+    servings: recipe.servings,
+  });
+}
+
 export async function listVisibleRecipes(userId: string, options: ListRecipesOptions = {}) {
+  const prisma = await getPrisma();
   const { q = "", cookbookId } = options;
   const recipes = await prisma.recipe.findMany({
     where: {
@@ -26,6 +52,7 @@ export async function listVisibleRecipes(userId: string, options: ListRecipesOpt
         {
           OR: [
             { ownerId: userId },
+            { collaborators: { some: { userId } } },
             {
               cookbookRecipes: {
                 some: {
@@ -57,12 +84,19 @@ export async function listRecentRecipes(userId: string, limit = 5) {
 }
 
 export async function getRecipeForUser(recipeId: string, userId: string | null) {
+  const prisma = await getPrisma();
   const recipe = await prisma.recipe.findUnique({
     where: { id: recipeId },
     include: {
       photos: true,
       notes: { include: { user: true }, orderBy: { createdAt: "asc" } },
       owner: true,
+      collaborators: { include: { user: true } },
+      revisions: {
+        include: { editor: true },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
       cookbookRecipes: {
         include: {
           cookbook: { include: { members: true } },
@@ -73,9 +107,14 @@ export async function getRecipeForUser(recipeId: string, userId: string | null) 
   if (!recipe) {
     return null;
   }
+  const collaboratorRole =
+    userId != null
+      ? (recipe.collaborators.find((entry) => entry.userId === userId)?.role ?? null)
+      : null;
   const allowed = canViewRecipe({
     userId,
     recipeOwnerId: recipe.ownerId,
+    collaboratorRole,
     containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
       visibility: entry.cookbook.visibility,
       ownerId: entry.cookbook.ownerId,
@@ -85,7 +124,7 @@ export async function getRecipeForUser(recipeId: string, userId: string | null) 
   if (!allowed) {
     return null;
   }
-  return recipe;
+  return { ...recipe, collaboratorRole };
 }
 
 export async function createRecipe(args: {
@@ -102,6 +141,7 @@ export async function createRecipe(args: {
   sourceAttribution: string | null;
   photo?: File | null;
 }) {
+  const prisma = await getPrisma();
   const title = args.title.trim();
   if (!title) {
     throw new Error("Give the recipe a name.");
@@ -143,10 +183,30 @@ export async function updateRecipe(args: {
   servings: number | null;
   photo?: File | null;
 }) {
-  const recipe = await prisma.recipe.findUnique({ where: { id: args.recipeId } });
-  if (!recipe || !canEditRecipe({ userId: args.userId, recipeOwnerId: recipe.ownerId })) {
-    throw new Error("You can only edit recipes you own. Add a note instead.");
+  const prisma = await getPrisma();
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: args.recipeId },
+    include: { collaborators: { where: { userId: args.userId } } },
+  });
+  if (
+    !recipe ||
+    !canEditRecipe({
+      userId: args.userId,
+      recipeOwnerId: recipe.ownerId,
+      collaboratorRole: recipe.collaborators[0]?.role ?? null,
+    })
+  ) {
+    throw new Error("You do not have edit access to this recipe.");
   }
+
+  await prisma.recipeRevision.create({
+    data: {
+      recipeId: recipe.id,
+      editorId: args.userId,
+      snapshot: recipeSnapshot(recipe),
+    },
+  });
+
   await prisma.recipe.update({
     where: { id: args.recipeId },
     data: {
@@ -162,6 +222,47 @@ export async function updateRecipe(args: {
   if (args.photo && args.photo.size > 0) {
     await saveRecipePhoto(args.recipeId, args.photo);
   }
+}
+
+export async function setRecipeCollaborator(args: {
+  ownerId: string;
+  recipeId: string;
+  email: string;
+  role: RecipeCollabRole;
+}) {
+  const prisma = await getPrisma();
+  const recipe = await prisma.recipe.findUnique({ where: { id: args.recipeId } });
+  if (!recipe || recipe.ownerId !== args.ownerId) {
+    throw new Error("Only the recipe owner can manage access.");
+  }
+  const email = args.email.trim().toLowerCase();
+  const invitee = await prisma.user.findUnique({ where: { email } });
+  if (!invitee) {
+    throw new Error("No Kitchen account for that email yet. Ask them to sign up first.");
+  }
+  if (invitee.id === args.ownerId) {
+    throw new Error("You already own this recipe.");
+  }
+  await prisma.recipeCollaborator.upsert({
+    where: { recipeId_userId: { recipeId: args.recipeId, userId: invitee.id } },
+    update: { role: args.role },
+    create: { recipeId: args.recipeId, userId: invitee.id, role: args.role },
+  });
+}
+
+export async function removeRecipeCollaborator(args: {
+  ownerId: string;
+  recipeId: string;
+  userId: string;
+}) {
+  const prisma = await getPrisma();
+  const recipe = await prisma.recipe.findUnique({ where: { id: args.recipeId } });
+  if (!recipe || recipe.ownerId !== args.ownerId) {
+    throw new Error("Only the recipe owner can manage access.");
+  }
+  await prisma.recipeCollaborator.deleteMany({
+    where: { recipeId: args.recipeId, userId: args.userId },
+  });
 }
 
 export async function copyRecipeToMyBook(userId: string, recipeId: string) {
@@ -185,9 +286,19 @@ export async function copyRecipeToMyBook(userId: string, recipeId: string) {
 }
 
 export async function addNote(userId: string, recipeId: string, body: string) {
+  const prisma = await getPrisma();
   const recipe = await getRecipeForUser(recipeId, userId);
   if (!recipe) {
     throw new Error("Recipe not found.");
+  }
+  const canComment = canCommentOnRecipe({
+    userId,
+    recipeOwnerId: recipe.ownerId,
+    collaboratorRole: recipe.collaboratorRole ?? null,
+    canView: true,
+  });
+  if (!canComment) {
+    throw new Error("You do not have comment access on this recipe.");
   }
   const text = body.trim();
   if (!text) {
@@ -199,22 +310,31 @@ export async function addNote(userId: string, recipeId: string, body: string) {
 }
 
 async function saveRecipePhoto(recipeId: string, photo: File) {
-  const ext = PHOTO_TYPES[photo.type];
-  if (!ext) {
-    throw new Error("Use a JPG, PNG, or WebP photo.");
+  const prisma = await getPrisma();
+  let photoPath: string;
+
+  try {
+    photoPath = await uploadRecipePhoto(recipeId, photo);
+  } catch {
+    const ext = PHOTO_TYPES[photo.type];
+    if (!ext) {
+      throw new Error("Use a JPG, PNG, or WebP photo.");
+    }
+    if (photo.size > 1 * 1024 * 1024) {
+      throw new Error("Photos need to be under 1MB.");
+    }
+    const dir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(dir, { recursive: true });
+    const filename = `${randomBytes(8).toString("hex")}.${ext}`;
+    const buffer = Buffer.from(await photo.arrayBuffer());
+    await writeFile(path.join(dir, filename), buffer);
+    photoPath = `/uploads/${filename}`;
   }
-  if (photo.size > 1 * 1024 * 1024) {
-    throw new Error("Photos need to be under 1MB.");
-  }
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-  const filename = `${randomBytes(8).toString("hex")}.${ext}`;
-  const buffer = Buffer.from(await photo.arrayBuffer());
-  await writeFile(path.join(dir, filename), buffer);
+
   await prisma.recipePhoto.create({
     data: {
       recipeId,
-      path: `/uploads/${filename}`,
+      path: photoPath,
       alt: "Finished dish",
     },
   });

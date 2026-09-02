@@ -16,7 +16,7 @@ export function AppHeader({ userName }: { userName: string | null }) {
             <UserMenu userName={userName} />
           </nav>
         ) : (
-          <Link href="/login" className="text-lg">
+          <Link href="/sign-in" className="text-lg">
             Sign in
           </Link>
         )}

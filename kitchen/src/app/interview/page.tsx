@@ -1,6 +1,6 @@
 import { saveInterview } from "@/app/actions/interview";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { INTERVIEW_QUESTIONS } from "@/lib/types";
 
 export default async function InterviewPage({
@@ -9,6 +9,7 @@ export default async function InterviewPage({
   searchParams: Promise<{ saved?: string }>;
 }) {
   const user = await requireUser();
+  const prisma = await getPrisma();
   const { saved } = await searchParams;
   const existing = await prisma.interviewResponse.findUnique({ where: { userId: user.id } });
   const answers = existing ? (JSON.parse(existing.answers) as Record<string, string>) : {};

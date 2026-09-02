@@ -75,13 +75,24 @@ async function structureWithOpenAi(draft: ImportDraftShape, key: string): Promis
 }
 
 export async function structureWithOptionalAi(draft: ImportDraftShape): Promise<ImportDraftShape> {
+  let structured = draft;
   const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (anthropicKey) {
-    return structureWithAnthropic(draft, anthropicKey);
+    structured = await structureWithAnthropic(structured, anthropicKey);
+  } else {
+    const openAiKey = process.env.OPENAI_API_KEY?.trim();
+    if (openAiKey) {
+      structured = await structureWithOpenAi(structured, openAiKey);
+    }
   }
-  const openAiKey = process.env.OPENAI_API_KEY?.trim();
-  if (openAiKey) {
-    return structureWithOpenAi(draft, openAiKey);
+  return enrichWithVideoAnalysis(structured);
+}
+
+/** Future hook: analyze video frames from social URLs when API support is available. */
+export async function enrichWithVideoAnalysis(draft: ImportDraftShape): Promise<ImportDraftShape> {
+  if (draft.sourceType !== "instagram" && draft.sourceType !== "tiktok") {
+    return draft;
   }
+  // Video dissection is planned; caption-based draft is returned until a video API is wired.
   return draft;
 }

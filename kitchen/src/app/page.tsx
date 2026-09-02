@@ -14,7 +14,7 @@ export default async function HomePage() {
         </p>
         <p>
           <Link
-            href="/login"
+            href="/sign-in"
             className="inline-flex min-h-12 items-center rounded-xl bg-clay px-5 py-3 text-lg text-white no-underline hover:bg-clay-dark"
           >
             Sign in with email
