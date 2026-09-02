@@ -6,9 +6,21 @@ const prisma = new PrismaClient();
 
 const DEFAULT_DEMO_EMAIL = "demo@lovethelaus.com";
 const DEFAULT_DEMO_NAME = "Demo Kitchen";
+const PRESTON_DEMO_EMAIL = "preston.lau13@gmail.com";
 
 function demoEmail(): string {
   return (process.env.DEMO_USER_EMAIL ?? DEFAULT_DEMO_EMAIL).trim().toLowerCase();
+}
+
+function demoName(email: string): string {
+  const configured = process.env.DEMO_USER_NAME?.trim();
+  if (configured) {
+    return configured;
+  }
+  if (email === PRESTON_DEMO_EMAIL) {
+    return "Preston";
+  }
+  return DEFAULT_DEMO_NAME;
 }
 
 function demoPassword(): string {
@@ -51,29 +63,7 @@ async function ensureSupabaseAuthUser(
   return data.user.id;
 }
 
-async function main() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before seeding.");
-  }
-
-  const email = demoEmail();
-  const name = DEFAULT_DEMO_NAME;
-  const password = demoPassword();
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const authUserId = await ensureSupabaseAuthUser(supabaseAdmin, email, name, password);
-
-  const demoUser = await prisma.user.upsert({
-    where: { email },
-    update: { name, authUserId },
-    create: { email, name, authUserId, defaultServings: 4, preferredUnits: "us" },
-  });
-
+async function seedDemoContent(demoUser: { id: string }) {
   const myRecipes = await prisma.cookbook.upsert({
     where: { slug: "demo-my-recipes" },
     update: { title: "My recipes", ownerId: demoUser.id, isDefault: true, visibility: "private" },
@@ -174,9 +164,55 @@ async function main() {
       }
     }
   }
+}
 
-  console.log(`Demo seed complete for ${email}`);
-  console.log("Use Try demo on the sign-in page, or sign in with DEMO_USER_EMAIL + DEMO_USER_PASSWORD.");
+async function main() {
+  const email = demoEmail();
+  const name = demoName(email);
+  const password = demoPassword();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  let demoUser = await prisma.user.findUnique({ where: { email } });
+  let authUserId = demoUser?.authUserId ?? null;
+
+  if (serviceRoleKey && supabaseUrl) {
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    authUserId = await ensureSupabaseAuthUser(supabaseAdmin, email, name, password);
+  } else if (!demoUser?.authUserId) {
+    throw new Error(
+      "Set SUPABASE_SERVICE_ROLE_KEY to create the auth user, or sign up at /kitchen/sign-up first."
+    );
+  } else {
+    console.log("No SUPABASE_SERVICE_ROLE_KEY — seeding Prisma content for existing auth user.");
+  }
+
+  demoUser = await prisma.user.upsert({
+    where: { email },
+    update: {
+      name,
+      ...(authUserId ? { authUserId } : {}),
+      subscriptionTier: "subscriber",
+    },
+    create: {
+      email,
+      name,
+      authUserId,
+      defaultServings: 4,
+      preferredUnits: "us",
+      subscriptionTier: "subscriber",
+    },
+  });
+
+  await seedDemoContent(demoUser);
+
+  const appUrl = process.env.APP_URL ?? "https://lovethelaus.com/kitchen";
+  console.log(`Demo seed complete for ${email} (${name})`);
+  console.log(`${DEMO_RECIPES.length} recipes across 3 cookbooks (My recipes, Family Favorites, Holiday Baking).`);
+  console.log(`Sign in: ${appUrl}/sign-in`);
+  console.log(`Email: ${email}`);
 }
 
 main()
