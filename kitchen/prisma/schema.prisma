@@ -48,6 +48,8 @@ model Recipe {
   sourceUrl         String?
   sourceAttribution String?
   tags              String   @default("")
+  category          String?
+  cookMinutes       Int?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -61,6 +63,8 @@ model Recipe {
   @@index([ownerId])
   @@index([title])
   @@index([recipeType])
+  @@index([category])
+  @@index([cookMinutes])
 }
 
 model RecipePhoto {

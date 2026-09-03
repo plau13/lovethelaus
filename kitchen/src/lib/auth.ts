@@ -107,7 +107,7 @@ export async function requestPasswordReset(emailRaw: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${appUrl()}/reset-password`,
+    redirectTo: `${appUrl()}/auth/callback?next=/reset-password`,
   });
 
   if (error) {

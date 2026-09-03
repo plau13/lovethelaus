@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { COMMON_INGREDIENTS } from "@/lib/common-ingredients";
-import { RECIPE_TYPES, type RecipeType } from "@/lib/types";
+import { RECIPE_CATEGORIES, RECIPE_TYPES, type RecipeCategory, type RecipeType } from "@/lib/types";
 
 function parseIngredientLines(value: string): string[] {
   return value
@@ -35,6 +35,8 @@ export function RecipeEditor({
     tags?: string;
     servings?: number | null;
     recipeType?: RecipeType;
+    category?: RecipeCategory | null;
+    cookMinutes?: number | null;
     attribution?: string;
   };
   hiddenFields?: Record<string, string>;
@@ -237,6 +239,35 @@ export function RecipeEditor({
           ) : (
             <input type="hidden" name="bakingSteps" value="" />
           )}
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="grid gap-1">
+              <span className="font-medium">Category</span>
+              <select
+                name="category"
+                defaultValue={defaults?.category ?? ""}
+                className="rounded-xl border border-line bg-white px-3 py-3"
+              >
+                <option value="">None</option>
+                {RECIPE_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category === "breads" ? "Breads" : "Pastas"}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1">
+              <span className="font-medium">Cook time (minutes)</span>
+              <input
+                name="cookMinutes"
+                type="number"
+                min={1}
+                defaultValue={defaults?.cookMinutes ?? ""}
+                placeholder="45"
+                className="rounded-xl border border-line bg-white px-3 py-3"
+              />
+            </label>
+          </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <label className="grid gap-1">

@@ -9,7 +9,7 @@ function parseRole(raw: string): RecipeCollabRole {
   if ((RECIPE_COLLAB_ROLES as readonly string[]).includes(raw)) {
     return raw as RecipeCollabRole;
   }
-  throw new Error("Choose view, comment, or edit access.");
+  throw new Error("Choose view, comment, edit, or co-author access.");
 }
 
 export async function grantRecipeAccess(formData: FormData) {
@@ -26,6 +26,7 @@ export async function grantRecipeAccess(formData: FormData) {
   });
 
   revalidatePath(`/recipes/${recipeId}`);
+  revalidatePath("/loved-ones");
 }
 
 export async function revokeRecipeAccess(formData: FormData) {
@@ -40,4 +41,5 @@ export async function revokeRecipeAccess(formData: FormData) {
   });
 
   revalidatePath(`/recipes/${recipeId}`);
+  revalidatePath("/loved-ones");
 }

@@ -1,7 +1,8 @@
-import { getKitchenUrl } from './utils/kitchen-url';
+import { getKitchenUrl, getSignInUrl } from './utils/kitchen-url';
 import { getPermalink } from './utils/permalinks';
 
 const kitchenUrl = getKitchenUrl();
+const signInUrl = getSignInUrl();
 
 export const headerData = {
   links: [
@@ -11,7 +12,7 @@ export const headerData = {
     { text: 'FAQ', href: getPermalink('/#faq') },
     { text: 'Sign in', href: getPermalink('/sign-in') },
   ],
-  actions: [{ text: 'Open Kitchen', href: kitchenUrl }],
+  actions: [{ text: 'Open Kitchen', href: signInUrl }],
 };
 
 export const footerData = {

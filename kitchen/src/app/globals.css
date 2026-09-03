@@ -30,6 +30,30 @@ a:hover {
   color: var(--color-clay-dark);
 }
 
+a.bg-clay,
+a.bg-clay:hover,
+a.bg-clay:focus-visible {
+  color: #fff;
+}
+
+@utility btn-clay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background-color: var(--color-clay);
+  color: #fff;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+@utility btn-clay-hover {
+  &:hover {
+    background-color: var(--color-clay-dark);
+    color: #fff;
+  }
+}
+
 button,
 .btn {
   min-height: 48px;

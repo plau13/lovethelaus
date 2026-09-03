@@ -8,11 +8,12 @@ function isVisibility(value: string): value is Visibility {
   return value === "private" || value === "unlisted" || value === "public";
 }
 
-function isCollabRole(value: string): value is "view" | "comment" | "edit" {
-  return value === "view" || value === "comment" || value === "edit";
+function isCollabRole(value: string): value is "view" | "comment" | "edit" | "co-author" {
+  return value === "view" || value === "comment" || value === "edit" || value === "co-author";
 }
 
 function collabRank(role: string): number {
+  if (role === "co-author") return 4;
   if (role === "edit") return 3;
   if (role === "comment") return 2;
   if (role === "view") return 1;
@@ -82,7 +83,7 @@ export function canEditRecipe(args: {
   if (args.userId && args.userId === args.recipeOwnerId) {
     return true;
   }
-  return args.collaboratorRole === "edit";
+  return args.collaboratorRole === "edit" || args.collaboratorRole === "co-author";
 }
 
 export function canCommentOnRecipe(args: {
@@ -97,7 +98,11 @@ export function canCommentOnRecipe(args: {
   if (args.userId === args.recipeOwnerId) {
     return true;
   }
-  if (args.collaboratorRole === "edit" || args.collaboratorRole === "comment") {
+  if (
+    args.collaboratorRole === "edit" ||
+    args.collaboratorRole === "co-author" ||
+    args.collaboratorRole === "comment"
+  ) {
     return true;
   }
   return args.canView;
@@ -115,7 +120,10 @@ export function roleAtLeast(role: string | null, needed: CookbookRole): boolean 
   return rank[role] >= rank[needed];
 }
 
-export function collabRoleAtLeast(role: string | null, needed: "view" | "comment" | "edit"): boolean {
+export function collabRoleAtLeast(
+  role: string | null,
+  needed: "view" | "comment" | "edit" | "co-author",
+): boolean {
   if (!role || !isCollabRole(role)) {
     return false;
   }

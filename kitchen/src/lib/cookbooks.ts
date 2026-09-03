@@ -258,3 +258,57 @@ export async function acceptInvite(userId: string, token: string) {
   await prisma.cookbookInvite.delete({ where: { id: invite.id } });
   return invite.cookbookId;
 }
+
+export async function addCookbookMemberByEmail(args: {
+  ownerId: string;
+  cookbookId: string;
+  email: string;
+  role: string;
+}) {
+  const prisma = await getPrisma();
+  const cookbook = await prisma.cookbook.findUnique({ where: { id: args.cookbookId } });
+  if (!cookbook || cookbook.ownerId !== args.ownerId) {
+    throw new Error("Only the cookbook owner can invite people.");
+  }
+  const email = args.email.trim().toLowerCase();
+  const invitee = await prisma.user.findUnique({ where: { email } });
+  if (!invitee) {
+    throw new Error("No Kitchen account for that email yet. Ask them to sign up first.");
+  }
+  if (invitee.id === args.ownerId) {
+    throw new Error("You already own this cookbook.");
+  }
+  const role = parseRole(args.role);
+  if (role === "owner") {
+    throw new Error("Cannot assign owner role to another person.");
+  }
+  await prisma.cookbookMember.upsert({
+    where: { cookbookId_userId: { cookbookId: args.cookbookId, userId: invitee.id } },
+    update: { role },
+    create: { cookbookId: args.cookbookId, userId: invitee.id, role },
+  });
+}
+
+export async function removeCookbookMember(args: {
+  ownerId: string;
+  cookbookId: string;
+  userId: string;
+}) {
+  const prisma = await getPrisma();
+  const cookbook = await prisma.cookbook.findUnique({ where: { id: args.cookbookId } });
+  if (!cookbook || cookbook.ownerId !== args.ownerId) {
+    throw new Error("Only the cookbook owner can remove members.");
+  }
+  if (args.userId === args.ownerId) {
+    throw new Error("Cannot remove the cookbook owner.");
+  }
+  const member = await prisma.cookbookMember.findUnique({
+    where: { cookbookId_userId: { cookbookId: args.cookbookId, userId: args.userId } },
+  });
+  if (!member || member.role === "owner") {
+    throw new Error("Cannot remove the cookbook owner.");
+  }
+  await prisma.cookbookMember.deleteMany({
+    where: { cookbookId: args.cookbookId, userId: args.userId },
+  });
+}

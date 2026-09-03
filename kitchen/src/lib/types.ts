@@ -29,7 +29,74 @@ export const COOKBOOK_LIST_FILTERS = ["all", "private", "shared", "public"] as c
 
 export type CookbookListFilter = (typeof COOKBOOK_LIST_FILTERS)[number];
 
-export const RECIPE_COLLAB_ROLES = ["view", "comment", "edit"] as const;
+export const RECIPE_CATEGORIES = ["breads", "pastas"] as const;
+
+export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
+
+export const COOK_TIME_BUCKETS = [
+  { id: "under-30", label: "Under 30 min", min: 0, max: 29 },
+  { id: "30-45", label: "30–45 min", min: 30, max: 45 },
+  { id: "45-60", label: "45–60 min", min: 45, max: 60 },
+  { id: "60-90", label: "1 hr – 1 hr 30 min", min: 60, max: 90 },
+  { id: "90-120", label: "1 hr 30 min – 2 hrs", min: 90, max: 120 },
+  { id: "120-plus", label: "2 hrs +", min: 120, max: null },
+] as const;
+
+export type CookTimeBucketId = (typeof COOK_TIME_BUCKETS)[number]["id"];
+
+export function categoryLabel(category: string | null | undefined): string {
+  switch (category) {
+    case "breads":
+      return "Breads";
+    case "pastas":
+      return "Pastas";
+    default:
+      return "";
+  }
+}
+
+export function cookTimeBucketFilter(bucketId: string): { cookMinutes: { gte: number; lte?: number } } | null {
+  const bucket = COOK_TIME_BUCKETS.find((entry) => entry.id === bucketId);
+  if (!bucket) {
+    return null;
+  }
+  if (bucket.max === null) {
+    return { cookMinutes: { gte: bucket.min } };
+  }
+  return { cookMinutes: { gte: bucket.min, lte: bucket.max } };
+}
+
+export function formatCookMinutes(minutes: number | null | undefined): string {
+  if (minutes == null || minutes <= 0) {
+    return "";
+  }
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (remainder === 0) {
+    return hours === 1 ? "1 hr" : `${hours} hrs`;
+  }
+  return `${hours} hr ${remainder} min`;
+}
+
+export const RECIPE_COLLAB_ROLES = ["view", "comment", "edit", "co-author"] as const;
+
+export function collabRoleLabel(role: string): string {
+  switch (role) {
+    case "view":
+      return "View only";
+    case "comment":
+      return "Comment";
+    case "edit":
+      return "Edit";
+    case "co-author":
+      return "Co-author";
+    default:
+      return role;
+  }
+}
 
 export type RecipeCollabRole = (typeof RECIPE_COLLAB_ROLES)[number];
 

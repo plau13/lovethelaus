@@ -137,8 +137,12 @@ Astro's native CSP is intentionally **not** enabled in this version: it is incom
 
 ## Verification Checklist
 
-After changes, always verify:
+After changes, run the relevant section in [`docs/TESTING.md`](docs/TESTING.md). **Auth/email changes require the full Auth & email matrix** — not just the flow you edited.
 
-1. `npm run build` succeeds
-2. `npm run check` passes (astro check + ESLint + Prettier)
-3. Visual check in browser: homepage sections, Open Kitchen CTA, dark mode, mobile menu
+Design changes should follow [`docs/BRAND.md`](docs/BRAND.md).
+
+Default automated checks:
+
+1. `npm run build` succeeds (or `npm run build:prod` + `npm run check` if marketing changed)
+2. `cd kitchen && npm run build` when Kitchen changed
+3. Visual check per [`docs/TESTING.md`](docs/TESTING.md) for the domains touched

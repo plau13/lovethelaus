@@ -8,11 +8,16 @@ export default async function OneTimeLoginPage({
   searchParams: Promise<{ error?: string; sent?: string }>;
 }) {
   const { error, sent } = await searchParams;
+  const isSuccess = sent === "magic-link";
 
   return (
     <AuthShell
-      title="One-time login"
-      description="Enter your email and we'll send you a link to sign in."
+      title={isSuccess ? "Check your email to log in" : "One-time login"}
+      description={
+        isSuccess
+          ? "We sent a sign-in link to your email. Open it from this device to continue. Check your spam folder if it does not arrive within a few minutes."
+          : "Enter your email and we'll send you a link to sign in."
+      }
       footer={
         <Link href="/sign-in" className="text-clay hover:text-clay-dark">
           Back to sign in
@@ -20,25 +25,26 @@ export default async function OneTimeLoginPage({
       }
     >
       <AuthError message={error} />
-      {sent === "magic-link" ? (
-        <AuthNotice message="Check your email for a sign-in link." />
-      ) : null}
-      <form action={magicLinkAction} className="grid gap-4">
-        <input type="hidden" name="returnTo" value="/sign-in/one-time" />
-        <AuthField label="Email">
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className={authInputClass}
-            placeholder="you@example.com"
-          />
-        </AuthField>
-        <button type="submit" className="btn rounded-xl bg-clay px-5 py-3 text-lg text-white hover:bg-clay-dark">
-          Send one-time login
-        </button>
-      </form>
+      {isSuccess ? (
+        <AuthNotice message="The link expires after a short time. You can close this page once you are signed in." />
+      ) : (
+        <form action={magicLinkAction} className="grid gap-4">
+          <input type="hidden" name="returnTo" value="/sign-in/one-time" />
+          <AuthField label="Email">
+            <input
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              className={authInputClass}
+              placeholder="you@example.com"
+            />
+          </AuthField>
+          <button type="submit" className="btn rounded-xl bg-clay px-5 py-3 text-lg text-white hover:bg-clay-dark">
+            Send one-time login
+          </button>
+        </form>
+      )}
     </AuthShell>
   );
 }

@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { canCommentOnRecipe, canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import { parseTags } from "@/lib/tags";
-import { RECIPE_COLLAB_ROLES } from "@/lib/types";
+import { collabRoleLabel, formatCookMinutes, RECIPE_COLLAB_ROLES, categoryLabel } from "@/lib/types";
 
 function recipeTypeLabel(type: string): string {
   switch (type) {
@@ -48,6 +48,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     canView: true,
   });
   const isOwner = recipe.ownerId === user.id;
+  const coAuthors = recipe.collaborators.filter((entry) => entry.role === "co-author");
   const cookingSteps = recipe.steps.split("\n").filter(Boolean);
   const bakingSteps = recipe.bakingSteps.split("\n").filter(Boolean);
 
@@ -65,12 +66,23 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         ) : null}
       </p>
       <h1 className="font-serif text-4xl leading-tight">{recipe.title}</h1>
+      <p className="text-muted">
+        By {recipe.owner.name}
+        {coAuthors.length > 0 ? (
+          <>
+            {" · Co-authors: "}
+            {coAuthors.map((entry) => entry.user.name).join(", ")}
+          </>
+        ) : null}
+      </p>
       {recipe.photos[0] ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={recipe.photos[0].path} alt={recipe.photos[0].alt} className="max-h-80 w-full rounded-2xl object-cover" />
       ) : null}
       <p className="text-muted">
         {recipeTypeLabel(recipe.recipeType)}
+        {recipe.category ? ` · ${categoryLabel(recipe.category)}` : null}
+        {recipe.cookMinutes ? ` · ${formatCookMinutes(recipe.cookMinutes)}` : null}
         {recipe.servings ? ` · ${recipe.servings} servings` : null}
         {parseTags(recipe.tags).length ? ` · ${parseTags(recipe.tags).join(" · ")}` : null}
         {recipe.sourceUrl ? (
@@ -115,12 +127,15 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
       {isOwner ? (
         <section className="grid gap-3 no-print rounded-2xl border border-line bg-white p-5">
           <h2 className="text-xl font-semibold">Share access</h2>
-          <p className="text-muted text-sm">Grant view, comment, or edit access to this recipe.</p>
+          <p className="text-muted text-sm">
+            Invite family to view, comment, edit, or co-author this recipe. Co-authors can edit and appear on the
+            recipe.
+          </p>
           <ul className="grid gap-2 text-sm">
             {recipe.collaborators.map((entry) => (
               <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line px-3 py-2">
                 <span>
-                  {entry.user.name} ({entry.user.email}) — {entry.role}
+                  {entry.user.name} ({entry.user.email}) — {collabRoleLabel(entry.role)}
                 </span>
                 <form action={revokeRecipeAccess}>
                   <input type="hidden" name="recipeId" value={recipe.id} />
@@ -144,7 +159,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
             <select name="role" className="rounded-xl border border-line bg-white px-3 py-2" defaultValue="view">
               {RECIPE_COLLAB_ROLES.map((role) => (
                 <option key={role} value={role}>
-                  {role}
+                  {collabRoleLabel(role)}
                 </option>
               ))}
             </select>
