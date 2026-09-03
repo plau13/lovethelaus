@@ -11,6 +11,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "build:prod": "PUBLIC_KITCHEN_URL=https://lovethelaus.com/kitchen astro build",
     "preview": "astro preview",
     "astro": "astro",
     "check": "npm run check:astro && npm run check:eslint && npm run check:prettier",
@@ -20,9 +21,9 @@
     "fix": "npm run fix:eslint && npm run fix:prettier",
     "fix:eslint": "eslint --fix .",
     "fix:prettier": "prettier -w .",
-    "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name=lovethelaus-marketing",
-    "deploy:router": "npm run build && npx wrangler deploy --config workers/router/wrangler.jsonc",
-    "deploy:all": "npm run build && cd kitchen && npm run deploy && cd .. && npx wrangler deploy --config workers/router/wrangler.jsonc"
+    "deploy:pages": "npm run build:prod && npx wrangler pages deploy dist --project-name=lovethelaus-marketing",
+    "deploy:router": "npm run build:prod && npx wrangler deploy --config workers/router/wrangler.jsonc",
+    "deploy:all": "npm run build:prod && cd kitchen && npm run deploy && cd .. && npx wrangler deploy --config workers/router/wrangler.jsonc"
   },
   "dependencies": {
     "@astro-community/astro-embed-twitter": "^0.5.11",

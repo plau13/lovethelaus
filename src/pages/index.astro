@@ -7,8 +7,9 @@ import Content from '~/components/widgets/Content.astro';
 import FAQs from '~/components/widgets/FAQs.astro';
 import SurveyEmbed from '~/components/widgets/SurveyEmbed.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
+import { getSignInUrl } from '~/utils/kitchen-url';
 
-const kitchenUrl = import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000/kitchen';
+const signInUrl = getSignInUrl();
 
 const metadata = {
   title: 'Kitchen — family recipes',
@@ -23,9 +24,8 @@ const metadata = {
     actions={[
       {
         variant: 'primary',
-        text: 'Open Kitchen',
-        href: kitchenUrl,
-        target: '_blank',
+        text: 'Sign in',
+        href: signInUrl,
         icon: 'tabler:chef-hat',
       },
       { text: 'See how it works', href: '#how-it-works' },
@@ -187,9 +187,8 @@ const metadata = {
     actions={[
       {
         variant: 'primary',
-        text: 'Open Kitchen',
-        href: kitchenUrl,
-        target: '_blank',
+        text: 'Sign in',
+        href: signInUrl,
         icon: 'tabler:chef-hat',
       },
     ]}

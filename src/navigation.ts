@@ -1,6 +1,7 @@
+import { getKitchenUrl } from './utils/kitchen-url';
 import { getPermalink } from './utils/permalinks';
 
-const kitchenUrl = import.meta.env.PUBLIC_KITCHEN_URL ?? 'http://localhost:3000/kitchen';
+const kitchenUrl = getKitchenUrl();
 
 export const headerData = {
   links: [
