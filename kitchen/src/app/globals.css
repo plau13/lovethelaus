@@ -32,7 +32,13 @@ a:hover {
 
 a.bg-clay,
 a.bg-clay:hover,
-a.bg-clay:focus-visible {
+a.bg-clay:focus-visible,
+a.btn-clay,
+a.btn-clay:hover,
+a.btn-clay:focus-visible,
+button.bg-clay,
+button.bg-clay:hover,
+button.bg-clay:focus-visible {
   color: #fff;
 }
 

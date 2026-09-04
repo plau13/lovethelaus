@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { putRecipeInCookbook } from "@/app/actions/cookbooks";
+import { RecipeIndexBox } from "@/components/RecipeIndexBox";
+import { RecipeTabCard } from "@/components/RecipeTabCard";
 import { requireUser } from "@/lib/auth";
 import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
 import { canEditCookbookContents, canManageCookbook } from "@/lib/permissions";
@@ -32,15 +34,23 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
         {cookbook.visibility} · your role: {role ?? "viewer"}
       </p>
       {cookbook.description ? <p>{cookbook.description}</p> : null}
-      <ul className="grid gap-3">
-        {cookbook.recipes.map((entry) => (
-          <li key={entry.id}>
-            <Link href={`/recipes/${entry.recipe.id}`} className="font-serif text-2xl">
-              {entry.recipe.title}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {cookbook.recipes.length === 0 ? (
+        <p className="text-muted">No recipes in this cookbook yet.</p>
+      ) : (
+        <RecipeIndexBox>
+          {cookbook.recipes.map((entry, index) => (
+            <RecipeTabCard
+              key={entry.id}
+              id={entry.recipe.id}
+              title={entry.recipe.title}
+              category={entry.recipe.category}
+              cookMinutes={entry.recipe.cookMinutes}
+              difficulty={entry.recipe.difficulty}
+              index={index}
+            />
+          ))}
+        </RecipeIndexBox>
+      )}
       {canEditCookbookContents(role) ? (
         <form action={putRecipeInCookbook} className="grid gap-3 rounded-2xl border border-line bg-white p-4">
           <input type="hidden" name="cookbookId" value={cookbook.id} />

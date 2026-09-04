@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { CookbookSpineShelf } from "@/components/CookbookSpineShelf";
+import { HomeRecipeSearch } from "@/components/HomeRecipeSearch";
+import { RecipeIndexBox } from "@/components/RecipeIndexBox";
+import { RecipeTabCard } from "@/components/RecipeTabCard";
 import { getCurrentUser } from "@/lib/auth";
 import { listMyCookbooks } from "@/lib/cookbooks";
 import { listRecentRecipes } from "@/lib/recipes";
@@ -15,7 +19,7 @@ export default async function HomePage() {
         <p>
           <Link
             href="/sign-in"
-            className="inline-flex min-h-12 items-center rounded-xl bg-clay px-5 py-3 text-lg text-white no-underline hover:bg-clay-dark"
+            className="btn-clay btn-clay-hover inline-flex min-h-12 items-center rounded-xl px-5 py-3 text-lg no-underline"
           >
             Sign in with email
           </Link>
@@ -35,20 +39,19 @@ export default async function HomePage() {
         <h1 className="font-serif text-4xl">Welcome, {user.name}</h1>
         <p className="text-muted">Your family recipe box — cook, share, and keep everything in one place.</p>
         <div className="flex flex-wrap gap-3 pt-2">
-          <Link
-            href="/recipes/new"
-            className="inline-flex min-h-12 items-center rounded-xl bg-clay px-4 py-2 text-white no-underline hover:bg-clay-dark"
-          >
+          <Link href="/recipes/new" className="btn-clay btn-clay-hover inline-flex min-h-12 rounded-xl px-4 py-2 no-underline">
             Add recipe
           </Link>
           <Link
             href="/cookbooks/new"
-            className="inline-flex min-h-12 items-center rounded-xl border border-line bg-white px-4 py-2 no-underline hover:bg-paper"
+            className="inline-flex min-h-12 items-center rounded-xl border border-line bg-white px-4 py-2 text-ink no-underline hover:bg-paper"
           >
             New cookbook
           </Link>
         </div>
       </section>
+
+      <HomeRecipeSearch />
 
       <section className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -60,15 +63,19 @@ export default async function HomePage() {
         {recipes.length === 0 ? (
           <p className="text-muted">No recipes yet.</p>
         ) : (
-          <ul className="grid gap-2">
-            {recipes.map((recipe) => (
-              <li key={recipe.id}>
-                <Link href={`/recipes/${recipe.id}`} className="font-serif text-2xl text-ink no-underline">
-                  {recipe.title}
-                </Link>
-              </li>
+          <RecipeIndexBox>
+            {recipes.map((recipe, index) => (
+              <RecipeTabCard
+                key={recipe.id}
+                id={recipe.id}
+                title={recipe.title}
+                category={recipe.category}
+                cookMinutes={recipe.cookMinutes}
+                difficulty={recipe.difficulty}
+                index={index}
+              />
             ))}
-          </ul>
+          </RecipeIndexBox>
         )}
       </section>
 
@@ -82,16 +89,14 @@ export default async function HomePage() {
         {cookbooks.length === 0 ? (
           <p className="text-muted">No cookbooks yet.</p>
         ) : (
-          <ul className="grid gap-2">
-            {cookbooks.map((cookbook) => (
-              <li key={cookbook.id}>
-                <Link href={`/cookbooks/${cookbook.id}`} className="font-serif text-2xl text-ink no-underline">
-                  {cookbook.title}
-                </Link>
-                <p className="text-sm text-muted">{cookbook._count.recipes} recipes</p>
-              </li>
-            ))}
-          </ul>
+          <CookbookSpineShelf
+            cookbooks={cookbooks.map((cookbook) => ({
+              id: cookbook.id,
+              title: cookbook.title,
+              recipeCount: cookbook._count.recipes,
+              visibility: cookbook.visibility,
+            }))}
+          />
         )}
       </section>
     </main>

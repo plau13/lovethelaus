@@ -86,6 +86,14 @@ export function canEditRecipe(args: {
   return args.collaboratorRole === "edit" || args.collaboratorRole === "co-author";
 }
 
+export function canInviteOnRecipe(args: {
+  userId: string | null;
+  recipeOwnerId: string;
+  collaboratorRole?: string | null;
+}): boolean {
+  return canEditRecipe(args);
+}
+
 export function canCommentOnRecipe(args: {
   userId: string | null;
   recipeOwnerId: string;

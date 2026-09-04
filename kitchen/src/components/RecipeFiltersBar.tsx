@@ -73,16 +73,6 @@ export function RecipeFiltersBar({
 
   return (
     <div className="no-print grid gap-4">
-      <label className="grid gap-1">
-        <span className="text-muted">Search (title, ingredients, tags)</span>
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="rounded-xl border border-line bg-white px-3 py-3"
-          placeholder="chicken mushrooms"
-        />
-      </label>
-
       <div className="flex flex-wrap gap-2">
         <select
           value={category}
@@ -144,6 +134,16 @@ export function RecipeFiltersBar({
           ))}
         </select>
       </div>
+
+      <label className="grid gap-1">
+        <span className="text-muted">Search (title, ingredients, tags)</span>
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          className="rounded-xl border border-line bg-white px-3 py-3"
+          placeholder="chicken mushrooms"
+        />
+      </label>
     </div>
   );
 }

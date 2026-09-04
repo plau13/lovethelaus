@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toggleFavorite } from "@/app/actions/recipes";
-
-const iconButtonClass =
-  "inline-flex min-h-12 min-w-12 items-center justify-center rounded-xl border border-line bg-white text-ink hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50";
+import { IconButton, IconLink } from "@/components/IconButton";
+import { RecipeShareDialog } from "@/components/RecipeShareDialog";
 
 function BackArrowIcon() {
   return (
-    <svg aria-hidden className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -17,7 +16,7 @@ function BackArrowIcon() {
 
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
-    <svg aria-hidden className="h-5 w-5" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+    <svg aria-hidden viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
       <path
         d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.5-7 10-7 10z"
         strokeLinecap="round"
@@ -27,9 +26,19 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
+function ShareIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 3v12" strokeLinecap="round" />
+      <path d="M8 7l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function DownloadIcon() {
   return (
-    <svg aria-hidden className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 3v12" strokeLinecap="round" />
       <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5 21h14" strokeLinecap="round" />
@@ -39,7 +48,7 @@ function DownloadIcon() {
 
 function MoreIcon() {
   return (
-    <svg aria-hidden className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+    <svg aria-hidden viewBox="0 0 24 24" fill="currentColor">
       <circle cx="5" cy="12" r="1.75" />
       <circle cx="12" cy="12" r="1.75" />
       <circle cx="19" cy="12" r="1.75" />
@@ -47,20 +56,38 @@ function MoreIcon() {
   );
 }
 
+type Collaborator = {
+  id: string;
+  userId: string;
+  role: string;
+  user: { name: string; email: string };
+};
+
 export function RecipeDetailToolbar({
   recipeId,
   favorited: initialFavorited,
   canExport,
   canEdit,
+  canInvite,
+  isOwner,
+  collaborators,
   exportHref,
+  cookModeOn,
+  onCookModeChange,
 }: {
   recipeId: string;
   favorited: boolean;
   canExport: boolean;
   canEdit: boolean;
+  canInvite: boolean;
+  isOwner: boolean;
+  collaborators: Collaborator[];
   exportHref: string;
+  cookModeOn: boolean;
+  onCookModeChange: (on: boolean) => void;
 }) {
   const [favorited, setFavorited] = useState(initialFavorited);
+  const [shareOpen, setShareOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -103,77 +130,81 @@ export function RecipeDetailToolbar({
   }
 
   return (
-    <div className="no-print flex flex-wrap items-center justify-between gap-3">
-      <p className="text-muted m-0 flex flex-wrap items-center gap-1">
-        <Link href="/recipes" className="inline-flex items-center gap-1 no-underline hover:text-ink">
-          <BackArrowIcon />
-          <span>All recipes</span>
-        </Link>
-        <span aria-hidden>·</span>
-        <Link href={`/recipes/${recipeId}/cook`} className="no-underline hover:text-ink">
-          Cook mode
-        </Link>
-      </p>
-
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={handleFavoriteToggle}
-          disabled={pending}
-          className={`${iconButtonClass} ${favorited ? "text-clay" : "text-muted"}`}
-          aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-          aria-pressed={favorited}
-        >
-          <HeartIcon filled={favorited} />
-        </button>
-
-        {canExport ? (
-          <a
-            href={exportHref}
-            className={`${iconButtonClass} no-underline`}
-            aria-label="Download recipe"
-            download
-          >
-            <DownloadIcon />
-          </a>
-        ) : (
-          <span className="relative group">
+    <>
+      <div className="no-print flex flex-wrap items-center justify-between gap-3">
+        <div className="text-muted flex flex-wrap items-center gap-2">
+          <Link href="/recipes" className="inline-flex items-center gap-1 no-underline hover:text-ink">
+            <BackArrowIcon />
+            <span>All recipes</span>
+          </Link>
+          <span aria-hidden>·</span>
+          <span className="inline-flex items-center gap-2">
+            <span>Cook mode</span>
             <button
               type="button"
-              disabled
-              aria-disabled
-              className={iconButtonClass}
-              aria-label="Download recipe unavailable"
-              title="Subscribe in Settings to download shared recipes"
+              onClick={() => onCookModeChange(!cookModeOn)}
+              className={`rounded-full px-3 py-1 text-sm font-medium ${
+                cookModeOn ? "bg-green-700 text-white" : "bg-line text-muted"
+              }`}
+              aria-pressed={cookModeOn}
             >
-              <DownloadIcon />
+              {cookModeOn ? "On" : "Off"}
             </button>
-            <span
-              role="tooltip"
-              className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-56 rounded-xl border border-line bg-white p-3 text-sm text-muted shadow-lg group-hover:block group-focus-within:block"
-            >
-              Subscribe in{" "}
-              <Link href="/settings" className="text-clay">
-                Settings
-              </Link>{" "}
-              to download shared recipes.
-            </span>
           </span>
-        )}
+        </div>
 
-        {canEdit ? (
+        <div className="flex items-center gap-1">
+          <IconButton
+            onClick={handleFavoriteToggle}
+            disabled={pending}
+            className={favorited ? "text-clay" : "text-muted"}
+            aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+            aria-pressed={favorited}
+          >
+            <HeartIcon filled={favorited} />
+          </IconButton>
+
+          <IconButton onClick={() => setShareOpen(true)} aria-label="Share recipe">
+            <ShareIcon />
+          </IconButton>
+
+          {canExport ? (
+            <IconLink href={exportHref} aria-label="Download recipe" download>
+              <DownloadIcon />
+            </IconLink>
+          ) : (
+            <span className="group relative">
+              <IconButton
+                disabled
+                aria-disabled
+                aria-label="Download recipe unavailable"
+                title="Subscribe in Settings to download shared recipes"
+              >
+                <DownloadIcon />
+              </IconButton>
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-56 rounded-xl border border-line bg-white p-3 text-sm text-muted shadow-lg group-hover:block group-focus-within:block"
+              >
+                Subscribe in{" "}
+                <Link href="/settings" className="text-clay">
+                  Settings
+                </Link>{" "}
+                to download shared recipes.
+              </span>
+            </span>
+          )}
+
           <div className="relative" ref={menuRef}>
-            <button
-              type="button"
+            <IconButton
               onClick={() => setMenuOpen((value) => !value)}
-              className={iconButtonClass}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
               aria-label="Recipe actions"
             >
               <MoreIcon />
-            </button>
-            {menuOpen ? (
+            </IconButton>
+            {menuOpen && canEdit ? (
               <div
                 role="menu"
                 className="absolute right-0 z-20 mt-1 min-w-36 rounded-xl border border-line bg-white py-1 shadow-lg"
@@ -181,7 +212,7 @@ export function RecipeDetailToolbar({
                 <Link
                   href={`/recipes/${recipeId}/edit`}
                   role="menuitem"
-                  className="block px-4 py-2 no-underline hover:bg-paper"
+                  className="block px-4 py-2 text-ink no-underline hover:bg-paper"
                   onClick={() => setMenuOpen(false)}
                 >
                   Edit
@@ -189,8 +220,17 @@ export function RecipeDetailToolbar({
               </div>
             ) : null}
           </div>
-        ) : null}
+        </div>
       </div>
-    </div>
+
+      <RecipeShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        recipeId={recipeId}
+        canInvite={canInvite}
+        isOwner={isOwner}
+        collaborators={collaborators}
+      />
+    </>
   );
 }

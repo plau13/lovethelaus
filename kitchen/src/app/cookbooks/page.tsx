@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listCookbooksForUser } from "@/lib/cookbooks";
+import { CookbookSpineShelf } from "@/components/CookbookSpineShelf";
 import { COOKBOOK_LIST_FILTERS, type CookbookListFilter } from "@/lib/types";
 
 function filterLabel(filter: CookbookListFilter): string {
@@ -20,28 +21,28 @@ function filterLabel(filter: CookbookListFilter): string {
   }
 }
 
-function CookbookCards({
+function CookbookSection({
+  title,
   cookbooks,
 }: {
+  title: string;
   cookbooks: Awaited<ReturnType<typeof listCookbooksForUser>>["own"];
 }) {
   if (cookbooks.length === 0) {
     return null;
   }
   return (
-    <ul className="grid gap-3">
-      {cookbooks.map((cookbook) => (
-        <li key={cookbook.id} className="rounded-2xl border border-line bg-white p-4">
-          <Link href={`/cookbooks/${cookbook.id}`} className="font-serif text-2xl text-ink no-underline">
-            {cookbook.title}
-          </Link>
-          <p className="text-muted">
-            {cookbook.visibility} · {cookbook._count.recipes} recipes
-            {cookbook.members[0]?.role ? ` · ${cookbook.members[0].role}` : ""}
-          </p>
-        </li>
-      ))}
-    </ul>
+    <section className="grid gap-3">
+      <h2 className="text-xl font-semibold">{title}</h2>
+      <CookbookSpineShelf
+        cookbooks={cookbooks.map((cookbook) => ({
+          id: cookbook.id,
+          title: cookbook.title,
+          recipeCount: cookbook._count.recipes,
+          visibility: cookbook.visibility,
+        }))}
+      />
+    </section>
   );
 }
 
@@ -63,7 +64,7 @@ export default async function CookbooksPage({
         <h1 className="font-serif text-4xl">Cookbooks</h1>
         <Link
           href="/cookbooks/new"
-          className="inline-flex min-h-12 items-center rounded-xl bg-clay px-4 py-2 text-white no-underline hover:bg-clay-dark"
+          className="btn-clay btn-clay-hover inline-flex min-h-12 items-center rounded-xl px-4 py-2 no-underline"
         >
           New cookbook
         </Link>
@@ -108,24 +109,15 @@ export default async function CookbooksPage({
       </div>
 
       {grouped.own.length > 0 ? (
-        <section className="grid gap-3">
-          <h2 className="text-xl font-semibold">Your cookbooks ({grouped.own.length})</h2>
-          <CookbookCards cookbooks={grouped.own} />
-        </section>
+        <CookbookSection title={`Your cookbooks (${grouped.own.length})`} cookbooks={grouped.own} />
       ) : null}
 
       {grouped.shared.length > 0 ? (
-        <section className="grid gap-3">
-          <h2 className="text-xl font-semibold">Shared with you ({grouped.shared.length})</h2>
-          <CookbookCards cookbooks={grouped.shared} />
-        </section>
+        <CookbookSection title={`Shared with you (${grouped.shared.length})`} cookbooks={grouped.shared} />
       ) : null}
 
       {grouped.public.length > 0 ? (
-        <section className="grid gap-3">
-          <h2 className="text-xl font-semibold">Public cookbooks ({grouped.public.length})</h2>
-          <CookbookCards cookbooks={grouped.public} />
-        </section>
+        <CookbookSection title={`Public cookbooks (${grouped.public.length})`} cookbooks={grouped.public} />
       ) : null}
 
       {grouped.own.length + grouped.shared.length + grouped.public.length === 0 ? (

@@ -67,7 +67,7 @@ Do not use filled or blue variants. Keep the hat outline consistent across surfa
 <button class="btn rounded-xl bg-clay px-5 py-3 text-white hover:bg-clay-dark">
 ```
 
-Global fix in `kitchen/src/app/globals.css`: `a.bg-clay { color: #fff; }`
+Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `button.bg-clay` force white text.
 
 ### Secondary action
 
@@ -76,9 +76,10 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay { color: #fff; }`
 ### Cards
 
 - `rounded-2xl border border-line bg-white p-4` (or `p-5` for sections)
-- Recipe box / paper areas: `bg-paper` with inset shadow for “index card” tabs
-- **Recipe index card** (`RecipeTabCard`): protruding serif title tab in warm tab colors; card body below hides category, cook time, and difficulty until hover/focus (always visible on touch / `@media (hover: none)`)
-- **Recipe detail toolbar**: back arrow + Cook mode on the left; favorite, download, and overflow (Edit) icon actions on the right (48px touch targets)
+- Recipe box / paper areas: `bg-paper` with inset shadow (`RecipeIndexBox`) — staggered title tabs along the rim; metadata lifts on hover (always visible on touch)
+- **Recipe index tab** (`RecipeTabCard`): warm serif tabs inside the shared box
+- **Cookbook spine shelf** (`CookbookSpineShelf`): vertical book spines on a shelf (Home + Cookbooks list)
+- **Recipe detail toolbar**: `← All recipes · Cook mode [Off|On]` on the left; **Heart · Share · Download · ⋯** icon buttons on the right (48px, centered icons); Share opens invite/copy modal; cook On uses inline `KitchenView`
 
 ### Auth screens
 

@@ -1,5 +1,6 @@
 import { RecipeFiltersBar } from "@/components/RecipeFiltersBar";
-import { RecipeCardGrid, RecipeTabCard } from "@/components/RecipeTabCard";
+import { RecipeIndexBox } from "@/components/RecipeIndexBox";
+import { RecipeTabCard } from "@/components/RecipeTabCard";
 import { requireUser } from "@/lib/auth";
 import { listMyCookbooks } from "@/lib/cookbooks";
 import { listVisibleRecipes } from "@/lib/recipes";
@@ -69,7 +70,7 @@ export default async function RecipesPage({
       {recipes.length === 0 ? (
         <p className="text-muted">No recipes match these filters yet.</p>
       ) : (
-        <RecipeCardGrid>
+        <RecipeIndexBox>
           {recipes.map((recipe, index) => (
             <RecipeTabCard
               key={recipe.id}
@@ -81,7 +82,7 @@ export default async function RecipesPage({
               index={index}
             />
           ))}
-        </RecipeCardGrid>
+        </RecipeIndexBox>
       )}
     </main>
   );

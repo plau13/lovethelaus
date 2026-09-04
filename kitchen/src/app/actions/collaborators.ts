@@ -19,7 +19,7 @@ export async function grantRecipeAccess(formData: FormData) {
   const role = parseRole(String(formData.get("role") ?? "view"));
 
   await setRecipeCollaborator({
-    ownerId: user.id,
+    actorId: user.id,
     recipeId,
     email,
     role,

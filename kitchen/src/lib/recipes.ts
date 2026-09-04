@@ -250,22 +250,31 @@ export async function updateRecipe(args: {
 }
 
 export async function setRecipeCollaborator(args: {
-  ownerId: string;
+  actorId: string;
   recipeId: string;
   email: string;
   role: RecipeCollabRole;
 }) {
   const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({ where: { id: args.recipeId } });
-  if (!recipe || recipe.ownerId !== args.ownerId) {
-    throw new Error("Only the recipe owner can manage access.");
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: args.recipeId },
+    include: { collaborators: { where: { userId: args.actorId } } },
+  });
+  const collaboratorRole = recipe?.collaborators[0]?.role ?? null;
+  const canInvite =
+    recipe != null &&
+    (recipe.ownerId === args.actorId ||
+      collaboratorRole === "edit" ||
+      collaboratorRole === "co-author");
+  if (!canInvite) {
+    throw new Error("You do not have permission to invite others to this recipe.");
   }
   const email = args.email.trim().toLowerCase();
   const invitee = await prisma.user.findUnique({ where: { email } });
   if (!invitee) {
     throw new Error("No Kitchen account for that email yet. Ask them to sign up first.");
   }
-  if (invitee.id === args.ownerId) {
+  if (invitee.id === recipe.ownerId) {
     throw new Error("You already own this recipe.");
   }
   await prisma.recipeCollaborator.upsert({
