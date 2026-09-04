@@ -96,10 +96,10 @@ cd kitchen && npm test && npm run build
 
 ### Manual
 
-- [ ] `/kitchen` — search redirects to `/kitchen/recipes?q=…`; recent recipes in shared recipe box; cookbooks as spine shelf
-- [ ] `/kitchen/recipes` — filters above search; shared recipe box with staggered tabs; hover lift on desktop; metadata always visible on touch; “Add recipe” white on clay
+- [ ] `/kitchen` — search redirects to `/kitchen/recipes?q=…`; recent recipes and cookbooks as white list cards with metadata
+- [ ] `/kitchen/recipes` — filters above search; white list cards with category · cook time · difficulty · tags; “Add recipe” white on clay
 - [ ] Recipe detail — toolbar icons centered (Heart · Share · Download · ⋯); Cook mode Off/On toggle (On = green, inline cook layout); Share modal (copy link for all; invite for owner/editors); no inline Share access section; Edit in ⋯ when editable
-- [ ] `/kitchen/cookbooks` — cookbook spine shelf; cookbook detail uses recipe box for recipes
+- [ ] `/kitchen/cookbooks` — cookbook list cards (visibility · recipe count · role); cookbook detail uses recipe list cards
 - [ ] `/kitchen/loved-ones` — invite and remove access
 - [ ] Add/edit recipe — category, cook time, and difficulty save
 - [ ] Header nav centered: Home, Recipes, Cookbooks, Loved Ones

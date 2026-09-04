@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listCookbooksForUser } from "@/lib/cookbooks";
-import { CookbookSpineShelf } from "@/components/CookbookSpineShelf";
+import { CookbookListItem } from "@/components/CookbookListItem";
 import { COOKBOOK_LIST_FILTERS, type CookbookListFilter } from "@/lib/types";
 
 function filterLabel(filter: CookbookListFilter): string {
@@ -34,14 +34,18 @@ function CookbookSection({
   return (
     <section className="grid gap-3">
       <h2 className="text-xl font-semibold">{title}</h2>
-      <CookbookSpineShelf
-        cookbooks={cookbooks.map((cookbook) => ({
-          id: cookbook.id,
-          title: cookbook.title,
-          recipeCount: cookbook._count.recipes,
-          visibility: cookbook.visibility,
-        }))}
-      />
+      <ul className="grid gap-3">
+        {cookbooks.map((cookbook) => (
+          <CookbookListItem
+            key={cookbook.id}
+            id={cookbook.id}
+            title={cookbook.title}
+            recipeCount={cookbook._count.recipes}
+            visibility={cookbook.visibility}
+            role={cookbook.members[0]?.role ?? null}
+          />
+        ))}
+      </ul>
     </section>
   );
 }

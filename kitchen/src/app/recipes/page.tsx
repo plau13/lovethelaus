@@ -1,6 +1,5 @@
 import { RecipeFiltersBar } from "@/components/RecipeFiltersBar";
-import { RecipeIndexBox } from "@/components/RecipeIndexBox";
-import { RecipeTabCard } from "@/components/RecipeTabCard";
+import { RecipeListItem } from "@/components/RecipeListItem";
 import { requireUser } from "@/lib/auth";
 import { listMyCookbooks } from "@/lib/cookbooks";
 import { listVisibleRecipes } from "@/lib/recipes";
@@ -70,19 +69,19 @@ export default async function RecipesPage({
       {recipes.length === 0 ? (
         <p className="text-muted">No recipes match these filters yet.</p>
       ) : (
-        <RecipeIndexBox>
-          {recipes.map((recipe, index) => (
-            <RecipeTabCard
+        <ul className="grid gap-3">
+          {recipes.map((recipe) => (
+            <RecipeListItem
               key={recipe.id}
               id={recipe.id}
               title={recipe.title}
               category={recipe.category}
               cookMinutes={recipe.cookMinutes}
               difficulty={recipe.difficulty}
-              index={index}
+              tags={recipe.tags}
             />
           ))}
-        </RecipeIndexBox>
+        </ul>
       )}
     </main>
   );

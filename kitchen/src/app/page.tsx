@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { CookbookSpineShelf } from "@/components/CookbookSpineShelf";
+import { CookbookListItem } from "@/components/CookbookListItem";
 import { HomeRecipeSearch } from "@/components/HomeRecipeSearch";
-import { RecipeIndexBox } from "@/components/RecipeIndexBox";
-import { RecipeTabCard } from "@/components/RecipeTabCard";
+import { RecipeListItem } from "@/components/RecipeListItem";
 import { getCurrentUser } from "@/lib/auth";
 import { listMyCookbooks } from "@/lib/cookbooks";
 import { listRecentRecipes } from "@/lib/recipes";
@@ -63,19 +62,19 @@ export default async function HomePage() {
         {recipes.length === 0 ? (
           <p className="text-muted">No recipes yet.</p>
         ) : (
-          <RecipeIndexBox>
-            {recipes.map((recipe, index) => (
-              <RecipeTabCard
+          <ul className="grid gap-3">
+            {recipes.map((recipe) => (
+              <RecipeListItem
                 key={recipe.id}
                 id={recipe.id}
                 title={recipe.title}
                 category={recipe.category}
                 cookMinutes={recipe.cookMinutes}
                 difficulty={recipe.difficulty}
-                index={index}
+                tags={recipe.tags}
               />
             ))}
-          </RecipeIndexBox>
+          </ul>
         )}
       </section>
 
@@ -89,14 +88,17 @@ export default async function HomePage() {
         {cookbooks.length === 0 ? (
           <p className="text-muted">No cookbooks yet.</p>
         ) : (
-          <CookbookSpineShelf
-            cookbooks={cookbooks.map((cookbook) => ({
-              id: cookbook.id,
-              title: cookbook.title,
-              recipeCount: cookbook._count.recipes,
-              visibility: cookbook.visibility,
-            }))}
-          />
+          <ul className="grid gap-3">
+            {cookbooks.map((cookbook) => (
+              <CookbookListItem
+                key={cookbook.id}
+                id={cookbook.id}
+                title={cookbook.title}
+                recipeCount={cookbook._count.recipes}
+                visibility={cookbook.visibility}
+              />
+            ))}
+          </ul>
         )}
       </section>
     </main>

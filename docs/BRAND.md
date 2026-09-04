@@ -76,9 +76,8 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `but
 ### Cards
 
 - `rounded-2xl border border-line bg-white p-4` (or `p-5` for sections)
-- Recipe box / paper areas: `bg-paper` with inset shadow (`RecipeIndexBox`) — staggered title tabs along the rim; metadata lifts on hover (always visible on touch)
-- **Recipe index tab** (`RecipeTabCard`): warm serif tabs inside the shared box
-- **Cookbook spine shelf** (`CookbookSpineShelf`): vertical book spines on a shelf (Home + Cookbooks list)
+- **Recipe list card** (`RecipeListItem`): `rounded-xl border border-line bg-white p-4 shadow-sm`; serif title + muted metadata line (category · cook time · difficulty · tags), always visible
+- **Cookbook list card** (`CookbookListItem`): same shell; title + visibility · recipe count · role
 - **Recipe detail toolbar**: `← All recipes · Cook mode [Off|On]` on the left; **Heart · Share · Download · ⋯** icon buttons on the right (48px, centered icons); Share opens invite/copy modal; cook On uses inline `KitchenView`
 
 ### Auth screens
