@@ -20,7 +20,7 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 - Purge legacy seed users: `npm run db:purge-seed-users`
 - Tests: `npm test` (permissions, JSON-LD, social import)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
-- Nav: Home, Recipes, Cookbooks, Loved Ones + user menu (Settings)
+- Nav: Home, Recipes, Cookbooks + user menu (Settings)
 - Brand: [`docs/BRAND.md`](../docs/BRAND.md)
 - Testing: [`docs/TESTING.md`](../docs/TESTING.md) — run full Auth matrix when touching auth/email
 - Supabase: [`supabase/AUTH.md`](supabase/AUTH.md)

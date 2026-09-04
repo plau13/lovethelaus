@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authErrorMessage, signIn, signUp, requestPasswordReset } from "@/lib/auth";
+import { authErrorMessage, getCurrentUser, signIn } from "@/lib/auth";
 
 function redirectUrl(request: NextRequest, path: string): URL {
   return new URL(path, request.url);
@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
 
   try {
     await signIn(email, password);
-    return NextResponse.redirect(redirectUrl(request, "/kitchen/recipes"));
+    const user = await getCurrentUser();
+    const destination = user && !user.onboardingCompletedAt ? "/kitchen/onboarding" : "/kitchen/recipes";
+    return NextResponse.redirect(redirectUrl(request, destination));
   } catch (error) {
     const separator = returnTo.includes("?") ? "&" : "?";
     return NextResponse.redirect(

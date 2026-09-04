@@ -188,3 +188,99 @@ export const INTERVIEW_QUESTIONS = [
     prompt: "Any photos of kids that must stay private if a cookbook is shared?",
   },
 ] as const;
+
+export type OnboardingQuestion =
+  | { id: string; prompt: string; type: "text" }
+  | { id: string; prompt: string; type: "textarea" }
+  | { id: string; prompt: string; type: "select"; options: readonly { value: string; label: string }[] }
+  | { id: string; prompt: string; type: "checkboxes"; options: readonly { value: string; label: string }[] };
+
+export const ONBOARDING_QUESTIONS: readonly OnboardingQuestion[] = [
+  {
+    id: "familyName",
+    prompt: "What should we call your family's recipe box?",
+    type: "text",
+  },
+  {
+    id: "whoCooks",
+    prompt: "Who else in your family cooks or shares recipes?",
+    type: "text",
+  },
+  {
+    id: "recipeSources",
+    prompt: "Where do your recipes live today? (binder, Notes, texts, old website, etc.)",
+    type: "textarea",
+  },
+  {
+    id: "findRecipes",
+    prompt: "When you're planning dinner, how do you usually find a recipe?",
+    type: "textarea",
+  },
+  {
+    id: "cookDevice",
+    prompt: "How do you prefer to cook from recipes?",
+    type: "select",
+    options: [
+      { value: "phone", label: "Phone" },
+      { value: "tablet", label: "Tablet" },
+      { value: "printed", label: "Printed" },
+      { value: "mix", label: "Mix" },
+    ],
+  },
+  {
+    id: "recipeTypes",
+    prompt: "What kinds of recipes are you most excited to save?",
+    type: "checkboxes",
+    options: [
+      { value: "classics", label: "Family classics" },
+      { value: "weeknight", label: "Weeknight meals" },
+      { value: "baking", label: "Baking" },
+      { value: "holidays", label: "Holidays" },
+      { value: "other", label: "Other" },
+    ],
+  },
+  {
+    id: "sharingComfort",
+    prompt: "How do you want to share with family?",
+    type: "select",
+    options: [
+      { value: "solo", label: "Just me for now" },
+      { value: "invite", label: "Invite specific people" },
+      { value: "open", label: "Happy to share cookbooks" },
+    ],
+  },
+  {
+    id: "kitchenWifi",
+    prompt: "Is your kitchen Wi-Fi reliable, or do you need recipes to work with spotty connection?",
+    type: "select",
+    options: [
+      { value: "reliable", label: "Reliable" },
+      { value: "spotty", label: "Sometimes spotty" },
+      { value: "offline", label: "Often offline" },
+    ],
+  },
+  {
+    id: "householdNotes",
+    prompt: "Any dietary needs, allergies, or household notes we should know? (optional)",
+    type: "textarea",
+  },
+];
+
+export function parseOnboardingAnswers(raw: string): Record<string, string | string[]> {
+  try {
+    const parsed = JSON.parse(raw) as Record<string, string | string[]>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function formatOnboardingAnswer(value: string | string[] | undefined): string {
+  if (value === undefined) {
+    return "—";
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(", ") : "—";
+  }
+  return value.trim() || "—";
+}

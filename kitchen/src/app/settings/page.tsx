@@ -1,25 +1,31 @@
-import Link from "next/link";
-import { deleteAccount, updateProfile } from "@/app/actions/settings";
 import { logOut } from "@/app/actions/auth";
-import { requireUser } from "@/lib/auth";
-import { listMyCookbooks } from "@/lib/cookbooks";
+import { updateProfile } from "@/app/actions/settings";
+import { requireOnboardedUser } from "@/lib/auth";
 import { exportSummary, recipesForExport } from "@/lib/export-eligibility";
 import { getPrisma } from "@/lib/prisma";
-import { PREFERRED_UNITS } from "@/lib/types";
+import {
+  formatOnboardingAnswer,
+  ONBOARDING_QUESTIONS,
+  parseOnboardingAnswers,
+  PREFERRED_UNITS,
+} from "@/lib/types";
 import { isSubscriber } from "@/lib/subscription";
+
+function supportEmail(): string {
+  return process.env.SUPPORT_EMAIL ?? "preston.lau13@gmail.com";
+}
 
 export default async function SettingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const { saved } = await searchParams;
-  const cookbooks = await listMyCookbooks(user.id);
-  const defaultCookbook = cookbooks.find((cookbook) => cookbook.isDefault);
   const prisma = await getPrisma();
   const exportable = await recipesForExport(user.id);
   const ownedOnly = await prisma.recipe.count({ where: { ownerId: user.id } });
+  const onboardingAnswers = parseOnboardingAnswers(user.onboardingAnswers);
 
   return (
     <main className="grid gap-8">
@@ -32,11 +38,20 @@ export default async function SettingsPage({
         <h2 className="text-xl font-semibold">Profile</h2>
         <form action={updateProfile} className="grid gap-4">
           <label className="grid gap-1">
-            <span className="font-medium">Display name</span>
+            <span className="font-medium">First name</span>
             <input
-              name="name"
+              name="firstName"
               required
-              defaultValue={user.name}
+              defaultValue={user.firstName}
+              className="rounded-xl border border-line bg-white px-3 py-3"
+            />
+          </label>
+          <label className="grid gap-1">
+            <span className="font-medium">Last name</span>
+            <input
+              name="lastName"
+              required
+              defaultValue={user.lastName}
               className="rounded-xl border border-line bg-white px-3 py-3"
             />
           </label>
@@ -46,17 +61,6 @@ export default async function SettingsPage({
               value={user.email}
               readOnly
               className="rounded-xl border border-line bg-paper px-3 py-3 text-muted"
-            />
-          </label>
-          <label className="grid gap-1">
-            <span className="font-medium">Default servings</span>
-            <input
-              name="defaultServings"
-              type="number"
-              min={1}
-              max={12}
-              defaultValue={user.defaultServings}
-              className="rounded-xl border border-line bg-white px-3 py-3"
             />
           </label>
           <label className="grid gap-1">
@@ -79,23 +83,20 @@ export default async function SettingsPage({
         </form>
       </section>
 
-      <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
-        <h2 className="text-xl font-semibold">Cookbooks</h2>
-        <p className="text-muted">
-          Your default cookbook is{" "}
-          {defaultCookbook ? (
-            <Link href={`/cookbooks/${defaultCookbook.id}`} className="text-clay">
-              {defaultCookbook.title}
-            </Link>
-          ) : (
-            "not set yet"
-          )}
-          . New recipes land there first. Share cookbooks from each book&apos;s sharing page.
-        </p>
-        <Link href="/cookbooks" className="text-clay">
-          Manage cookbooks
-        </Link>
-      </section>
+      {user.onboardingCompletedAt ? (
+        <section className="grid gap-4 rounded-2xl border border-line bg-white p-5">
+          <h2 className="text-xl font-semibold">Onboarding</h2>
+          <p className="text-muted text-sm">Your answers from setup. Contact us if anything needs updating.</p>
+          <dl className="grid gap-3">
+            {ONBOARDING_QUESTIONS.map((question) => (
+              <div key={question.id} className="grid gap-1">
+                <dt className="text-sm font-medium">{question.prompt}</dt>
+                <dd className="text-muted">{formatOnboardingAnswer(onboardingAnswers[question.id])}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
         <h2 className="text-xl font-semibold">Export recipes</h2>
@@ -125,28 +126,13 @@ export default async function SettingsPage({
             Sign out
           </button>
         </form>
-      </section>
-
-      <section className="grid gap-4 rounded-2xl border border-red-200 bg-white p-5">
-        <h2 className="text-xl font-semibold text-red-800">Danger zone</h2>
-        <p className="text-muted">
-          Deleting your account removes your recipes, cookbooks, and notes. This cannot be undone.
+        <p className="text-muted text-sm">
+          To delete your account, email{" "}
+          <a href={`mailto:${supportEmail()}`} className="text-clay">
+            {supportEmail()}
+          </a>
+          .
         </p>
-        <form action={deleteAccount} className="grid gap-3">
-          <label className="grid gap-1">
-            <span className="font-medium">Type your email to confirm</span>
-            <input
-              name="confirmEmail"
-              type="email"
-              required
-              placeholder={user.email}
-              className="rounded-xl border border-line bg-white px-3 py-3"
-            />
-          </label>
-          <button type="submit" className="btn w-fit rounded-xl border border-red-300 px-4 py-2 text-red-800">
-            Delete account
-          </button>
-        </form>
       </section>
     </main>
   );

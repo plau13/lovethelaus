@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { parseEmailList } from "@/lib/parse-emails";
 import { removeRecipeCollaborator, setRecipeCollaborator } from "@/lib/recipes";
 import { RECIPE_COLLAB_ROLES, type RecipeCollabRole } from "@/lib/types";
 
@@ -26,7 +27,28 @@ export async function grantRecipeAccess(formData: FormData) {
   });
 
   revalidatePath(`/recipes/${recipeId}`);
-  revalidatePath("/loved-ones");
+}
+
+export async function grantRecipeAccessBatch(formData: FormData) {
+  const user = await requireUser();
+  const recipeId = String(formData.get("recipeId") ?? "");
+  const role = parseRole(String(formData.get("role") ?? "view"));
+  const emails = parseEmailList(String(formData.get("emails") ?? ""));
+
+  if (emails.length === 0) {
+    throw new Error("Add at least one email address.");
+  }
+
+  for (const email of emails) {
+    await setRecipeCollaborator({
+      actorId: user.id,
+      recipeId,
+      email,
+      role,
+    });
+  }
+
+  revalidatePath(`/recipes/${recipeId}`);
 }
 
 export async function revokeRecipeAccess(formData: FormData) {
@@ -41,5 +63,4 @@ export async function revokeRecipeAccess(formData: FormData) {
   });
 
   revalidatePath(`/recipes/${recipeId}`);
-  revalidatePath("/loved-ones");
 }

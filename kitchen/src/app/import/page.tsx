@@ -1,9 +1,9 @@
 import { startImport } from "@/app/actions/import";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { isSubscriber, socialImportRemaining } from "@/lib/subscription";
 
 export default async function ImportPage() {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const remaining = socialImportRemaining(user);
   const limitLabel = isSubscriber(user)
     ? "about 10 Instagram/TikTok imports per month"

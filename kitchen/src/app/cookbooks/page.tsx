@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
+import { listFavoriteCookbookIds } from "@/lib/cookbook-favorites";
 import { listCookbooksForUser } from "@/lib/cookbooks";
 import { CookbookListItem } from "@/components/CookbookListItem";
 import { COOKBOOK_LIST_FILTERS, type CookbookListFilter } from "@/lib/types";
@@ -55,12 +56,18 @@ export default async function CookbooksPage({
 }: {
   searchParams: Promise<{ q?: string; filter?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const { q = "", filter: filterRaw = "all" } = await searchParams;
   const filter = COOKBOOK_LIST_FILTERS.includes(filterRaw as CookbookListFilter)
     ? (filterRaw as CookbookListFilter)
     : "all";
-  const grouped = await listCookbooksForUser(user.id, { q, filter });
+  const [grouped, favoriteIds] = await Promise.all([
+    listCookbooksForUser(user.id, { q, filter }),
+    listFavoriteCookbookIds(user.id),
+  ]);
+
+  const allCookbooks = [...grouped.own, ...grouped.shared, ...grouped.public];
+  const favoriteCookbooks = allCookbooks.filter((cookbook) => favoriteIds.has(cookbook.id));
 
   return (
     <main className="grid gap-6">
@@ -111,6 +118,10 @@ export default async function CookbooksPage({
           );
         })}
       </div>
+
+      {favoriteCookbooks.length > 0 ? (
+        <CookbookSection title={`Favorites (${favoriteCookbooks.length})`} cookbooks={favoriteCookbooks} />
+      ) : null}
 
       {grouped.own.length > 0 ? (
         <CookbookSection title={`Your cookbooks (${grouped.own.length})`} cookbooks={grouped.own} />

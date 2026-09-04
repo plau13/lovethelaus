@@ -1,7 +1,8 @@
 "use client";
 
-import { grantRecipeAccess, revokeRecipeAccess } from "@/app/actions/collaborators";
+import { grantRecipeAccessBatch, revokeRecipeAccess } from "@/app/actions/collaborators";
 import { useEffect, useRef, useState } from "react";
+import { EmailPillInput } from "@/components/EmailPillInput";
 import { collabRoleLabel, RECIPE_COLLAB_ROLES } from "@/lib/types";
 
 type Collaborator = {
@@ -123,24 +124,21 @@ export function RecipeShareDialog({
                 ))}
               </ul>
             ) : null}
-            <form action={grantRecipeAccess} className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <form action={grantRecipeAccessBatch} className="grid gap-3">
               <input type="hidden" name="recipeId" value={recipeId} />
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="family@example.com"
-                className="rounded-xl border border-line bg-white px-3 py-2"
-              />
-              <select name="role" className="rounded-xl border border-line bg-white px-3 py-2" defaultValue="view">
-                {RECIPE_COLLAB_ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {collabRoleLabel(role)}
-                  </option>
-                ))}
-              </select>
+              <EmailPillInput name="emails" />
+              <label className="grid gap-1">
+                <span className="text-sm font-medium">Role</span>
+                <select name="role" className="rounded-xl border border-line bg-white px-3 py-2" defaultValue="view">
+                  {RECIPE_COLLAB_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {collabRoleLabel(role)}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <button type="submit" className="btn-clay btn-clay-hover rounded-xl px-4 py-2">
-                Invite
+                Send invites
               </button>
             </form>
           </div>

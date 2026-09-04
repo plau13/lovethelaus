@@ -42,6 +42,14 @@ export async function requireUser() {
   return user;
 }
 
+export async function requireOnboardedUser() {
+  const user = await requireUser();
+  if (!user.onboardingCompletedAt) {
+    redirect("/onboarding");
+  }
+  return user;
+}
+
 export async function signUp(nameRaw: string, emailRaw: string, password: string) {
   const name = nameRaw.trim() || emailRaw.split("@")[0] || "Family cook";
   const email = emailRaw.trim().toLowerCase();

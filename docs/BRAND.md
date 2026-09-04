@@ -101,7 +101,7 @@ Minimum **48px** height for buttons and primary taps (kitchen counter / phone us
 | Kitchen header | `max-w-4xl` |
 | Marketing sections | `max-w-7xl` (AstroWind default) |
 
-Kitchen nav: logo left, **Home · Recipes · Cookbooks · Loved Ones** centered, user menu right.
+Kitchen nav: logo left, **Home · Recipes · Cookbooks** centered, user menu right.
 
 ## Do / Don't
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
 import { RecipeDetailClient } from "@/components/RecipeDetailClient";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { exportAccessFromLoadedRecipe } from "@/lib/export-eligibility";
 import { canCommentOnRecipe, canEditRecipe, canInviteOnRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
@@ -31,7 +31,7 @@ function parseRevisionSnapshot(snapshot: string): { title?: string } {
 }
 
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const { id } = await params;
   const recipe = await getRecipeForUser(id, user.id);
   if (!recipe) {
@@ -58,7 +58,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const cookingSteps = recipe.steps.split("\n").filter(Boolean);
   const bakingSteps = recipe.bakingSteps.split("\n").filter(Boolean);
   const exportAccess = exportAccessFromLoadedRecipe(user, recipe);
-  const baseServings = recipe.servings ?? user.defaultServings ?? 4;
+  const baseServings = recipe.servings ?? 4;
   const cookTimeLabel = recipe.cookMinutes ? formatCookMinutes(recipe.cookMinutes) : null;
   const firstPhoto = recipe.photos[0] ?? null;
 

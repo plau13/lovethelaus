@@ -1,8 +1,8 @@
 import { saveCookbook } from "@/app/actions/cookbooks";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 
 export default async function NewCookbookPage() {
-  await requireUser();
+  await requireOnboardedUser();
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">New cookbook</h1>

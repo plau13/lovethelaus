@@ -1,7 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { authErrorMessage, signIn, signInWithMagicLink, signOut, signUp, requestPasswordReset } from "@/lib/auth";
+import { authErrorMessage, getCurrentUser, signIn, signInWithMagicLink, signOut, signUp, requestPasswordReset } from "@/lib/auth";
+
+async function postAuthRedirect(): Promise<string> {
+  const user = await getCurrentUser();
+  if (user && !user.onboardingCompletedAt) {
+    return "/onboarding";
+  }
+  return "/recipes";
+}
 
 export async function signUpAction(formData: FormData) {
   try {
@@ -13,7 +21,7 @@ export async function signUpAction(formData: FormData) {
   } catch (error) {
     redirect(`/sign-up?error=${encodeURIComponent(authErrorMessage(error))}`);
   }
-  redirect("/recipes");
+  redirect(await postAuthRedirect());
 }
 
 export async function signInAction(formData: FormData) {
@@ -22,7 +30,7 @@ export async function signInAction(formData: FormData) {
   } catch (error) {
     redirect(`/sign-in?error=${encodeURIComponent(authErrorMessage(error))}`);
   }
-  redirect("/recipes");
+  redirect(await postAuthRedirect());
 }
 
 export async function magicLinkAction(formData: FormData) {

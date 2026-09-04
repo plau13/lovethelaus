@@ -1,6 +1,7 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { getPrisma } from "@/lib/prisma";
 import { ensureDefaultCookbook } from "@/lib/default-cookbook";
+import { fullName, splitDisplayName } from "@/lib/user-name";
 
 function displayName(authUser: SupabaseUser): string {
   const meta = authUser.user_metadata?.name;
@@ -19,17 +20,22 @@ export async function syncPrismaUserFromSupabase(authUser: SupabaseUser) {
 
   const prisma = await getPrisma();
   const name = displayName(authUser);
+  const { firstName, lastName } = splitDisplayName(name);
 
   const user = await prisma.user.upsert({
     where: { email },
     update: {
       authUserId: authUser.id,
       name,
+      firstName,
+      lastName,
     },
     create: {
       authUserId: authUser.id,
       email,
       name,
+      firstName,
+      lastName,
     },
   });
 

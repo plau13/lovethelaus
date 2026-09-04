@@ -112,6 +112,35 @@ export async function buildSingleRecipeExport(userId: string, recipeId: string) 
   return buildExportPayload([toRecipeForExport(recipe)]);
 }
 
+export async function canExportCookbook(userId: string, cookbookId: string): Promise<boolean> {
+  const prisma = await getPrisma();
+  const cookbook = await prisma.cookbook.findUnique({
+    where: { id: cookbookId },
+    include: { members: { where: { userId } } },
+  });
+  if (!cookbook) {
+    return false;
+  }
+  const role = cookbook.members[0]?.role ?? null;
+  return cookbook.ownerId === userId || role === "editor" || role === "owner";
+}
+
+export async function buildCookbookExport(userId: string, cookbookId: string) {
+  const allowed = await canExportCookbook(userId, cookbookId);
+  if (!allowed) {
+    throw new Error("You cannot export this cookbook.");
+  }
+
+  const prisma = await getPrisma();
+  const entries = await prisma.cookbookRecipe.findMany({
+    where: { cookbookId },
+    include: { recipe: { include: { notes: true } } },
+    orderBy: { position: "asc" },
+  });
+
+  return buildExportPayload(entries.map((entry) => toRecipeForExport(entry.recipe)));
+}
+
 export async function recipesForExport(userId: string): Promise<RecipeForExport[]> {
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { id: userId } });

@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { toCsv } from "@/lib/export";
 import {
+  buildCookbookExport,
   buildSingleRecipeExport,
   buildUserExportPayload,
+  canExportCookbook,
   canExportRecipe,
   recipesForExport,
 } from "@/lib/export-eligibility";
@@ -17,6 +19,33 @@ export async function GET(request: NextRequest) {
 
   const format = request.nextUrl.searchParams.get("format") ?? "json";
   const recipeId = request.nextUrl.searchParams.get("recipeId");
+  const cookbookId = request.nextUrl.searchParams.get("cookbookId");
+
+  if (cookbookId) {
+    const allowed = await canExportCookbook(user.id, cookbookId);
+    if (!allowed) {
+      return NextResponse.json({ error: "You cannot export this cookbook." }, { status: 403 });
+    }
+
+    const payload = await buildCookbookExport(user.id, cookbookId);
+    const filename = `cookbook-${cookbookId}.json`;
+
+    if (format === "csv") {
+      const csv = toCsv(payload);
+      return new NextResponse(csv, {
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${filename.replace(".json", ".csv")}"`,
+        },
+      });
+    }
+
+    return NextResponse.json(payload, {
+      headers: {
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
+  }
 
   if (recipeId) {
     const access = await canExportRecipe(user.id, recipeId);

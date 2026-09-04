@@ -1,14 +1,19 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { putRecipeInCookbook } from "@/app/actions/cookbooks";
+import { CookbookDetailClient } from "@/components/CookbookDetailClient";
 import { RecipeListItem } from "@/components/RecipeListItem";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
+import { canExportCookbook } from "@/lib/export-eligibility";
 import { canEditCookbookContents, canManageCookbook } from "@/lib/permissions";
 import { listVisibleRecipes } from "@/lib/recipes";
 
+function appUrl(): string {
+  return process.env.APP_URL ?? "http://localhost:3000/kitchen";
+}
+
 export default async function CookbookPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const { id } = await params;
   const cookbook = await getCookbookForUser(id, user.id);
   if (!cookbook) {
@@ -16,18 +21,24 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
   }
   const role = await memberRole(cookbook.id, user.id);
   const ownedRecipes = (await listVisibleRecipes(user.id, {})).filter((recipe) => recipe.ownerId === user.id);
+  const canExport = await canExportCookbook(user.id, cookbook.id);
+  const isOwner = cookbook.ownerId === user.id;
+  const publicShareUrl =
+    cookbook.visibility === "unlisted" || cookbook.visibility === "public"
+      ? `${appUrl()}/c/${cookbook.slug}`
+      : null;
 
   return (
-    <main className="grid gap-6">
-      <p className="text-muted">
-        <Link href="/cookbooks">All cookbooks</Link>
-        {canManageCookbook(role) ? (
-          <>
-            {" · "}
-            <Link href={`/cookbooks/${cookbook.id}/settings`}>Sharing</Link>
-          </>
-        ) : null}
-      </p>
+    <CookbookDetailClient
+      cookbookId={cookbook.id}
+      favorited={cookbook.favorited}
+      canExport={canExport}
+      canManage={canManageCookbook(role)}
+      isOwner={isOwner}
+      members={cookbook.members}
+      publicShareUrl={publicShareUrl}
+      exportHref={`/api/export?format=json&cookbookId=${cookbook.id}`}
+    >
       <h1 className="font-serif text-4xl">{cookbook.title}</h1>
       <p className="text-muted">
         {cookbook.visibility} · your role: {role ?? "viewer"}
@@ -68,6 +79,6 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
           </button>
         </form>
       ) : null}
-    </main>
+    </CookbookDetailClient>
   );
 }

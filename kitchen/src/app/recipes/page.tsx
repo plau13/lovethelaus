@@ -1,6 +1,6 @@
 import { RecipeFiltersBar } from "@/components/RecipeFiltersBar";
 import { RecipeListItem } from "@/components/RecipeListItem";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { listMyCookbooks } from "@/lib/cookbooks";
 import { listVisibleRecipes } from "@/lib/recipes";
 import {
@@ -22,7 +22,7 @@ export default async function RecipesPage({
     difficulty?: string;
   }>;
 }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const {
     q = "",
     cookbook: cookbookId = "",

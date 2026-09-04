@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 import { saveRecipeEdits } from "@/app/actions/recipes";
 import { startImport } from "@/app/actions/import";
 import { RecipeEditor } from "@/components/RecipeEditor";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import type { RecipeCategory, RecipeDifficulty, RecipeType } from "@/lib/types";
 
 export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const { id } = await params;
   const recipe = await getRecipeForUser(id, user.id);
   if (
@@ -28,7 +28,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
         saveAction={saveRecipeEdits}
         importAction={startImport}
         submitLabel="Save changes"
-        defaultServings={user.defaultServings}
+        defaultServings={4}
         hiddenFields={{ recipeId: recipe.id }}
         defaults={{
           title: recipe.title,

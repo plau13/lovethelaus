@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CookbookListItem } from "@/components/CookbookListItem";
 import { HomeRecipeSearch } from "@/components/HomeRecipeSearch";
@@ -25,6 +26,10 @@ export default async function HomePage() {
         </p>
       </main>
     );
+  }
+
+  if (!user.onboardingCompletedAt) {
+    redirect("/onboarding");
   }
 
   const [recipes, cookbooks] = await Promise.all([

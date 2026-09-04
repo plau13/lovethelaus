@@ -127,21 +127,29 @@ export async function getCookbookForUser(cookbookId: string, userId: string | nu
       },
       invites: true,
       owner: true,
+      ...(userId
+        ? { favorites: { where: { userId }, select: { id: true }, take: 1 } }
+        : {}),
     },
   });
   if (!cookbook) {
     return null;
   }
+  const favorited = userId && "favorites" in cookbook ? cookbook.favorites.length > 0 : false;
+  const cookbookData = { ...cookbook };
+  if ("favorites" in cookbookData) {
+    delete (cookbookData as { favorites?: unknown }).favorites;
+  }
   const allowed = canViewCookbook({
     userId,
-    ownerId: cookbook.ownerId,
-    visibility: cookbook.visibility,
-    memberUserIds: cookbook.members.map((member) => member.userId),
+    ownerId: cookbookData.ownerId,
+    visibility: cookbookData.visibility,
+    memberUserIds: cookbookData.members.map((member) => member.userId),
   });
   if (!allowed) {
     return null;
   }
-  return cookbook;
+  return { ...cookbookData, favorited };
 }
 
 export async function getPublicCookbook(slug: string) {

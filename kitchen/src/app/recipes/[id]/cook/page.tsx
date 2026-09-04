@@ -2,12 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfflineCookCache } from "@/components/OfflineCookCache";
 import { KitchenView } from "@/components/KitchenView";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getRecipeForUser } from "@/lib/recipes";
 import { isSubscriber } from "@/lib/subscription";
 
 export default async function CookPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const { id } = await params;
   const recipe = await getRecipeForUser(id, user.id);
   if (!recipe) {

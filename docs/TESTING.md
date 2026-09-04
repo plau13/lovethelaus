@@ -100,10 +100,12 @@ cd kitchen && npm test && npm run build
 - [ ] `/kitchen/recipes` — filters above search; white list cards with category · cook time · difficulty · tags; “Add recipe” white on clay
 - [ ] Recipe detail — visible back arrow on “All recipes”; “All recipes” and cook mode on one line; bordered cook-mode rectangle (grey off, green on); favorite heart toggles instantly; servings stepper scales ingredient quantities (best-effort); ingredients/instructions in white section cards; hero photo or edit placeholder; toolbar icons centered (Heart · Share · Download · ⋯); cook mode uses scaled ingredients with checkboxes; Share modal; Edit in ⋯ when editable
 - [ ] Navigation — Recipes ↔ Cookbooks ↔ recipe detail shows loading skeleton briefly (not a blank stall)
-- [ ] `/kitchen/cookbooks` — cookbook list cards (visibility · recipe count · role); cookbook detail uses recipe list cards
-- [ ] `/kitchen/loved-ones` — invite and remove access
+- [ ] `/kitchen/cookbooks` — cookbook list cards (visibility · recipe count · role); favorites section when starred; cookbook detail toolbar (heart · share · download · ⋯ settings)
+- [ ] Cookbook share modal — email pills, invite link, member list; `/kitchen/loved-ones` redirects to cookbooks
+- [ ] Settings — first/last name, units, onboarding answers (read-only), email support for account deletion (no self-serve delete)
+- [ ] New user sign-up → `/kitchen/onboarding` → recipes; answers visible in Settings
 - [ ] Add/edit recipe — category, cook time, and difficulty save
-- [ ] Header nav centered: Home, Recipes, Cookbooks, Loved Ones
+- [ ] Header nav centered: Home, Recipes, Cookbooks
 - [ ] Favicon on `/kitchen/recipes`
 
 ---

@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { confirmImport } from "@/app/actions/import";
 import { RecipeEditor } from "@/components/RecipeEditor";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 
 export default async function ConfirmImportPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireOnboardedUser();
   const prisma = await getPrisma();
   const { id } = await params;
   const draft = await prisma.importDraft.findFirst({
@@ -23,7 +23,7 @@ export default async function ConfirmImportPage({ params }: { params: Promise<{ 
       <RecipeEditor
         saveAction={confirmImport}
         submitLabel="Save to my box"
-        defaultServings={user.defaultServings}
+        defaultServings={4}
         hiddenFields={{ draftId: draft.id }}
         defaults={{
           title: draft.title,
