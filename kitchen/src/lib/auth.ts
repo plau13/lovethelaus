@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/prisma";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase-user-sync";
@@ -8,7 +9,7 @@ function appUrl(): string {
   return process.env.APP_URL ?? "http://localhost:3000/kitchen";
 }
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const {
@@ -31,7 +32,7 @@ export async function getCurrentUser() {
   }
 
   return syncPrismaUserFromSupabase(authUser);
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

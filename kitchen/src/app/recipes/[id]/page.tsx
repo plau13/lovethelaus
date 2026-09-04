@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
 import { RecipeDetailClient } from "@/components/RecipeDetailClient";
 import { requireUser } from "@/lib/auth";
-import { canExportRecipe } from "@/lib/export-eligibility";
-import { isRecipeFavorited } from "@/lib/favorites";
+import { exportAccessFromLoadedRecipe } from "@/lib/export-eligibility";
 import { canCommentOnRecipe, canEditRecipe, canInviteOnRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import { parseTags } from "@/lib/tags";
@@ -58,8 +57,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const coAuthors = recipe.collaborators.filter((entry) => entry.role === "co-author");
   const cookingSteps = recipe.steps.split("\n").filter(Boolean);
   const bakingSteps = recipe.bakingSteps.split("\n").filter(Boolean);
-  const favorited = await isRecipeFavorited(user.id, recipe.id);
-  const exportAccess = await canExportRecipe(user.id, recipe.id);
+  const exportAccess = exportAccessFromLoadedRecipe(user, recipe);
   const baseServings = recipe.servings ?? user.defaultServings ?? 4;
   const cookTimeLabel = recipe.cookMinutes ? formatCookMinutes(recipe.cookMinutes) : null;
   const firstPhoto = recipe.photos[0] ?? null;
@@ -80,7 +78,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         steps={recipe.steps}
         bakingSteps={recipe.bakingSteps}
         baseServings={baseServings}
-        favorited={favorited}
+        favorited={recipe.favorited}
         canExport={exportAccess.allowed}
         canEdit={editable}
         canInvite={canInvite}

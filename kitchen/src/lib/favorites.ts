@@ -1,5 +1,5 @@
 import { getPrisma } from "@/lib/prisma";
-import { getRecipeForUser } from "@/lib/recipes";
+import { canViewRecipe } from "@/lib/permissions";
 
 export async function isRecipeFavorited(userId: string, recipeId: string): Promise<boolean> {
   const prisma = await getPrisma();
@@ -10,12 +10,44 @@ export async function isRecipeFavorited(userId: string, recipeId: string): Promi
 }
 
 export async function toggleRecipeFavorite(userId: string, recipeId: string): Promise<boolean> {
-  const recipe = await getRecipeForUser(recipeId, userId);
+  const prisma = await getPrisma();
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: recipeId },
+    select: {
+      id: true,
+      ownerId: true,
+      collaborators: { where: { userId }, select: { role: true } },
+      cookbookRecipes: {
+        select: {
+          cookbook: {
+            select: {
+              visibility: true,
+              ownerId: true,
+              members: { select: { userId: true } },
+            },
+          },
+        },
+      },
+    },
+  });
   if (!recipe) {
     throw new Error("Recipe not found.");
   }
 
-  const prisma = await getPrisma();
+  const allowed = canViewRecipe({
+    userId,
+    recipeOwnerId: recipe.ownerId,
+    collaboratorRole: recipe.collaborators[0]?.role ?? null,
+    containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
+      visibility: entry.cookbook.visibility,
+      ownerId: entry.cookbook.ownerId,
+      memberUserIds: entry.cookbook.members.map((member) => member.userId),
+    })),
+  });
+  if (!allowed) {
+    throw new Error("Recipe not found.");
+  }
+
   const existing = await prisma.recipeFavorite.findUnique({
     where: { userId_recipeId: { userId, recipeId } },
   });

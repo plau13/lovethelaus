@@ -8,6 +8,19 @@ export type ExportRecipeAccess = {
   reason: "owner" | "subscriber" | "denied";
 };
 
+export function exportAccessFromLoadedRecipe(
+  user: { id: string; subscriptionTier: string },
+  recipe: { ownerId: string }
+): ExportRecipeAccess {
+  if (recipe.ownerId === user.id) {
+    return { allowed: true, reason: "owner" };
+  }
+  if (!isSubscriber(user)) {
+    return { allowed: false, reason: "denied" };
+  }
+  return { allowed: true, reason: "subscriber" };
+}
+
 function toRecipeForExport(recipe: {
   id: string;
   title: string;

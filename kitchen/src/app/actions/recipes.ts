@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { toggleRecipeFavorite } from "@/lib/favorites";
@@ -111,5 +110,4 @@ export async function toggleFavorite(formData: FormData) {
   const user = await requireUser();
   const recipeId = String(formData.get("recipeId") ?? "");
   await toggleRecipeFavorite(user.id, recipeId);
-  revalidatePath(`/recipes/${recipeId}`);
 }

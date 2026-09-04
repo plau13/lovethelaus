@@ -115,20 +115,28 @@ export async function getRecipeForUser(recipeId: string, userId: string | null) 
           cookbook: { include: { members: true } },
         },
       },
+      ...(userId
+        ? { favorites: { where: { userId }, select: { id: true }, take: 1 } }
+        : {}),
     },
   });
   if (!recipe) {
     return null;
   }
+  const favorited = userId && "favorites" in recipe ? recipe.favorites.length > 0 : false;
+  const recipeData = { ...recipe };
+  if ("favorites" in recipeData) {
+    delete (recipeData as { favorites?: unknown }).favorites;
+  }
   const collaboratorRole =
     userId != null
-      ? (recipe.collaborators.find((entry) => entry.userId === userId)?.role ?? null)
+      ? (recipeData.collaborators.find((entry) => entry.userId === userId)?.role ?? null)
       : null;
   const allowed = canViewRecipe({
     userId,
-    recipeOwnerId: recipe.ownerId,
+    recipeOwnerId: recipeData.ownerId,
     collaboratorRole,
-    containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
+    containingCookbooks: recipeData.cookbookRecipes.map((entry) => ({
       visibility: entry.cookbook.visibility,
       ownerId: entry.cookbook.ownerId,
       memberUserIds: entry.cookbook.members.map((member) => member.userId),
@@ -137,7 +145,7 @@ export async function getRecipeForUser(recipeId: string, userId: string | null) 
   if (!allowed) {
     return null;
   }
-  return { ...recipe, collaboratorRole };
+  return { ...recipeData, collaboratorRole, favorited };
 }
 
 export async function createRecipe(args: {

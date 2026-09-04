@@ -36,14 +36,16 @@ export default async function RecipesPage({
   const difficulty = RECIPE_DIFFICULTIES.find((entry) => entry === difficultyRaw) as
     | RecipeDifficulty
     | undefined;
-  const cookbooks = await listMyCookbooks(user.id);
-  const recipes = await listVisibleRecipes(user.id, {
-    q,
-    cookbookId: cookbookId || undefined,
-    category,
-    timeBucket: timeBucket || undefined,
-    difficulty,
-  });
+  const [cookbooks, recipes] = await Promise.all([
+    listMyCookbooks(user.id),
+    listVisibleRecipes(user.id, {
+      q,
+      cookbookId: cookbookId || undefined,
+      category,
+      timeBucket: timeBucket || undefined,
+      difficulty,
+    }),
+  ]);
 
   return (
     <main className="grid gap-6">

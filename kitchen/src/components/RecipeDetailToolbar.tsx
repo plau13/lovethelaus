@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toggleFavorite } from "@/app/actions/recipes";
 import { IconButton, IconLink } from "@/components/IconButton";
 import { RecipeShareDialog } from "@/components/RecipeShareDialog";
 
 function BackArrowIcon() {
   return (
-    <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0">
       <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -89,12 +89,11 @@ export function RecipeDetailToolbar({
   const [favorited, setFavorited] = useState(initialFavorited);
   const [shareOpen, setShareOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setFavorited(initialFavorited);
-  }, [initialFavorited]);
+  }, [recipeId, initialFavorited]);
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -118,14 +117,10 @@ export function RecipeDetailToolbar({
   function handleFavoriteToggle() {
     const next = !favorited;
     setFavorited(next);
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.set("recipeId", recipeId);
-      try {
-        await toggleFavorite(formData);
-      } catch {
-        setFavorited(!next);
-      }
+    const formData = new FormData();
+    formData.set("recipeId", recipeId);
+    void toggleFavorite(formData).catch(() => {
+      setFavorited(!next);
     });
   }
 
@@ -156,7 +151,6 @@ export function RecipeDetailToolbar({
         <div className="flex items-center gap-1">
           <IconButton
             onClick={handleFavoriteToggle}
-            disabled={pending}
             className={favorited ? "text-clay" : "text-muted"}
             aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
             aria-pressed={favorited}
