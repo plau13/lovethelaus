@@ -60,6 +60,16 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const bakingSteps = recipe.bakingSteps.split("\n").filter(Boolean);
   const favorited = await isRecipeFavorited(user.id, recipe.id);
   const exportAccess = await canExportRecipe(user.id, recipe.id);
+  const baseServings = recipe.servings ?? user.defaultServings ?? 4;
+  const cookTimeLabel = recipe.cookMinutes ? formatCookMinutes(recipe.cookMinutes) : null;
+  const firstPhoto = recipe.photos[0] ?? null;
+
+  const metaParts = [
+    recipeTypeLabel(recipe.recipeType),
+    recipe.category ? categoryLabel(recipe.category) : null,
+    recipe.difficulty ? difficultyLabel(recipe.difficulty) : null,
+    parseTags(recipe.tags).length ? parseTags(recipe.tags).join(" · ") : null,
+  ].filter(Boolean);
 
   return (
     <main className="grid gap-6">
@@ -69,6 +79,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         ingredients={recipe.ingredients}
         steps={recipe.steps}
         bakingSteps={recipe.bakingSteps}
+        baseServings={baseServings}
         favorited={favorited}
         canExport={exportAccess.allowed}
         canEdit={editable}
@@ -76,67 +87,30 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         isOwner={isOwner}
         collaborators={recipe.collaborators}
         exportHref={`/api/export?format=json&recipeId=${recipe.id}`}
+        main={{
+          ownerName: recipe.owner.name,
+          coAuthorNames: coAuthors.map((entry) => entry.user.name),
+          photo: firstPhoto ? { path: firstPhoto.path, alt: firstPhoto.alt } : null,
+          canEdit: editable,
+          metaLine: (
+            <>
+              {metaParts.join(" · ")}
+              {recipe.sourceUrl ? (
+                <>
+                  {metaParts.length > 0 ? " · " : null}
+                  <a href={recipe.sourceUrl} target="_blank" rel="noreferrer">
+                    Original source
+                  </a>
+                </>
+              ) : null}
+            </>
+          ),
+          sourceAttribution: recipe.sourceAttribution,
+          cookingSteps,
+          bakingSteps,
+          cookTimeLabel,
+        }}
       >
-        <h1 className="font-serif text-4xl leading-tight">{recipe.title}</h1>
-        <p className="text-muted">
-          By {recipe.owner.name}
-          {coAuthors.length > 0 ? (
-            <>
-              {" · Co-authors: "}
-              {coAuthors.map((entry) => entry.user.name).join(", ")}
-            </>
-          ) : null}
-        </p>
-        {recipe.photos[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={recipe.photos[0].path} alt={recipe.photos[0].alt} className="max-h-80 w-full rounded-2xl object-cover" />
-        ) : null}
-        <p className="text-muted">
-          {recipeTypeLabel(recipe.recipeType)}
-          {recipe.category ? ` · ${categoryLabel(recipe.category)}` : null}
-          {recipe.cookMinutes ? ` · ${formatCookMinutes(recipe.cookMinutes)}` : null}
-          {recipe.difficulty ? ` · ${difficultyLabel(recipe.difficulty)}` : null}
-          {recipe.servings ? ` · ${recipe.servings} servings` : null}
-          {parseTags(recipe.tags).length ? ` · ${parseTags(recipe.tags).join(" · ")}` : null}
-          {recipe.sourceUrl ? (
-            <>
-              {" · "}
-              <a href={recipe.sourceUrl} target="_blank" rel="noreferrer">
-                Original source
-              </a>
-            </>
-          ) : null}
-        </p>
-        {recipe.sourceAttribution ? <p className="text-sm text-muted">{recipe.sourceAttribution}</p> : null}
-        <section>
-          <h2 className="mb-2 text-xl font-semibold">Ingredients</h2>
-          <ul className="grid gap-1 text-lg">
-            {recipe.ingredients.split("\n").filter(Boolean).map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-        {cookingSteps.length > 0 ? (
-          <section>
-            <h2 className="mb-2 text-xl font-semibold">Cooking instructions</h2>
-            <ol className="grid list-decimal gap-2 pl-5 text-lg leading-relaxed">
-              {cookingSteps.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ol>
-          </section>
-        ) : null}
-        {bakingSteps.length > 0 ? (
-          <section>
-            <h2 className="mb-2 text-xl font-semibold">Baking instructions</h2>
-            <ol className="grid list-decimal gap-2 pl-5 text-lg leading-relaxed">
-              {bakingSteps.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ol>
-          </section>
-        ) : null}
-
         {recipe.revisions.length > 0 ? (
           <section className="grid gap-2 no-print">
             <h2 className="text-xl font-semibold">Version history</h2>

@@ -41,6 +41,8 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
           category: recipe.category as RecipeCategory | null,
           cookMinutes: recipe.cookMinutes,
           difficulty: recipe.difficulty as RecipeDifficulty | null,
+          photoPath: recipe.photos[0]?.path,
+          photoAlt: recipe.photos[0]?.alt,
         }}
       />
     </main>

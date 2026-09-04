@@ -78,7 +78,10 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `but
 - `rounded-2xl border border-line bg-white p-4` (or `p-5` for sections)
 - **Recipe list card** (`RecipeListItem`): `rounded-xl border border-line bg-white p-4 shadow-sm`; serif title + muted metadata line (category · cook time · difficulty · tags), always visible
 - **Cookbook list card** (`CookbookListItem`): same shell; title + visibility · recipe count · role
-- **Recipe detail toolbar**: `← All recipes · Cook mode [Off|On]` on the left; **Heart · Share · Download · ⋯** icon buttons on the right (48px, centered icons); Share opens invite/copy modal; cook On uses inline `KitchenView`
+- **Recipe detail toolbar**: `← All recipes` and bordered **Cook mode Off/On** on one line (grey rectangle when off, green when on); **Heart · Share · Download · ⋯** icon buttons on the right (48px, centered icons); Share opens invite/copy modal; cook On uses inline `KitchenView`
+- **Recipe detail sections**: `rounded-2xl border border-line bg-white p-5` cards for Ingredients and Instructions; uppercase section labels
+- **Servings control** (`ServingsControl`): stepper below title; scales ingredient quantities client-side (best-effort for lines with leading numbers/fractions)
+- **Recipe photo**: hero image above ingredients when uploaded; dashed placeholder with edit link when missing (editors only)
 
 ### Auth screens
 

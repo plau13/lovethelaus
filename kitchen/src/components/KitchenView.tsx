@@ -5,6 +5,21 @@ import { splitLines } from "@/lib/tags";
 
 type WakeLockSentinel = { release: () => Promise<void> };
 
+function RecipeSectionCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
+      <h2 className="mb-4 text-xs font-semibold tracking-wide text-muted uppercase">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
 export function KitchenView({
   title,
   ingredients,
@@ -36,15 +51,15 @@ export function KitchenView({
 
   const cookingLines = splitLines(steps);
   const bakingLines = splitLines(bakingSteps);
+  const ingredientLines = splitLines(ingredients);
 
   return (
     <div className="grid gap-8">
       <h1 className="font-serif text-4xl leading-tight sm:text-5xl">{title}</h1>
-      <section>
-        <h2 className="mb-3 text-xl font-semibold">Ingredients</h2>
-        <ul className="grid gap-3 text-xl">
-          {splitLines(ingredients).map((line, index) => (
-            <li key={`${index}-${line}`}>
+      <RecipeSectionCard title="Ingredients">
+        <ul className="divide-y divide-line text-xl">
+          {ingredientLines.map((line, index) => (
+            <li key={`${index}-${line}`} className="py-3 first:pt-0 last:pb-0">
               <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -57,26 +72,24 @@ export function KitchenView({
             </li>
           ))}
         </ul>
-      </section>
+      </RecipeSectionCard>
       {cookingLines.length > 0 ? (
-        <section>
-          <h2 className="mb-3 text-xl font-semibold">Cooking instructions</h2>
+        <RecipeSectionCard title="Cooking instructions">
           <ol className="grid list-decimal gap-4 pl-6 text-xl leading-relaxed">
             {cookingLines.map((line, index) => (
               <li key={`cook-${index}-${line}`}>{line}</li>
             ))}
           </ol>
-        </section>
+        </RecipeSectionCard>
       ) : null}
       {bakingLines.length > 0 ? (
-        <section>
-          <h2 className="mb-3 text-xl font-semibold">Baking instructions</h2>
+        <RecipeSectionCard title="Baking instructions">
           <ol className="grid list-decimal gap-4 pl-6 text-xl leading-relaxed">
             {bakingLines.map((line, index) => (
               <li key={`bake-${index}-${line}`}>{line}</li>
             ))}
           </ol>
-        </section>
+        </RecipeSectionCard>
       ) : null}
     </div>
   );

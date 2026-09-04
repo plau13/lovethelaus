@@ -132,25 +132,25 @@ export function RecipeDetailToolbar({
   return (
     <>
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
-        <div className="text-muted flex flex-wrap items-center gap-2">
-          <Link href="/recipes" className="inline-flex items-center gap-1 no-underline hover:text-ink">
+        <div className="text-muted flex flex-nowrap items-center gap-2">
+          <Link href="/recipes" className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap no-underline hover:text-ink">
             <BackArrowIcon />
             <span>All recipes</span>
           </Link>
           <span aria-hidden>·</span>
-          <span className="inline-flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onCookModeChange(!cookModeOn)}
+            className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium ${
+              cookModeOn
+                ? "border-green-700 bg-green-700 text-white"
+                : "border-line bg-line/40 text-muted"
+            }`}
+            aria-pressed={cookModeOn}
+          >
             <span>Cook mode</span>
-            <button
-              type="button"
-              onClick={() => onCookModeChange(!cookModeOn)}
-              className={`rounded-full px-3 py-1 text-sm font-medium ${
-                cookModeOn ? "bg-green-700 text-white" : "bg-line text-muted"
-              }`}
-              aria-pressed={cookModeOn}
-            >
-              {cookModeOn ? "On" : "Off"}
-            </button>
-          </span>
+            <span>{cookModeOn ? "On" : "Off"}</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-1">

@@ -39,6 +39,8 @@ export function RecipeEditor({
     cookMinutes?: number | null;
     difficulty?: RecipeDifficulty | null;
     attribution?: string;
+    photoPath?: string;
+    photoAlt?: string;
   };
   hiddenFields?: Record<string, string>;
 }) {
@@ -324,6 +326,14 @@ export function RecipeEditor({
 
           <label className="grid gap-1">
             <span className="font-medium">Photo (optional)</span>
+            {defaults?.photoPath ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={defaults.photoPath}
+                alt={defaults.photoAlt ?? "Current recipe photo"}
+                className="max-h-48 w-full rounded-xl object-cover"
+              />
+            ) : null}
             <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" />
           </label>
 

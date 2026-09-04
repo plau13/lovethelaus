@@ -98,7 +98,7 @@ cd kitchen && npm test && npm run build
 
 - [ ] `/kitchen` — search redirects to `/kitchen/recipes?q=…`; recent recipes and cookbooks as white list cards with metadata
 - [ ] `/kitchen/recipes` — filters above search; white list cards with category · cook time · difficulty · tags; “Add recipe” white on clay
-- [ ] Recipe detail — toolbar icons centered (Heart · Share · Download · ⋯); Cook mode Off/On toggle (On = green, inline cook layout); Share modal (copy link for all; invite for owner/editors); no inline Share access section; Edit in ⋯ when editable
+- [ ] Recipe detail — “All recipes” and cook mode on one line; bordered cook-mode rectangle (grey off, green on); servings stepper scales ingredient quantities (best-effort); ingredients/instructions in white section cards; hero photo or edit placeholder; toolbar icons centered (Heart · Share · Download · ⋯); cook mode uses scaled ingredients with checkboxes; Share modal; Edit in ⋯ when editable
 - [ ] `/kitchen/cookbooks` — cookbook list cards (visibility · recipe count · role); cookbook detail uses recipe list cards
 - [ ] `/kitchen/loved-ones` — invite and remove access
 - [ ] Add/edit recipe — category, cook time, and difficulty save
