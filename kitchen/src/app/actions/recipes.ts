@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { addNote, copyRecipeToMyBook, createRecipe, updateRecipe } from "@/lib/recipes";
-import { RECIPE_CATEGORIES, RECIPE_TYPES, type RecipeCategory, type RecipeType } from "@/lib/types";
+import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES, RECIPE_TYPES, type RecipeCategory, type RecipeDifficulty, type RecipeType } from "@/lib/types";
 
 function servingsFrom(formData: FormData): number | null {
   const raw = String(formData.get("servings") ?? "").trim();
@@ -31,6 +31,14 @@ function categoryFrom(formData: FormData): RecipeCategory | null {
   return RECIPE_CATEGORIES.find((category) => category === raw) ?? null;
 }
 
+function difficultyFrom(formData: FormData): RecipeDifficulty | null {
+  const raw = String(formData.get("difficulty") ?? "").trim();
+  if (!raw) {
+    return null;
+  }
+  return RECIPE_DIFFICULTIES.find((entry) => entry === raw) ?? null;
+}
+
 function recipeTypeFrom(formData: FormData): RecipeType {
   const raw = String(formData.get("recipeType") ?? "cooking");
   const match = RECIPE_TYPES.find((type) => type === raw);
@@ -53,6 +61,7 @@ export async function saveNewRecipe(formData: FormData) {
     servings: servingsFrom(formData),
     category: categoryFrom(formData),
     cookMinutes: cookMinutesFrom(formData),
+    difficulty: difficultyFrom(formData),
     sourceType: "typed",
     sourceUrl: null,
     sourceAttribution: null,
@@ -76,6 +85,7 @@ export async function saveRecipeEdits(formData: FormData) {
     servings: servingsFrom(formData),
     category: categoryFrom(formData),
     cookMinutes: cookMinutesFrom(formData),
+    difficulty: difficultyFrom(formData),
     photo: formData.get("photo") as File | null,
   });
   redirect(`/recipes/${recipeId}`);

@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { canCommentOnRecipe, canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import { parseTags } from "@/lib/tags";
-import { collabRoleLabel, formatCookMinutes, RECIPE_COLLAB_ROLES, categoryLabel } from "@/lib/types";
+import { collabRoleLabel, difficultyLabel, formatCookMinutes, RECIPE_COLLAB_ROLES, categoryLabel } from "@/lib/types";
 
 function recipeTypeLabel(type: string): string {
   switch (type) {
@@ -83,6 +83,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         {recipeTypeLabel(recipe.recipeType)}
         {recipe.category ? ` · ${categoryLabel(recipe.category)}` : null}
         {recipe.cookMinutes ? ` · ${formatCookMinutes(recipe.cookMinutes)}` : null}
+        {recipe.difficulty ? ` · ${difficultyLabel(recipe.difficulty)}` : null}
         {recipe.servings ? ` · ${recipe.servings} servings` : null}
         {parseTags(recipe.tags).length ? ` · ${parseTags(recipe.tags).join(" · ")}` : null}
         {recipe.sourceUrl ? (

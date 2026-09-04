@@ -50,6 +50,7 @@ model Recipe {
   tags              String   @default("")
   category          String?
   cookMinutes       Int?
+  difficulty        String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -65,6 +66,7 @@ model Recipe {
   @@index([recipeType])
   @@index([category])
   @@index([cookMinutes])
+  @@index([difficulty])
 }
 
 model RecipePhoto {

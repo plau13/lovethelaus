@@ -10,7 +10,7 @@ import {
   canViewRecipe,
 } from "@/lib/permissions";
 import { ensureDefaultCookbook } from "@/lib/auth";
-import { cookTimeBucketFilter, type RecipeCategory, type RecipeCollabRole, type RecipeType } from "@/lib/types";
+import { cookTimeBucketFilter, type RecipeCategory, type RecipeCollabRole, type RecipeDifficulty, type RecipeType } from "@/lib/types";
 
 const PHOTO_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -23,6 +23,7 @@ export type ListRecipesOptions = {
   cookbookId?: string;
   category?: RecipeCategory;
   timeBucket?: string;
+  difficulty?: RecipeDifficulty;
 };
 
 function recipeSnapshot(recipe: {
@@ -35,6 +36,7 @@ function recipeSnapshot(recipe: {
   servings: number | null;
   category: string | null;
   cookMinutes: number | null;
+  difficulty: string | null;
 }) {
   return JSON.stringify({
     title: recipe.title,
@@ -46,12 +48,13 @@ function recipeSnapshot(recipe: {
     servings: recipe.servings,
     category: recipe.category,
     cookMinutes: recipe.cookMinutes,
+    difficulty: recipe.difficulty,
   });
 }
 
 export async function listVisibleRecipes(userId: string, options: ListRecipesOptions = {}) {
   const prisma = await getPrisma();
-  const { q = "", cookbookId, category, timeBucket } = options;
+  const { q = "", cookbookId, category, timeBucket, difficulty } = options;
   const timeFilter = timeBucket ? cookTimeBucketFilter(timeBucket) : null;
   const recipes = await prisma.recipe.findMany({
     where: {
@@ -79,6 +82,7 @@ export async function listVisibleRecipes(userId: string, options: ListRecipesOpt
             }
           : {},
         category ? { category } : {},
+        difficulty ? { difficulty } : {},
         timeFilter ?? {},
       ],
     },
@@ -147,6 +151,7 @@ export async function createRecipe(args: {
   servings: number | null;
   category?: RecipeCategory | null;
   cookMinutes?: number | null;
+  difficulty?: RecipeDifficulty | null;
   sourceType: string;
   sourceUrl: string | null;
   sourceAttribution: string | null;
@@ -170,6 +175,7 @@ export async function createRecipe(args: {
       servings: args.servings,
       category: args.category ?? null,
       cookMinutes: args.cookMinutes ?? null,
+      difficulty: args.difficulty ?? null,
       sourceType: args.sourceType,
       sourceUrl: args.sourceUrl,
       sourceAttribution: args.sourceAttribution,
@@ -196,6 +202,7 @@ export async function updateRecipe(args: {
   servings: number | null;
   category?: RecipeCategory | null;
   cookMinutes?: number | null;
+  difficulty?: RecipeDifficulty | null;
   photo?: File | null;
 }) {
   const prisma = await getPrisma();
@@ -234,6 +241,7 @@ export async function updateRecipe(args: {
       servings: args.servings,
       category: args.category ?? null,
       cookMinutes: args.cookMinutes ?? null,
+      difficulty: args.difficulty ?? null,
     },
   });
   if (args.photo && args.photo.size > 0) {
@@ -298,6 +306,7 @@ export async function copyRecipeToMyBook(userId: string, recipeId: string) {
     servings: source.servings,
     category: source.category as RecipeCategory | null,
     cookMinutes: source.cookMinutes,
+    difficulty: source.difficulty as RecipeDifficulty | null,
     sourceType: source.sourceType,
     sourceUrl: source.sourceUrl,
     sourceAttribution: source.sourceAttribution ?? `Copied from ${source.owner.name}`,

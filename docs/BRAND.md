@@ -77,6 +77,7 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay { color: #fff; }`
 
 - `rounded-2xl border border-line bg-white p-4` (or `p-5` for sections)
 - Recipe box / paper areas: `bg-paper` with inset shadow for “index card” tabs
+- **Recipe index card** (`RecipeTabCard`): protruding serif title tab in warm tab colors; card body below hides category, cook time, and difficulty until hover/focus (always visible on touch / `@media (hover: none)`)
 
 ### Auth screens
 

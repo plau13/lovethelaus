@@ -96,8 +96,8 @@ cd kitchen && npm test && npm run build
 
 ### Manual
 
-- [ ] `/kitchen/recipes` — search, category tabs, time filters, cookbook pills; “Add recipe” text visible (white on clay)
-- [ ] Add/edit recipe — category and cook time save
+- [ ] `/kitchen/recipes` — debounced search (no Search button); category, time, cookbook, and difficulty dropdowns; index-card layout with hover metadata; “Add recipe” text visible (white on clay)
+- [ ] Add/edit recipe — category, cook time, and difficulty save
 - [ ] `/kitchen/cookbooks` — list and detail
 - [ ] `/kitchen/loved-ones` — invite and remove access
 - [ ] Header nav centered: Home, Recipes, Cookbooks, Loved Ones

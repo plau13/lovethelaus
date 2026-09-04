@@ -5,7 +5,7 @@ import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireUser } from "@/lib/auth";
 import { canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
-import type { RecipeCategory, RecipeType } from "@/lib/types";
+import type { RecipeCategory, RecipeDifficulty, RecipeType } from "@/lib/types";
 
 export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -40,6 +40,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
           recipeType: recipe.recipeType as RecipeType,
           category: recipe.category as RecipeCategory | null,
           cookMinutes: recipe.cookMinutes,
+          difficulty: recipe.difficulty as RecipeDifficulty | null,
         }}
       />
     </main>

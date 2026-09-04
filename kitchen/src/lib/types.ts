@@ -44,6 +44,23 @@ export const COOK_TIME_BUCKETS = [
 
 export type CookTimeBucketId = (typeof COOK_TIME_BUCKETS)[number]["id"];
 
+export const RECIPE_DIFFICULTIES = ["easy", "intermediate", "hard"] as const;
+
+export type RecipeDifficulty = (typeof RECIPE_DIFFICULTIES)[number];
+
+export function difficultyLabel(difficulty: string | null | undefined): string {
+  switch (difficulty) {
+    case "easy":
+      return "Easy";
+    case "intermediate":
+      return "Intermediate";
+    case "hard":
+      return "Hard";
+    default:
+      return "";
+  }
+}
+
 export function categoryLabel(category: string | null | undefined): string {
   switch (category) {
     case "breads":
