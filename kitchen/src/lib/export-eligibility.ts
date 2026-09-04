@@ -1,7 +1,103 @@
 import { getPrisma } from "@/lib/prisma";
 import { canViewRecipe } from "@/lib/permissions";
 import { isSubscriber } from "@/lib/subscription";
-import { buildExportPayload, toRecipeExport, type RecipeForExport } from "@/lib/export";
+import { buildExportPayload, type RecipeForExport } from "@/lib/export";
+
+export type ExportRecipeAccess = {
+  allowed: boolean;
+  reason: "owner" | "subscriber" | "denied";
+};
+
+function toRecipeForExport(recipe: {
+  id: string;
+  title: string;
+  ingredients: string;
+  steps: string;
+  servings: number | null;
+  tags: string;
+  sourceType: string;
+  sourceUrl: string | null;
+  sourceAttribution: string | null;
+  updatedAt: Date;
+  notes: Array<{ body: string }>;
+}): RecipeForExport {
+  return {
+    id: recipe.id,
+    title: recipe.title,
+    ingredients: recipe.ingredients,
+    steps: recipe.steps,
+    servings: recipe.servings,
+    tags: recipe.tags,
+    sourceType: recipe.sourceType,
+    sourceUrl: recipe.sourceUrl,
+    sourceAttribution: recipe.sourceAttribution,
+    updatedAt: recipe.updatedAt,
+    notes: recipe.notes.map((note) => ({ body: note.body })),
+  };
+}
+
+export async function canExportRecipe(userId: string, recipeId: string): Promise<ExportRecipeAccess> {
+  const prisma = await getPrisma();
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    return { allowed: false, reason: "denied" };
+  }
+
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: recipeId },
+    include: {
+      notes: true,
+      collaborators: { where: { userId } },
+      cookbookRecipes: { include: { cookbook: { include: { members: true } } } },
+    },
+  });
+  if (!recipe) {
+    return { allowed: false, reason: "denied" };
+  }
+
+  if (recipe.ownerId === userId) {
+    return { allowed: true, reason: "owner" };
+  }
+
+  if (!isSubscriber(user)) {
+    return { allowed: false, reason: "denied" };
+  }
+
+  const allowed = canViewRecipe({
+    userId,
+    recipeOwnerId: recipe.ownerId,
+    collaboratorRole: recipe.collaborators[0]?.role ?? null,
+    containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
+      visibility: entry.cookbook.visibility,
+      ownerId: entry.cookbook.ownerId,
+      memberUserIds: entry.cookbook.members.map((member) => member.userId),
+    })),
+  });
+
+  if (!allowed) {
+    return { allowed: false, reason: "denied" };
+  }
+
+  return { allowed: true, reason: "subscriber" };
+}
+
+export async function buildSingleRecipeExport(userId: string, recipeId: string) {
+  const access = await canExportRecipe(userId, recipeId);
+  if (!access.allowed) {
+    throw new Error("You cannot export this recipe.");
+  }
+
+  const prisma = await getPrisma();
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: recipeId },
+    include: { notes: true },
+  });
+  if (!recipe) {
+    throw new Error("Recipe not found.");
+  }
+
+  return buildExportPayload([toRecipeForExport(recipe)]);
+}
 
 export async function recipesForExport(userId: string): Promise<RecipeForExport[]> {
   const prisma = await getPrisma();
@@ -17,19 +113,7 @@ export async function recipesForExport(userId: string): Promise<RecipeForExport[
   });
 
   const ownedIds = new Set(owned.map((r) => r.id));
-  const exportable: RecipeForExport[] = owned.map((recipe) => ({
-    id: recipe.id,
-    title: recipe.title,
-    ingredients: recipe.ingredients,
-    steps: recipe.steps,
-    servings: recipe.servings,
-    tags: recipe.tags,
-    sourceType: recipe.sourceType,
-    sourceUrl: recipe.sourceUrl,
-    sourceAttribution: recipe.sourceAttribution,
-    updatedAt: recipe.updatedAt,
-    notes: recipe.notes.map((n) => ({ body: n.body })),
-  }));
+  const exportable: RecipeForExport[] = owned.map((recipe) => toRecipeForExport(recipe));
 
   if (!isSubscriber(user)) {
     return exportable;
@@ -60,19 +144,7 @@ export async function recipesForExport(userId: string): Promise<RecipeForExport[
       })),
     });
     if (allowed) {
-      exportable.push({
-        id: recipe.id,
-        title: recipe.title,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
-        servings: recipe.servings,
-        tags: recipe.tags,
-        sourceType: recipe.sourceType,
-        sourceUrl: recipe.sourceUrl,
-        sourceAttribution: recipe.sourceAttribution,
-        updatedAt: recipe.updatedAt,
-        notes: recipe.notes.map((n) => ({ body: n.body })),
-      });
+      exportable.push(toRecipeForExport(recipe));
     }
   }
 
@@ -103,19 +175,7 @@ export async function recipesForExport(userId: string): Promise<RecipeForExport[
       })),
     });
     if (allowed) {
-      exportable.push({
-        id: recipe.id,
-        title: recipe.title,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
-        servings: recipe.servings,
-        tags: recipe.tags,
-        sourceType: recipe.sourceType,
-        sourceUrl: recipe.sourceUrl,
-        sourceAttribution: recipe.sourceAttribution,
-        updatedAt: recipe.updatedAt,
-        notes: recipe.notes.map((n) => ({ body: n.body })),
-      });
+      exportable.push(toRecipeForExport(recipe));
     }
   }
 

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { buildUserExportPayload, recipesForExport } from "@/lib/export-eligibility";
 import { toCsv } from "@/lib/export";
+import {
+  buildSingleRecipeExport,
+  buildUserExportPayload,
+  canExportRecipe,
+  recipesForExport,
+} from "@/lib/export-eligibility";
+import { slugify } from "@/lib/slug";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -10,6 +16,25 @@ export async function GET(request: NextRequest) {
   }
 
   const format = request.nextUrl.searchParams.get("format") ?? "json";
+  const recipeId = request.nextUrl.searchParams.get("recipeId");
+
+  if (recipeId) {
+    const access = await canExportRecipe(user.id, recipeId);
+    if (!access.allowed) {
+      return NextResponse.json({ error: "You cannot export this recipe." }, { status: 403 });
+    }
+
+    const payload = await buildSingleRecipeExport(user.id, recipeId);
+    const recipe = payload.recipes[0];
+    const filename = `${slugify(recipe?.title ?? "recipe")}.json`;
+
+    return NextResponse.json(payload, {
+      headers: {
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
+  }
+
   const payload = await buildUserExportPayload(user.id);
 
   if (format === "csv") {

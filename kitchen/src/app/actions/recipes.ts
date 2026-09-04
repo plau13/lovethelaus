@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { toggleRecipeFavorite } from "@/lib/favorites";
 import { addNote, copyRecipeToMyBook, createRecipe, updateRecipe } from "@/lib/recipes";
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES, RECIPE_TYPES, type RecipeCategory, type RecipeDifficulty, type RecipeType } from "@/lib/types";
 
@@ -103,4 +105,11 @@ export async function copyToMyBook(formData: FormData) {
   const recipeId = String(formData.get("recipeId") ?? "");
   const copy = await copyRecipeToMyBook(user.id, recipeId);
   redirect(`/recipes/${copy.id}`);
+}
+
+export async function toggleFavorite(formData: FormData) {
+  const user = await requireUser();
+  const recipeId = String(formData.get("recipeId") ?? "");
+  await toggleRecipeFavorite(user.id, recipeId);
+  revalidatePath(`/recipes/${recipeId}`);
 }

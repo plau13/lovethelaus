@@ -97,6 +97,7 @@ cd kitchen && npm test && npm run build
 ### Manual
 
 - [ ] `/kitchen/recipes` — debounced search (no Search button); category, time, cookbook, and difficulty dropdowns; index-card layout with hover metadata; “Add recipe” text visible (white on clay)
+- [ ] Recipe detail — back arrow on “All recipes”; heart favorite persists on reload; download for owner/subscriber; disabled download upsells Settings for free users on shared recipes; Edit only in ⋯ menu when editable
 - [ ] Add/edit recipe — category, cook time, and difficulty save
 - [ ] `/kitchen/cookbooks` — list and detail
 - [ ] `/kitchen/loved-ones` — invite and remove access

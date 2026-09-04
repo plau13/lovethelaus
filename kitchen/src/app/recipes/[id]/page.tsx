@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { grantRecipeAccess, revokeRecipeAccess } from "@/app/actions/collaborators";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
+import { RecipeDetailToolbar } from "@/components/RecipeDetailToolbar";
 import { requireUser } from "@/lib/auth";
+import { canExportRecipe } from "@/lib/export-eligibility";
+import { isRecipeFavorited } from "@/lib/favorites";
 import { canCommentOnRecipe, canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import { parseTags } from "@/lib/tags";
@@ -51,20 +54,18 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const coAuthors = recipe.collaborators.filter((entry) => entry.role === "co-author");
   const cookingSteps = recipe.steps.split("\n").filter(Boolean);
   const bakingSteps = recipe.bakingSteps.split("\n").filter(Boolean);
+  const favorited = await isRecipeFavorited(user.id, recipe.id);
+  const exportAccess = await canExportRecipe(user.id, recipe.id);
 
   return (
     <main className="grid gap-6">
-      <p className="text-muted no-print">
-        <Link href="/recipes">All recipes</Link>
-        {" · "}
-        <Link href={`/recipes/${recipe.id}/cook`}>Cook mode</Link>
-        {editable ? (
-          <>
-            {" · "}
-            <Link href={`/recipes/${recipe.id}/edit`}>Edit</Link>
-          </>
-        ) : null}
-      </p>
+      <RecipeDetailToolbar
+        recipeId={recipe.id}
+        favorited={favorited}
+        canExport={exportAccess.allowed}
+        canEdit={editable}
+        exportHref={`/api/export?format=json&recipeId=${recipe.id}`}
+      />
       <h1 className="font-serif text-4xl leading-tight">{recipe.title}</h1>
       <p className="text-muted">
         By {recipe.owner.name}
