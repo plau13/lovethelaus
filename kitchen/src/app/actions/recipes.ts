@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { toggleRecipeFavorite } from "@/lib/favorites";
 import { addNote, copyRecipeToMyBook, createRecipe, updateRecipe } from "@/lib/recipes";
+import { revalidatePublicRecipe } from "@/lib/revalidate-public";
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES, RECIPE_TYPES, type RecipeCategory, type RecipeDifficulty, type RecipeType } from "@/lib/types";
 
 function servingsFrom(formData: FormData): number | null {
@@ -89,6 +90,7 @@ export async function saveRecipeEdits(formData: FormData) {
     difficulty: difficultyFrom(formData),
     photo: formData.get("photo") as File | null,
   });
+  await revalidatePublicRecipe(recipeId);
   redirect(`/recipes/${recipeId}`);
 }
 

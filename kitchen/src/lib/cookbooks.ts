@@ -4,6 +4,7 @@ import { getDb, schema } from "@/db/client";
 import { sendCookbookInviteEmail, sendCookbookMemberAddedEmail } from "@/lib/email-templates";
 import { appUrl } from "@/lib/paths";
 import { canEditCookbookContents, canManageCookbook, canViewCookbook } from "@/lib/permissions";
+import { ensureRecipeSlugs } from "@/lib/recipes";
 import { slugify } from "@/lib/slug";
 import type { CookbookListFilter, CookbookRole, Visibility } from "@/lib/types";
 import { COOKBOOK_ROLES, VISIBILITIES } from "@/lib/types";
@@ -226,15 +227,23 @@ export async function updateCookbookSettings(args: {
   if (!canManageCookbook(role)) {
     throw new Error("Only the cookbook owner can change sharing.");
   }
+  const visibility = parseVisibility(args.visibility);
   const [updated] = await db
     .update(cookbook)
     .set({
       title: args.title.trim(),
       description: args.description.trim(),
-      visibility: parseVisibility(args.visibility),
+      visibility,
     })
     .where(eq(cookbook.id, args.cookbookId))
     .returning();
+  if (visibility !== "private") {
+    const entries = await db.query.cookbookRecipe.findMany({
+      where: eq(cookbookRecipe.cookbookId, args.cookbookId),
+      columns: { recipeId: true },
+    });
+    await ensureRecipeSlugs(entries.map((entry) => entry.recipeId));
+  }
   return updated;
 }
 

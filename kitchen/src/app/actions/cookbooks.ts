@@ -15,6 +15,7 @@ import {
 } from "@/lib/cookbooks";
 import { parseEmailList } from "@/lib/parse-emails";
 import { appUrl } from "@/lib/paths";
+import { revalidatePublicCookbook } from "@/lib/revalidate-public";
 
 export async function saveCookbook(formData: FormData) {
   const user = await requireUser();
@@ -36,6 +37,7 @@ export async function saveCookbookSettings(formData: FormData) {
     description: String(formData.get("description") ?? ""),
     visibility: String(formData.get("visibility") ?? "private"),
   });
+  await revalidatePublicCookbook(cookbookId);
   redirect(`/cookbooks/${cookbookId}/settings`);
 }
 
@@ -60,6 +62,7 @@ export async function putRecipeInCookbook(formData: FormData) {
   const user = await requireUser();
   const cookbookId = String(formData.get("cookbookId") ?? "");
   await addRecipeToCookbook(user.id, cookbookId, String(formData.get("recipeId") ?? ""));
+  await revalidatePublicCookbook(cookbookId);
   redirect(`/cookbooks/${cookbookId}`);
 }
 

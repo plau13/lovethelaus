@@ -68,6 +68,10 @@ After changing bindings run `npm run cf-typegen` locally to regenerate `cloudfla
 | **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner.                                                                                                                                                                                 |
 | **Stripe** | Product "Kitchen Plus" with one recurring price → `STRIPE_PRICE_KITCHEN_PLUS`. Webhook endpoint `https://lovethelaus.com/kitchen/api/stripe/webhook` with events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` → `STRIPE_WEBHOOK_SECRET`. Enable the Customer Portal. |
 
+### Build-time public config (ads, analytics)
+
+`NEXT_PUBLIC_ADSENSE_*` and `NEXT_PUBLIC_GA_ID` are compiled into the client bundle. Set them in `kitchen/.env` on the machine that runs `npm run deploy`; they are not Worker secrets and changing them requires a rebuild. See [`ADS.md`](ADS.md).
+
 ## Secrets & environment variables
 
 ### Where values live

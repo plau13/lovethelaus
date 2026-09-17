@@ -1,10 +1,11 @@
-import { and, desc, asc, eq, exists, gte, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, asc, eq, exists, gte, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { ensureDefaultCookbook } from "@/lib/default-cookbook";
 import { sendRecipeCollaboratorEmail } from "@/lib/email-templates";
 import { appUrl } from "@/lib/paths";
 import { canCommentOnRecipe, canEditRecipe, canViewRecipe } from "@/lib/permissions";
 import { deleteRecipePhotos, uploadRecipePhoto } from "@/lib/recipe-photos";
+import { recipeSlugFor } from "@/lib/slug";
 import { parseTags, recipeMatchesQuery } from "@/lib/tags";
 import {
   collabRoleLabel,
@@ -202,6 +203,7 @@ export async function createRecipe(args: {
       sourceAttribution: args.sourceAttribution,
     })
     .returning();
+  await db.update(recipe).set({ slug: recipeSlugFor(title, created.id) }).where(eq(recipe.id, created.id));
   await db
     .insert(cookbookRecipe)
     .values({ cookbookId: cookbook.id, recipeId: created.id, position: 0 })
@@ -209,7 +211,22 @@ export async function createRecipe(args: {
   if (args.photo && args.photo.size > 0) {
     await saveRecipePhoto(created.id, args.photo);
   }
-  return created;
+  return { ...created, slug: recipeSlugFor(title, created.id) };
+}
+
+/** Give recipes without a public slug one (used when a cookbook becomes shareable). */
+export async function ensureRecipeSlugs(recipeIds: string[]): Promise<void> {
+  if (recipeIds.length === 0) {
+    return;
+  }
+  const db = getDb();
+  const rows = await db.query.recipe.findMany({
+    where: and(inArray(recipe.id, recipeIds), isNull(recipe.slug)),
+    columns: { id: true, title: true },
+  });
+  for (const row of rows) {
+    await db.update(recipe).set({ slug: recipeSlugFor(row.title, row.id) }).where(eq(recipe.id, row.id));
+  }
 }
 
 export async function updateRecipe(args: {
@@ -262,6 +279,7 @@ export async function updateRecipe(args: {
       category: args.category ?? null,
       cookMinutes: args.cookMinutes ?? null,
       difficulty: args.difficulty ?? null,
+      ...(existing.slug ? {} : { slug: recipeSlugFor(args.title, existing.id) }),
     })
     .where(eq(recipe.id, args.recipeId));
   if (args.photo && args.photo.size > 0) {
