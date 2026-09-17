@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function HEAD(request: NextRequest) {
+export async function HEAD() {
   const user = await getCurrentUser();
   if (!user) {
     return new NextResponse(null, { status: 401 });

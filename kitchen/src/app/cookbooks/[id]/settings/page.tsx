@@ -3,11 +3,8 @@ import { notFound } from "next/navigation";
 import { saveCookbookSettings } from "@/app/actions/cookbooks";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
+import { appUrl } from "@/lib/paths";
 import { canManageCookbook } from "@/lib/permissions";
-
-function appUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000/kitchen";
-}
 
 export default async function CookbookSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireOnboardedUser();
@@ -17,7 +14,7 @@ export default async function CookbookSettingsPage({ params }: { params: Promise
   if (!cookbook || !canManageCookbook(role)) {
     notFound();
   }
-  const shareUrl = `${appUrl()}/c/${cookbook.slug}`;
+  const shareUrl = appUrl(`/c/${cookbook.slug}`);
 
   return (
     <main className="grid gap-8">

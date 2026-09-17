@@ -1,3 +1,4 @@
+import { BASE_PATH } from "@/lib/paths";
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -11,7 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#faf6f0",
     icons: [
       {
-        src: "/kitchen/icon.svg",
+        src: `${BASE_PATH}/icon.svg`,
         sizes: "any",
         type: "image/svg+xml",
       },

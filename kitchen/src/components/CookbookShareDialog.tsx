@@ -73,13 +73,16 @@ export function CookbookShareDialog({
     };
   }, [open, onClose]);
 
-  useEffect(() => {
+  // Reset transient state whenever the dialog closes (adjust-state-during-render pattern).
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (!open) {
       setCopied(false);
       setInviteCopied(false);
       setInviteUrl(null);
     }
-  }, [open]);
+  }
 
   if (!open) {
     return null;

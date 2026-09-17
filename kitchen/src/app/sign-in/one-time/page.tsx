@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { magicLinkAction } from "@/app/actions/auth";
 import { AuthError, AuthField, AuthNotice, AuthShell, authInputClass } from "@/components/AuthShell";
+import { safeReturnTo } from "@/lib/post-auth";
 
 export default async function OneTimeLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sent?: string }>;
+  searchParams: Promise<{ error?: string; sent?: string; returnTo?: string }>;
 }) {
-  const { error, sent } = await searchParams;
+  const { error, sent, returnTo: returnToRaw } = await searchParams;
+  const next = safeReturnTo(returnToRaw);
   const isSuccess = sent === "magic-link";
 
   return (
@@ -30,6 +32,7 @@ export default async function OneTimeLoginPage({
       ) : (
         <form action={magicLinkAction} className="grid gap-4">
           <input type="hidden" name="returnTo" value="/sign-in/one-time" />
+          {next ? <input type="hidden" name="next" value={next} /> : null}
           <AuthField label="Email">
             <input
               name="email"

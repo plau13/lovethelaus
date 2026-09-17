@@ -1,25 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authErrorMessage, getCurrentUser, signIn } from "@/lib/auth";
+import type { NextRequest } from "next/server";
+import { authErrorMessage, signIn } from "@/lib/auth";
+import { appPath, errorRedirect, formReturnTo, redirectWithCookies, withQuery } from "@/lib/route-helpers";
+import { safeReturnTo } from "@/lib/post-auth";
 
-function redirectUrl(request: NextRequest, path: string): URL {
-  return new URL(path, request.url);
-}
+export const dynamic = "force-dynamic";
 
+/** Form POST adapter used by the marketing site's /sign-in page and Kitchen's own form. */
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const email = String(formData.get("email") ?? "");
-  const password = String(formData.get("password") ?? "");
-  const returnTo = String(formData.get("returnTo") ?? "/sign-in");
+  const returnTo = formReturnTo(formData, "/sign-in");
+  const next = safeReturnTo(String(formData.get("next") ?? ""));
 
   try {
-    await signIn(email, password);
-    const user = await getCurrentUser();
-    const destination = user && !user.onboardingCompletedAt ? "/kitchen/onboarding" : "/kitchen/recipes";
-    return NextResponse.redirect(redirectUrl(request, destination));
-  } catch (error) {
-    const separator = returnTo.includes("?") ? "&" : "?";
-    return NextResponse.redirect(
-      redirectUrl(request, `${returnTo}${separator}error=${encodeURIComponent(authErrorMessage(error))}`)
+    const { setCookies } = await signIn(
+      String(formData.get("email") ?? ""),
+      String(formData.get("password") ?? ""),
+      request.headers
     );
+    const callback = next ? withQuery(appPath("/auth/callback"), "returnTo", next) : appPath("/auth/callback");
+    return redirectWithCookies(request, callback, setCookies);
+  } catch (error) {
+    return errorRedirect(request, returnTo, authErrorMessage(error));
   }
 }

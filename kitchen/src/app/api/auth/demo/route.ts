@@ -1,24 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { authErrorMessage, signIn } from "@/lib/auth";
+import { appPath, errorRedirect, redirectWithCookies } from "@/lib/route-helpers";
 
-function redirectUrl(request: NextRequest, path: string): URL {
-  return new URL(path, request.url);
-}
+export const dynamic = "force-dynamic";
 
+/** "Try the demo": signs in with the seeded demo account (DEMO_USER_EMAIL / DEMO_USER_PASSWORD). */
 export async function GET(request: NextRequest) {
   const email = process.env.DEMO_USER_EMAIL?.trim().toLowerCase();
   const password = process.env.DEMO_USER_PASSWORD?.trim();
 
   if (!email || !password) {
-    return NextResponse.redirect(redirectUrl(request, "/kitchen/sign-in?error=demo-unavailable"));
+    return errorRedirect(request, appPath("/sign-in"), "demo-unavailable");
   }
 
   try {
-    await signIn(email, password);
+    const { setCookies } = await signIn(email, password, request.headers);
+    return redirectWithCookies(request, appPath("/recipes"), setCookies);
   } catch (error) {
-    const message = encodeURIComponent(authErrorMessage(error));
-    return NextResponse.redirect(redirectUrl(request, `/kitchen/sign-in?error=${message}`));
+    return errorRedirect(request, appPath("/sign-in"), authErrorMessage(error));
   }
-
-  return NextResponse.redirect(redirectUrl(request, "/kitchen/recipes"));
 }

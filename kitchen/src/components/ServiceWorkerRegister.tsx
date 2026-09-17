@@ -1,5 +1,7 @@
 "use client";
 
+import { BASE_PATH } from "@/lib/paths";
+
 import { useEffect } from "react";
 
 export function ServiceWorkerRegister() {
@@ -7,7 +9,7 @@ export function ServiceWorkerRegister() {
     if (!("serviceWorker" in navigator)) {
       return;
     }
-    void navigator.serviceWorker.register("/kitchen/sw.js", { scope: "/kitchen/" });
+    void navigator.serviceWorker.register(`${BASE_PATH}/sw.js`, { scope: `${BASE_PATH}/` });
   }, []);
 
   return null;

@@ -1,8 +1,9 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
-import { getPrisma } from "@/lib/prisma";
+import { getDb, schema } from "@/db/client";
+import { refreshSessionCache, requireUser } from "@/lib/auth";
 import { ONBOARDING_QUESTIONS } from "@/lib/types";
 
 export async function saveOnboarding(formData: FormData) {
@@ -11,8 +12,7 @@ export async function saveOnboarding(formData: FormData) {
 
   for (const question of ONBOARDING_QUESTIONS) {
     if (question.type === "checkboxes") {
-      const values = formData.getAll(question.id).map((entry) => String(entry));
-      answers[question.id] = values;
+      answers[question.id] = formData.getAll(question.id).map((entry) => String(entry));
       continue;
     }
     const value = String(formData.get(question.id) ?? "").trim();
@@ -24,14 +24,12 @@ export async function saveOnboarding(formData: FormData) {
     }
   }
 
-  const prisma = await getPrisma();
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      onboardingAnswers: JSON.stringify(answers),
-      onboardingCompletedAt: new Date(),
-    },
-  });
+  const db = getDb();
+  await db
+    .update(schema.user)
+    .set({ onboardingAnswers: JSON.stringify(answers), onboardingCompletedAt: new Date() })
+    .where(eq(schema.user.id, user.id));
+  await refreshSessionCache();
 
   redirect("/recipes");
 }

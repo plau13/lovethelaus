@@ -1,24 +1,22 @@
-import { getPrisma } from "@/lib/prisma";
+import { and, eq } from "drizzle-orm";
+import { getDb, schema } from "@/db/client";
 import { canViewCookbook } from "@/lib/permissions";
 
 export async function isCookbookFavorited(userId: string, cookbookId: string): Promise<boolean> {
-  const prisma = await getPrisma();
-  const favorite = await prisma.cookbookFavorite.findUnique({
-    where: { userId_cookbookId: { userId, cookbookId } },
+  const db = getDb();
+  const favorite = await db.query.cookbookFavorite.findFirst({
+    where: and(eq(schema.cookbookFavorite.userId, userId), eq(schema.cookbookFavorite.cookbookId, cookbookId)),
+    columns: { id: true },
   });
   return favorite != null;
 }
 
 export async function toggleCookbookFavorite(userId: string, cookbookId: string): Promise<boolean> {
-  const prisma = await getPrisma();
-  const cookbook = await prisma.cookbook.findUnique({
-    where: { id: cookbookId },
-    select: {
-      id: true,
-      ownerId: true,
-      visibility: true,
-      members: { select: { userId: true } },
-    },
+  const db = getDb();
+  const cookbook = await db.query.cookbook.findFirst({
+    where: eq(schema.cookbook.id, cookbookId),
+    columns: { id: true, ownerId: true, visibility: true },
+    with: { members: { columns: { userId: true } } },
   });
   if (!cookbook) {
     throw new Error("Cookbook not found.");
@@ -34,26 +32,25 @@ export async function toggleCookbookFavorite(userId: string, cookbookId: string)
     throw new Error("Cookbook not found.");
   }
 
-  const existing = await prisma.cookbookFavorite.findUnique({
-    where: { userId_cookbookId: { userId, cookbookId } },
+  const existing = await db.query.cookbookFavorite.findFirst({
+    where: and(eq(schema.cookbookFavorite.userId, userId), eq(schema.cookbookFavorite.cookbookId, cookbookId)),
+    columns: { id: true },
   });
 
   if (existing) {
-    await prisma.cookbookFavorite.delete({ where: { id: existing.id } });
+    await db.delete(schema.cookbookFavorite).where(eq(schema.cookbookFavorite.id, existing.id));
     return false;
   }
 
-  await prisma.cookbookFavorite.create({
-    data: { userId, cookbookId },
-  });
+  await db.insert(schema.cookbookFavorite).values({ userId, cookbookId }).onConflictDoNothing();
   return true;
 }
 
 export async function listFavoriteCookbookIds(userId: string): Promise<Set<string>> {
-  const prisma = await getPrisma();
-  const favorites = await prisma.cookbookFavorite.findMany({
-    where: { userId },
-    select: { cookbookId: true },
+  const db = getDb();
+  const favorites = await db.query.cookbookFavorite.findMany({
+    where: eq(schema.cookbookFavorite.userId, userId),
+    columns: { cookbookId: true },
   });
   return new Set(favorites.map((entry) => entry.cookbookId));
 }

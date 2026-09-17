@@ -1,5 +1,7 @@
 "use client";
 
+import { BASE_PATH } from "@/lib/paths";
+
 import { useEffect } from "react";
 
 type CookPayload = {
@@ -21,7 +23,7 @@ export function OfflineCookCache({
     if (!enabled || !("caches" in window)) {
       return;
     }
-    const cacheKey = `/kitchen/offline/recipes/${recipe.id}.json`;
+    const cacheKey = `${BASE_PATH}/offline/recipes/${recipe.id}.json`;
     void caches.open("kitchen-offline-v1").then((cache) =>
       cache.put(
         cacheKey,

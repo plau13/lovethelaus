@@ -16,11 +16,11 @@ Applies to the whole repo (root marketing site and `kitchen/`).
 2. **Commit** — stage relevant changes only; never commit `.env`, secrets, or `.wrangler/` state. Write a concise commit message focused on why.
 3. **Deploy** — push to production using the smallest scope that covers your changes:
 
-| What changed | Deploy command (from repo root) |
-|--------------|----------------------------------|
-| Marketing site only (`src/`, `dist/`, Astro) | `npm run deploy:router` |
-| Kitchen only (`kitchen/`) | `cd kitchen && npm run deploy` |
-| Both, or unsure | `npm run deploy:all` |
+| What changed                                 | Deploy command (from repo root) |
+| -------------------------------------------- | ------------------------------- |
+| Marketing site only (`src/`, `dist/`, Astro) | `npm run deploy:router`         |
+| Kitchen only (`kitchen/`)                    | `cd kitchen && npm run deploy`  |
+| Both, or unsure                              | `npm run deploy:all`            |
 
 Requires `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
 

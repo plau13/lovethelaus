@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 const baseClass =
   "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-ink hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50";

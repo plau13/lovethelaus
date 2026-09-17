@@ -7,13 +7,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
-  serverExternalPackages: ["@prisma/client", ".prisma/client"],
-  outputFileTracingIncludes: {
-    "**/*": [
-      "./node_modules/pg-cloudflare/dist/**",
-      "./node_modules/pg-cloudflare/esm/**",
-    ],
-  },
 };
 
 export default nextConfig;

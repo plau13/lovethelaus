@@ -6,13 +6,13 @@ Network: Google AdSense first (no traffic minimum). Slot sizes match the Mediavi
 
 ## Surfaces (Phase 2)
 
-| Surface | Route | Notes |
-|---|---|---|
+| Surface            | Route                                        | Notes                                                                                                                                                                                                                                                                                        |
+| ------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Public recipe page | `kitchen/src/app/(public)/r/[slug]/page.tsx` | One recipe per URL from a `public` cookbook. `generateMetadata` (title, description, OG image via the `IMAGES` binding) + `Recipe` JSON-LD (name, image, author, datePublished, recipeIngredient, recipeInstructions, totalTime, recipeYield, keywords). `recipe.slug` exists in the schema. |
-| Public cookbook | `/c/[slug]` (rebuilt) | Index of cards (cover, title, time, difficulty) linking to `/r/[slug]`; `ItemList` JSON-LD; `generateMetadata`. Only `public` cookbooks get ads and indexing; `unlisted` stays noindex. |
-| Explore | `/explore`, `/explore/[category]` | Paginated grid of public recipes. Crawl entry point. |
-| Sitemap / robots | `kitchen/src/app/sitemap.ts`, `robots.ts` | Cover `/explore`, `/c/*`, `/r/*` only. Reference from the root `robots.txt`. |
-| Marketing site | — | No ads initially; AdSense wants content pages, not a landing page. |
+| Public cookbook    | `/c/[slug]` (rebuilt)                        | Index of cards (cover, title, time, difficulty) linking to `/r/[slug]`; `ItemList` JSON-LD; `generateMetadata`. Only `public` cookbooks get ads and indexing; `unlisted` stays noindex.                                                                                                      |
+| Explore            | `/explore`, `/explore/[category]`            | Paginated grid of public recipes. Crawl entry point.                                                                                                                                                                                                                                         |
+| Sitemap / robots   | `kitchen/src/app/sitemap.ts`, `robots.ts`    | Cover `/explore`, `/c/*`, `/r/*` only. Reference from the root `robots.txt`.                                                                                                                                                                                                                 |
+| Marketing site     | —                                            | No ads initially; AdSense wants content pages, not a landing page.                                                                                                                                                                                                                           |
 
 ## Layout
 

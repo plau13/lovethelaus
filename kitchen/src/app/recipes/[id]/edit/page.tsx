@@ -3,6 +3,7 @@ import { saveRecipeEdits } from "@/app/actions/recipes";
 import { startImport } from "@/app/actions/import";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireOnboardedUser } from "@/lib/auth";
+import { photoUrl } from "@/lib/paths";
 import { canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import type { RecipeCategory, RecipeDifficulty, RecipeType } from "@/lib/types";
@@ -41,7 +42,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
           category: recipe.category as RecipeCategory | null,
           cookMinutes: recipe.cookMinutes,
           difficulty: recipe.difficulty as RecipeDifficulty | null,
-          photoPath: recipe.photos[0]?.path,
+          photoPath: recipe.photos[0] ? photoUrl(recipe.photos[0].path) : undefined,
           photoAlt: recipe.photos[0]?.alt,
         }}
       />

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { getCurrentUser } from "@/lib/auth";
 import { AppHeader } from "@/components/AppHeader";
-import { AuthRecoveryRedirect } from "@/components/AuthRecoveryRedirect";
+import { BASE_PATH } from "@/lib/paths";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   description: "A private recipe box for the family.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/kitchen/icon.svg",
-    apple: "/kitchen/icon.svg",
+    icon: `${BASE_PATH}/icon.svg`,
+    apple: `${BASE_PATH}/icon.svg`,
   },
   appleWebApp: {
     capable: true,
@@ -43,7 +43,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable}`}>
       <body className="min-h-dvh antialiased">
-        <AuthRecoveryRedirect />
         <ServiceWorkerRegister />
         <AppHeader userName={user?.name ?? null} />
         <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6">{children}</div>

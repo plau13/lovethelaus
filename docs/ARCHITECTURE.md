@@ -4,14 +4,14 @@ Status: accepted 2026-09-17. Supersedes Supabase (Postgres + Auth) and Prisma.
 
 ## Decision
 
-| Concern | Choice | Why |
-|---|---|---|
-| Database | **Neon Postgres** via `@neondatabase/serverless` (HTTP driver) | Stateless per-request connections suit Cloudflare Workers; no Hyperdrive needed; branching for dev/preview. |
-| ORM | **Drizzle** (`drizzle-orm/neon-http`, `drizzle-kit` migrations) | Small Worker bundle, first-class Better Auth adapter, SQL-shaped queries for the visibility `exists` checks. |
-| Auth | **Better Auth** (email + password, magic link, password reset) | Runs in-process on the Worker; its `user` table *is* the app user table; cookie cache removes the per-render DB hit. |
-| Email | **Resend** | Fetch-based SDK works on Workers; needed for magic links, resets, and cookbook invites (previously never sent). |
-| Storage | **Cloudflare R2** (already bound as `RECIPE_PHOTOS`) | Keys stored in the DB; served through an authorised route. Filesystem fallback removed. |
-| Billing | **Stripe Checkout + Customer Portal + webhook**, hand-rolled | Two tiers (`free`, `subscriber`), one price. `@better-auth/stripe` adds tables and routes we don't need. |
+| Concern  | Choice                                                          | Why                                                                                                                  |
+| -------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Database | **Neon Postgres** via `@neondatabase/serverless` (HTTP driver)  | Stateless per-request connections suit Cloudflare Workers; no Hyperdrive needed; branching for dev/preview.          |
+| ORM      | **Drizzle** (`drizzle-orm/neon-http`, `drizzle-kit` migrations) | Small Worker bundle, first-class Better Auth adapter, SQL-shaped queries for the visibility `exists` checks.         |
+| Auth     | **Better Auth** (email + password, magic link, password reset)  | Runs in-process on the Worker; its `user` table _is_ the app user table; cookie cache removes the per-render DB hit. |
+| Email    | **Resend**                                                      | Fetch-based SDK works on Workers; needed for magic links, resets, and cookbook invites (previously never sent).      |
+| Storage  | **Cloudflare R2** (already bound as `RECIPE_PHOTOS`)            | Keys stored in the DB; served through an authorised route. Filesystem fallback removed.                              |
+| Billing  | **Stripe Checkout + Customer Portal + webhook**, hand-rolled    | Two tiers (`free`, `subscriber`), one price. `@better-auth/stripe` adds tables and routes we don't need.             |
 
 Prod data at cutover was the owner plus demo/family testers, so this is a clean cutover: fresh Neon database, one baseline migration, demo re-seeded. No password-hash migration.
 
@@ -41,18 +41,18 @@ No Worker fetches itself, so `global_fetch_strictly_public` stays on.
 
 ## Code map
 
-| Concern | Files |
-|---|---|
-| DB client | `kitchen/src/db/client.ts` (`createDb`, React-cached `getDb`) |
-| Schema | `kitchen/src/db/schema/{auth,app,heritage,relations,index}.ts`, migrations in `kitchen/drizzle/` |
-| Auth instance | `kitchen/src/lib/better-auth.ts` (lazy `getAuth()`), handler `src/app/api/auth/[...all]/route.ts` |
-| Auth facade | `kitchen/src/lib/auth.ts` (`getCurrentUser`, `requireUser`, `requireOnboardedUser`, `signOut`, `refreshSessionCache`) |
-| Redirect + path helpers | `kitchen/src/lib/post-auth.ts`, `kitchen/src/lib/paths.ts` |
-| Route guard | `kitchen/src/proxy.ts` |
-| Email | `kitchen/src/lib/email.ts`, `kitchen/src/lib/email-templates.ts` |
-| Billing | `kitchen/src/lib/stripe.ts`, `kitchen/src/lib/billing.ts`, `src/app/actions/billing.ts`, `src/app/api/stripe/webhook/route.ts` |
-| Photos | `kitchen/src/lib/recipe-photos.ts`, `src/app/api/recipe-photos/[...key]/route.ts` |
-| Scripts | `kitchen/scripts/seed-demo.ts`, `kitchen/scripts/purge-seed-users.ts` |
+| Concern                 | Files                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| DB client               | `kitchen/src/db/client.ts` (`createDb`, React-cached `getDb`)                                                                  |
+| Schema                  | `kitchen/src/db/schema/{auth,app,heritage,relations,index}.ts`, migrations in `kitchen/drizzle/`                               |
+| Auth instance           | `kitchen/src/lib/better-auth.ts` (lazy `getAuth()`), handler `src/app/api/auth/[...all]/route.ts`                              |
+| Auth facade             | `kitchen/src/lib/auth.ts` (`getCurrentUser`, `requireUser`, `requireOnboardedUser`, `signOut`, `refreshSessionCache`)          |
+| Redirect + path helpers | `kitchen/src/lib/post-auth.ts`, `kitchen/src/lib/paths.ts`                                                                     |
+| Route guard             | `kitchen/src/proxy.ts`                                                                                                         |
+| Email                   | `kitchen/src/lib/email.ts`, `kitchen/src/lib/email-templates.ts`                                                               |
+| Billing                 | `kitchen/src/lib/stripe.ts`, `kitchen/src/lib/billing.ts`, `src/app/actions/billing.ts`, `src/app/api/stripe/webhook/route.ts` |
+| Photos                  | `kitchen/src/lib/recipe-photos.ts`, `src/app/api/recipe-photos/[...key]/route.ts`                                              |
+| Scripts                 | `kitchen/scripts/seed-demo.ts`, `kitchen/scripts/purge-seed-users.ts`                                                          |
 
 ## Rules that keep this working
 

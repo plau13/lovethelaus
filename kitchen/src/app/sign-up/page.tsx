@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { signUpAction } from "@/app/actions/auth";
 import { AuthError, AuthField, AuthShell, authInputClass } from "@/components/AuthShell";
+import { safeReturnTo } from "@/lib/post-auth";
 
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; email?: string; returnTo?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, email, returnTo: returnToRaw } = await searchParams;
+  const returnTo = safeReturnTo(returnToRaw);
 
   return (
     <AuthShell
@@ -24,6 +26,7 @@ export default async function SignUpPage({
     >
       <AuthError message={error} />
       <form action={signUpAction} className="grid gap-4">
+        {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
         <AuthField label="Your name">
           <input name="name" className={authInputClass} placeholder="Mom" autoComplete="name" />
         </AuthField>
@@ -35,6 +38,7 @@ export default async function SignUpPage({
             autoComplete="email"
             className={authInputClass}
             placeholder="you@example.com"
+            defaultValue={email ?? ""}
           />
         </AuthField>
         <AuthField label="Password">

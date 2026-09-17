@@ -1,23 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { authErrorMessage, requestPasswordReset } from "@/lib/auth";
+import { errorRedirect, formReturnTo, originUrl, withQuery } from "@/lib/route-helpers";
 
-function redirectUrl(request: NextRequest, path: string): URL {
-  return new URL(path, request.url);
-}
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const email = String(formData.get("email") ?? "");
-  const returnTo = String(formData.get("returnTo") ?? "/forgot-password");
+  const returnTo = formReturnTo(formData, "/forgot-password");
 
   try {
-    await requestPasswordReset(email);
-    const separator = returnTo.includes("?") ? "&" : "?";
-    return NextResponse.redirect(redirectUrl(request, `${returnTo}${separator}sent=1`));
+    await requestPasswordReset(String(formData.get("email") ?? ""), request.headers);
+    return NextResponse.redirect(originUrl(request, withQuery(returnTo, "sent", "1")), 303);
   } catch (error) {
-    const separator = returnTo.includes("?") ? "&" : "?";
-    return NextResponse.redirect(
-      redirectUrl(request, `${returnTo}${separator}error=${encodeURIComponent(authErrorMessage(error))}`)
-    );
+    return errorRedirect(request, returnTo, authErrorMessage(error));
   }
 }

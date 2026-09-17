@@ -61,13 +61,13 @@ We do **not** sell your personal information.
 
 We use trusted providers to run Kitchen:
 
-| Provider | Purpose |
-|----------|---------|
-| **Neon** | PostgreSQL database |
-| **Cloudflare** | Hosting, CDN, and object storage for recipe photos |
-| **Resend** | Transactional email (sign-in links, password resets, cookbook invitations) |
-| **Stripe** | Payment processing for Kitchen Plus subscriptions. We never see or store card numbers. |
-| **Anthropic / OpenAI** (optional) | Structuring imported recipe drafts from captions |
+| Provider                          | Purpose                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| **Neon**                          | PostgreSQL database                                                                    |
+| **Cloudflare**                    | Hosting, CDN, and object storage for recipe photos                                     |
+| **Resend**                        | Transactional email (sign-in links, password resets, cookbook invitations)             |
+| **Stripe**                        | Payment processing for Kitchen Plus subscriptions. We never see or store card numbers. |
+| **Anthropic / OpenAI** (optional) | Structuring imported recipe drafts from captions                                       |
 
 These providers process data on our behalf under their own privacy terms. We configure them so your recipe content is not used to train public models beyond what is required to provide the import feature.
 

@@ -4,17 +4,17 @@ The interview script ([`kitchen/docs/mom-interview.md`](../kitchen/docs/mom-inte
 
 ## Data model (already in the schema)
 
-| Table / column | Purpose |
-|---|---|
-| `person` | A family member who may not have an account: `name`, `relationship`, `birthYear`, `passedYear`, `photoKey`, `bio`, optional `linkedUserId`. Owned by the user who created it. |
-| `recipe.originPersonId` | "From Grandma Rose". |
-| `recipe.adaptedFromRecipeId` | Lineage chain: this recipe was adapted from another recipe in the family. |
-| `recipe.story` | Free text: where this recipe comes from. |
-| `recipe.firstMadeYear`, `recipe.occasion` | "First made 1974", "Thanksgiving". |
-| `recipe.slug` | Public URL for Phase 2. |
-| `recipe_media` | `kind` = `photo` / `scan` / `voice`, R2 key, caption, duration, position. Scanned handwritten cards and voice memos are first-class. |
-| `recipe_memory` | "I made this": `madeOn`, note, optional media. Feeds the timeline. |
-| `cookbook.dedication`, `cookbook.familyName` | The cookbook reads like a book. |
+| Table / column                               | Purpose                                                                                                                                                                       |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `person`                                     | A family member who may not have an account: `name`, `relationship`, `birthYear`, `passedYear`, `photoKey`, `bio`, optional `linkedUserId`. Owned by the user who created it. |
+| `recipe.originPersonId`                      | "From Grandma Rose".                                                                                                                                                          |
+| `recipe.adaptedFromRecipeId`                 | Lineage chain: this recipe was adapted from another recipe in the family.                                                                                                     |
+| `recipe.story`                               | Free text: where this recipe comes from.                                                                                                                                      |
+| `recipe.firstMadeYear`, `recipe.occasion`    | "First made 1974", "Thanksgiving".                                                                                                                                            |
+| `recipe.slug`                                | Public URL for Phase 2.                                                                                                                                                       |
+| `recipe_media`                               | `kind` = `photo` / `scan` / `voice`, R2 key, caption, duration, position. Scanned handwritten cards and voice memos are first-class.                                          |
+| `recipe_memory`                              | "I made this": `madeOn`, note, optional media. Feeds the timeline.                                                                                                            |
+| `cookbook.dedication`, `cookbook.familyName` | The cookbook reads like a book.                                                                                                                                               |
 
 ## UI, in priority order (Phase 3)
 

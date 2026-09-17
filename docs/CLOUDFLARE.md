@@ -2,9 +2,9 @@
 
 Single domain: **`lovethelaus.com`**
 
-| Path | App |
-|------|-----|
-| `/` | Marketing (Astro static) |
+| Path         | App                            |
+| ------------ | ------------------------------ |
+| `/`          | Marketing (Astro static)       |
 | `/kitchen/*` | Kitchen (Next.js via OpenNext) |
 
 A **router Worker** (`lovethelaus`) owns the domain and forwards `/kitchen/*` to the Kitchen Worker via a service binding.
@@ -58,42 +58,42 @@ npx wrangler secret delete NEXT_PUBLIC_SUPABASE_URL
 npx wrangler secret delete NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 ```
 
-After changing bindings run `npm run cf-typegen` and commit `cloudflare-env.d.ts`.
+After changing bindings run `npm run cf-typegen` locally to regenerate `cloudflare-env.d.ts` (gitignored; it embeds the full Workers runtime types).
 
 ### One-time provider setup
 
-| Provider | Steps |
-|----------|-------|
-| **Neon** | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only). |
-| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner. |
+| Provider   | Steps                                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Neon**   | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only).                                                                                                                                                                                               |
+| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner.                                                                                                                                                                                 |
 | **Stripe** | Product "Kitchen Plus" with one recurring price → `STRIPE_PRICE_KITCHEN_PLUS`. Webhook endpoint `https://lovethelaus.com/kitchen/api/stripe/webhook` with events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` → `STRIPE_WEBHOOK_SECRET`. Enable the Customer Portal. |
 
 ## Secrets & environment variables
 
 ### Where values live
 
-| Location | Used for | Committed to git? | Encrypted at rest? |
-|----------|----------|-------------------|--------------------|
-| `kitchen/.env` | Local dev (Prisma, Next) | **No** (`.gitignore`) | Your machine only |
-| `kitchen/.dev.vars` | Local `wrangler dev` / OpenNext preview | **No** (`.gitignore`) | Your machine only |
-| **Wrangler secrets** | Production Kitchen Worker | **No** — stored in Cloudflare | **Yes** (Cloudflare encrypts; never returned after upload) |
-| `wrangler.jsonc` `vars` | Non-sensitive config only | Yes | N/A (plain text in repo) |
-| Build-time env (`PUBLIC_KITCHEN_URL`) | Marketing HTML at build | No secrets — baked into static `dist/` | N/A |
+| Location                              | Used for                                | Committed to git?                      | Encrypted at rest?                                         |
+| ------------------------------------- | --------------------------------------- | -------------------------------------- | ---------------------------------------------------------- |
+| `kitchen/.env`                        | Local dev (Prisma, Next)                | **No** (`.gitignore`)                  | Your machine only                                          |
+| `kitchen/.dev.vars`                   | Local `wrangler dev` / OpenNext preview | **No** (`.gitignore`)                  | Your machine only                                          |
+| **Wrangler secrets**                  | Production Kitchen Worker               | **No** — stored in Cloudflare          | **Yes** (Cloudflare encrypts; never returned after upload) |
+| `wrangler.jsonc` `vars`               | Non-sensitive config only               | Yes                                    | N/A (plain text in repo)                                   |
+| Build-time env (`PUBLIC_KITCHEN_URL`) | Marketing HTML at build                 | No secrets — baked into static `dist/` | N/A                                                        |
 
 ### Production Kitchen secrets (current)
 
 Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 
-| Secret | Sensitive? | Notes |
-|--------|------------|-------|
-| `DATABASE_URL` | **Yes** | Neon pooled connection string; never in repo |
-| `BETTER_AUTH_SECRET` | **Yes** | Signs session cookies; rotating it signs everyone out |
-| `RESEND_API_KEY` | **Yes** | Transactional email |
-| `STRIPE_SECRET_KEY` | **Yes** | Server-side Stripe API |
-| `STRIPE_WEBHOOK_SECRET` | **Yes** | Verifies webhook signatures |
-| `DEMO_USER_EMAIL` | No | Demo sign-in email (Try demo) |
-| `DEMO_USER_PASSWORD` | **Yes** | Demo account password; set before `db:seed:demo` |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | **Yes** (optional) | AI structuring of imported drafts |
+| Secret                                 | Sensitive?         | Notes                                                 |
+| -------------------------------------- | ------------------ | ----------------------------------------------------- |
+| `DATABASE_URL`                         | **Yes**            | Neon pooled connection string; never in repo          |
+| `BETTER_AUTH_SECRET`                   | **Yes**            | Signs session cookies; rotating it signs everyone out |
+| `RESEND_API_KEY`                       | **Yes**            | Transactional email                                   |
+| `STRIPE_SECRET_KEY`                    | **Yes**            | Server-side Stripe API                                |
+| `STRIPE_WEBHOOK_SECRET`                | **Yes**            | Verifies webhook signatures                           |
+| `DEMO_USER_EMAIL`                      | No                 | Demo sign-in email (Try demo)                         |
+| `DEMO_USER_PASSWORD`                   | **Yes**            | Demo account password; set before `db:seed:demo`      |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | **Yes** (optional) | AI structuring of imported drafts                     |
 
 List what's configured (names only, not values):
 

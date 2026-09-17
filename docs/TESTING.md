@@ -39,20 +39,20 @@ npm run build:prod && npm run check
 
 Production base: `https://lovethelaus.com`. Local Kitchen: `http://localhost:3000/kitchen`.
 
-| # | Flow | Marketing | Kitchen | Expected outcome |
-|---|------|-----------|---------|------------------|
-| 1 | Sign up | `/sign-up` | `/kitchen/sign-up` | Account created → `/kitchen/recipes` |
-| 2 | Sign in (password) | `/sign-in` | `/kitchen/sign-in` | Logged in → `/kitchen/recipes` |
-| 3 | Sign out | — | User menu → Sign out | Session cleared; `/kitchen/recipes` redirects to sign-in |
-| 4 | Forgot password | `/forgot-password` | `/kitchen/forgot-password` | Success message; reset email received |
-| 5 | Password recovery | Click email link | — | Lands on `/kitchen/reset-password?token=…` with the “Set a new password” form visible; save → `/kitchen/sign-in?reset=1`; expired link shows “invalid or expired” |
-| 6 | Magic link | `/sign-in/one-time` | `/kitchen/sign-in/one-time` | Check-email screen (form hidden); email link → `/kitchen/recipes` (or onboarding for a new account) |
-| 7 | Auth callback | — | `/kitchen/auth/callback?returnTo=…` | Honours `returnTo` (site-relative only) and onboarding state; `/kitchen` basePath respected |
-| 8 | Demo login | — | `/kitchen/api/auth/demo` | Demo user → recipes (requires `DEMO_USER_*` secrets) |
-| 9 | Invalid API GET | — | GET `/kitchen/api/auth/magic-link` | Redirects to one-time sign-in (no 405) |
-| 10 | Cookbook invite by email (new address) | — | Cookbook → Share → add an email with no account | Invite email arrives; sign-up with that email lands in the cookbook as a member |
-| 11 | Protected route, signed out | — | `/kitchen/recipes` | Redirects to `/kitchen/sign-in?returnTo=/recipes`; after sign-in lands back on recipes |
-| 12 | Public cookbook, signed out | — | `/kitchen/c/<public-slug>` | Renders with no session cookie set and no `session` query in Neon's query stats |
+| #   | Flow                                   | Marketing           | Kitchen                                         | Expected outcome                                                                                                                                                  |
+| --- | -------------------------------------- | ------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Sign up                                | `/sign-up`          | `/kitchen/sign-up`                              | Account created → `/kitchen/recipes`                                                                                                                              |
+| 2   | Sign in (password)                     | `/sign-in`          | `/kitchen/sign-in`                              | Logged in → `/kitchen/recipes`                                                                                                                                    |
+| 3   | Sign out                               | —                   | User menu → Sign out                            | Session cleared; `/kitchen/recipes` redirects to sign-in                                                                                                          |
+| 4   | Forgot password                        | `/forgot-password`  | `/kitchen/forgot-password`                      | Success message; reset email received                                                                                                                             |
+| 5   | Password recovery                      | Click email link    | —                                               | Lands on `/kitchen/reset-password?token=…` with the “Set a new password” form visible; save → `/kitchen/sign-in?reset=1`; expired link shows “invalid or expired” |
+| 6   | Magic link                             | `/sign-in/one-time` | `/kitchen/sign-in/one-time`                     | Check-email screen (form hidden); email link → `/kitchen/recipes` (or onboarding for a new account)                                                               |
+| 7   | Auth callback                          | —                   | `/kitchen/auth/callback?returnTo=…`             | Honours `returnTo` (site-relative only) and onboarding state; `/kitchen` basePath respected                                                                       |
+| 8   | Demo login                             | —                   | `/kitchen/api/auth/demo`                        | Demo user → recipes (requires `DEMO_USER_*` secrets)                                                                                                              |
+| 9   | Invalid API GET                        | —                   | GET `/kitchen/api/auth/magic-link`              | Redirects to one-time sign-in (no 405)                                                                                                                            |
+| 10  | Cookbook invite by email (new address) | —                   | Cookbook → Share → add an email with no account | Invite email arrives; sign-up with that email lands in the cookbook as a member                                                                                   |
+| 11  | Protected route, signed out            | —                   | `/kitchen/recipes`                              | Redirects to `/kitchen/sign-in?returnTo=/recipes`; after sign-in lands back on recipes                                                                            |
+| 12  | Public cookbook, signed out            | —                   | `/kitchen/c/<public-slug>`                      | Renders with no session cookie set and no `session` query in Neon's query stats                                                                                   |
 
 ### Config checks
 
@@ -132,11 +132,11 @@ Changes to `kitchen/src/lib/stripe.ts`, `billing.ts`, `src/app/actions/billing.t
 
 ## 5. Deploy verification
 
-| What changed | Deploy (from repo root) |
-|--------------|-------------------------|
-| Marketing / router | `npm run deploy:router` |
-| Kitchen only | `cd kitchen && npm run deploy` |
-| Both | `npm run deploy:all` |
+| What changed       | Deploy (from repo root)        |
+| ------------------ | ------------------------------ |
+| Marketing / router | `npm run deploy:router`        |
+| Kitchen only       | `cd kitchen && npm run deploy` |
+| Both               | `npm run deploy:all`           |
 
 After deploy, smoke-test production URLs for every section you changed. Auth changes require the full **Section 1** matrix on production.
 
@@ -144,13 +144,13 @@ After deploy, smoke-test production URLs for every section you changed. Auth cha
 
 ## Quick reference: auth file map
 
-| Flow | Key files |
-|------|-----------|
-| Better Auth instance | `kitchen/src/lib/better-auth.ts`, handler `api/auth/[...all]` |
-| Sign in/up | `kitchen/src/lib/auth.ts`, `api/auth/sign-in`, `sign-up`, `actions/auth.ts` |
-| Magic link | `api/auth/magic-link`, `sign-in/one-time` |
-| Forgot/reset | `requestPasswordReset`, `ResetPasswordForm`, `resetPasswordAction` |
-| Callback / redirects | `kitchen/src/app/auth/callback/route.ts`, `kitchen/src/lib/post-auth.ts` |
-| Route guard | `kitchen/src/proxy.ts` |
-| Email | `kitchen/src/lib/email.ts`, `email-templates.ts` |
-| Router | `workers/router/src/index.ts` |
+| Flow                 | Key files                                                                   |
+| -------------------- | --------------------------------------------------------------------------- |
+| Better Auth instance | `kitchen/src/lib/better-auth.ts`, handler `api/auth/[...all]`               |
+| Sign in/up           | `kitchen/src/lib/auth.ts`, `api/auth/sign-in`, `sign-up`, `actions/auth.ts` |
+| Magic link           | `api/auth/magic-link`, `sign-in/one-time`                                   |
+| Forgot/reset         | `requestPasswordReset`, `ResetPasswordForm`, `resetPasswordAction`          |
+| Callback / redirects | `kitchen/src/app/auth/callback/route.ts`, `kitchen/src/lib/post-auth.ts`    |
+| Route guard          | `kitchen/src/proxy.ts`                                                      |
+| Email                | `kitchen/src/lib/email.ts`, `email-templates.ts`                            |
+| Router               | `workers/router/src/index.ts`                                               |

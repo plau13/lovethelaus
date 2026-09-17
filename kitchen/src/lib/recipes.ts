@@ -1,22 +1,22 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomBytes } from "crypto";
-import { getPrisma } from "@/lib/prisma";
-import { uploadRecipePhoto } from "@/lib/recipe-photos";
+import { and, desc, asc, eq, exists, gte, lte, or, sql, type SQL } from "drizzle-orm";
+import { getDb, schema } from "@/db/client";
+import { ensureDefaultCookbook } from "@/lib/default-cookbook";
+import { sendRecipeCollaboratorEmail } from "@/lib/email-templates";
+import { appUrl } from "@/lib/paths";
+import { canCommentOnRecipe, canEditRecipe, canViewRecipe } from "@/lib/permissions";
+import { deleteRecipePhotos, uploadRecipePhoto } from "@/lib/recipe-photos";
 import { parseTags, recipeMatchesQuery } from "@/lib/tags";
 import {
-  canCommentOnRecipe,
-  canEditRecipe,
-  canViewRecipe,
-} from "@/lib/permissions";
-import { ensureDefaultCookbook } from "@/lib/auth";
-import { cookTimeBucketFilter, type RecipeCategory, type RecipeCollabRole, type RecipeDifficulty, type RecipeType } from "@/lib/types";
+  collabRoleLabel,
+  cookTimeBucketFilter,
+  type RecipeCategory,
+  type RecipeCollabRole,
+  type RecipeDifficulty,
+  type RecipeType,
+} from "@/lib/types";
 
-const PHOTO_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
+const { recipe, recipeCollaborator, cookbookRecipe, cookbookMember, recipeRevision, recipeNote, recipePhoto, recipeFavorite, user } =
+  schema;
 
 export type ListRecipesOptions = {
   q?: string;
@@ -26,7 +26,7 @@ export type ListRecipesOptions = {
   difficulty?: RecipeDifficulty;
 };
 
-function recipeSnapshot(recipe: {
+function recipeSnapshot(entry: {
   title: string;
   ingredients: string;
   steps: string;
@@ -39,99 +39,111 @@ function recipeSnapshot(recipe: {
   difficulty: string | null;
 }) {
   return JSON.stringify({
-    title: recipe.title,
-    ingredients: recipe.ingredients,
-    steps: recipe.steps,
-    bakingSteps: recipe.bakingSteps,
-    recipeType: recipe.recipeType,
-    tags: recipe.tags,
-    servings: recipe.servings,
-    category: recipe.category,
-    cookMinutes: recipe.cookMinutes,
-    difficulty: recipe.difficulty,
+    title: entry.title,
+    ingredients: entry.ingredients,
+    steps: entry.steps,
+    bakingSteps: entry.bakingSteps,
+    recipeType: entry.recipeType,
+    tags: entry.tags,
+    servings: entry.servings,
+    category: entry.category,
+    cookMinutes: entry.cookMinutes,
+    difficulty: entry.difficulty,
   });
+}
+
+/** SQL: the given user can see this recipe (owner, collaborator, or member of a cookbook containing it). */
+function visibleToUser(userId: string): SQL {
+  const db = getDb();
+  const mine = eq(recipe.ownerId, userId);
+  const collaborates = exists(
+    db
+      .select({ one: sql`1` })
+      .from(recipeCollaborator)
+      .where(and(eq(recipeCollaborator.recipeId, recipe.id), eq(recipeCollaborator.userId, userId)))
+  );
+  const viaCookbook = exists(
+    db
+      .select({ one: sql`1` })
+      .from(cookbookRecipe)
+      .innerJoin(cookbookMember, eq(cookbookMember.cookbookId, cookbookRecipe.cookbookId))
+      .where(and(eq(cookbookRecipe.recipeId, recipe.id), eq(cookbookMember.userId, userId)))
+  );
+  return or(mine, collaborates, viaCookbook)!;
 }
 
 export async function listVisibleRecipes(userId: string, options: ListRecipesOptions = {}) {
-  const prisma = await getPrisma();
+  const db = getDb();
   const { q = "", cookbookId, category, timeBucket, difficulty } = options;
-  const timeFilter = timeBucket ? cookTimeBucketFilter(timeBucket) : null;
-  const recipes = await prisma.recipe.findMany({
-    where: {
-      AND: [
-        {
-          OR: [
-            { ownerId: userId },
-            { collaborators: { some: { userId } } },
-            {
-              cookbookRecipes: {
-                some: {
-                  cookbook: {
-                    members: { some: { userId } },
-                  },
-                },
-              },
-            },
-          ],
-        },
-        cookbookId
-          ? {
-              cookbookRecipes: {
-                some: { cookbookId },
-              },
-            }
-          : {},
-        category ? { category } : {},
-        difficulty ? { difficulty } : {},
-        timeFilter ?? {},
-      ],
-    },
-    include: { photos: true, cookbookRecipes: { include: { cookbook: true } } },
-    orderBy: { updatedAt: "desc" },
+  const timeRange = timeBucket ? cookTimeBucketFilter(timeBucket) : null;
+
+  const conditions: (SQL | undefined)[] = [visibleToUser(userId)];
+  if (cookbookId) {
+    conditions.push(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(cookbookRecipe)
+          .where(and(eq(cookbookRecipe.recipeId, recipe.id), eq(cookbookRecipe.cookbookId, cookbookId)))
+      )
+    );
+  }
+  if (category) {
+    conditions.push(eq(recipe.category, category));
+  }
+  if (difficulty) {
+    conditions.push(eq(recipe.difficulty, difficulty));
+  }
+  if (timeRange) {
+    conditions.push(gte(recipe.cookMinutes, timeRange.min));
+    if (timeRange.max !== null) {
+      conditions.push(lte(recipe.cookMinutes, timeRange.max));
+    }
+  }
+
+  const rows = await db.query.recipe.findMany({
+    where: and(...conditions),
+    with: { photos: true, cookbookRecipes: { with: { cookbook: true } } },
+    orderBy: [desc(recipe.updatedAt)],
   });
-  return recipes.filter((recipe) => recipeMatchesQuery(recipe, q));
+  return rows.filter((entry) => recipeMatchesQuery(entry, q));
 }
 
 export async function listRecentRecipes(userId: string, limit = 5) {
-  return listVisibleRecipes(userId, {}).then((recipes) => recipes.slice(0, limit));
+  const db = getDb();
+  return db.query.recipe.findMany({
+    where: visibleToUser(userId),
+    with: { photos: true, cookbookRecipes: { with: { cookbook: true } } },
+    orderBy: [desc(recipe.updatedAt)],
+    limit,
+  });
 }
 
+const accessContext = {
+  cookbookRecipes: { with: { cookbook: { with: { members: true } } } },
+} as const;
+
 export async function getRecipeForUser(recipeId: string, userId: string | null) {
-  const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: recipeId },
-    include: {
-      photos: true,
-      notes: { include: { user: true }, orderBy: { createdAt: "asc" } },
+  const db = getDb();
+  const found = await db.query.recipe.findFirst({
+    where: eq(recipe.id, recipeId),
+    with: {
+      photos: { orderBy: [asc(recipePhoto.createdAt)] },
+      notes: { with: { user: true }, orderBy: [asc(recipeNote.createdAt)] },
       owner: true,
-      collaborators: { include: { user: true } },
-      revisions: {
-        include: { editor: true },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      },
-      cookbookRecipes: {
-        include: {
-          cookbook: { include: { members: true } },
-        },
-      },
-      ...(userId
-        ? { favorites: { where: { userId }, select: { id: true }, take: 1 } }
-        : {}),
+      collaborators: { with: { user: true } },
+      revisions: { with: { editor: true }, orderBy: [desc(recipeRevision.createdAt)], limit: 20 },
+      ...accessContext,
+      ...(userId ? { favorites: { where: eq(recipeFavorite.userId, userId), columns: { id: true }, limit: 1 } } : {}),
     },
   });
-  if (!recipe) {
+  if (!found) {
     return null;
   }
-  const favorited = userId && "favorites" in recipe ? recipe.favorites.length > 0 : false;
-  const recipeData = { ...recipe };
-  if ("favorites" in recipeData) {
-    delete (recipeData as { favorites?: unknown }).favorites;
-  }
+  const { favorites, ...recipeData } = found as typeof found & { favorites?: { id: string }[] };
+  const favorited = Boolean(userId && favorites && favorites.length > 0);
   const collaboratorRole =
-    userId != null
-      ? (recipeData.collaborators.find((entry) => entry.userId === userId)?.role ?? null)
-      : null;
+    userId != null ? (recipeData.collaborators.find((entry) => entry.userId === userId)?.role ?? null) : null;
   const allowed = canViewRecipe({
     userId,
     recipeOwnerId: recipeData.ownerId,
@@ -165,14 +177,15 @@ export async function createRecipe(args: {
   sourceAttribution: string | null;
   photo?: File | null;
 }) {
-  const prisma = await getPrisma();
+  const db = getDb();
   const title = args.title.trim();
   if (!title) {
     throw new Error("Give the recipe a name.");
   }
   const cookbook = await ensureDefaultCookbook(args.userId, "My recipes");
-  const recipe = await prisma.recipe.create({
-    data: {
+  const [created] = await db
+    .insert(recipe)
+    .values({
       ownerId: args.userId,
       title,
       ingredients: args.ingredients.trim(),
@@ -187,15 +200,16 @@ export async function createRecipe(args: {
       sourceType: args.sourceType,
       sourceUrl: args.sourceUrl,
       sourceAttribution: args.sourceAttribution,
-      cookbookRecipes: {
-        create: { cookbookId: cookbook.id, position: 0 },
-      },
-    },
-  });
+    })
+    .returning();
+  await db
+    .insert(cookbookRecipe)
+    .values({ cookbookId: cookbook.id, recipeId: created.id, position: 0 })
+    .onConflictDoNothing();
   if (args.photo && args.photo.size > 0) {
-    await saveRecipePhoto(recipe.id, args.photo);
+    await saveRecipePhoto(created.id, args.photo);
   }
-  return recipe;
+  return created;
 }
 
 export async function updateRecipe(args: {
@@ -213,33 +227,31 @@ export async function updateRecipe(args: {
   difficulty?: RecipeDifficulty | null;
   photo?: File | null;
 }) {
-  const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: args.recipeId },
-    include: { collaborators: { where: { userId: args.userId } } },
+  const db = getDb();
+  const existing = await db.query.recipe.findFirst({
+    where: eq(recipe.id, args.recipeId),
+    with: { collaborators: { where: eq(recipeCollaborator.userId, args.userId) } },
   });
   if (
-    !recipe ||
+    !existing ||
     !canEditRecipe({
       userId: args.userId,
-      recipeOwnerId: recipe.ownerId,
-      collaboratorRole: recipe.collaborators[0]?.role ?? null,
+      recipeOwnerId: existing.ownerId,
+      collaboratorRole: existing.collaborators[0]?.role ?? null,
     })
   ) {
     throw new Error("You do not have edit access to this recipe.");
   }
 
-  await prisma.recipeRevision.create({
-    data: {
-      recipeId: recipe.id,
-      editorId: args.userId,
-      snapshot: recipeSnapshot(recipe),
-    },
+  await db.insert(recipeRevision).values({
+    recipeId: existing.id,
+    editorId: args.userId,
+    snapshot: recipeSnapshot(existing),
   });
 
-  await prisma.recipe.update({
-    where: { id: args.recipeId },
-    data: {
+  await db
+    .update(recipe)
+    .set({
       title: args.title.trim(),
       ingredients: args.ingredients.trim(),
       steps: args.steps.trim(),
@@ -250,11 +262,26 @@ export async function updateRecipe(args: {
       category: args.category ?? null,
       cookMinutes: args.cookMinutes ?? null,
       difficulty: args.difficulty ?? null,
-    },
-  });
+    })
+    .where(eq(recipe.id, args.recipeId));
   if (args.photo && args.photo.size > 0) {
     await saveRecipePhoto(args.recipeId, args.photo);
   }
+}
+
+/** Owner-only. Removes R2 objects first, then the row (cascades handle the rest). */
+export async function deleteRecipe(userId: string, recipeId: string): Promise<void> {
+  const db = getDb();
+  const existing = await db.query.recipe.findFirst({
+    where: eq(recipe.id, recipeId),
+    columns: { id: true, ownerId: true },
+    with: { photos: { columns: { path: true } } },
+  });
+  if (!existing || existing.ownerId !== userId) {
+    throw new Error("Only the recipe owner can delete it.");
+  }
+  await deleteRecipePhotos(existing.photos.map((photo) => photo.path));
+  await db.delete(recipe).where(eq(recipe.id, recipeId));
 }
 
 export async function setRecipeCollaborator(args: {
@@ -263,48 +290,52 @@ export async function setRecipeCollaborator(args: {
   email: string;
   role: RecipeCollabRole;
 }) {
-  const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: args.recipeId },
-    include: { collaborators: { where: { userId: args.actorId } } },
+  const db = getDb();
+  const target = await db.query.recipe.findFirst({
+    where: eq(recipe.id, args.recipeId),
+    with: { collaborators: { where: eq(recipeCollaborator.userId, args.actorId) }, owner: true },
   });
-  const collaboratorRole = recipe?.collaborators[0]?.role ?? null;
+  const collaboratorRole = target?.collaborators[0]?.role ?? null;
   const canInvite =
-    recipe != null &&
-    (recipe.ownerId === args.actorId ||
-      collaboratorRole === "edit" ||
-      collaboratorRole === "co-author");
-  if (!canInvite) {
+    target != null &&
+    (target.ownerId === args.actorId || collaboratorRole === "edit" || collaboratorRole === "co-author");
+  if (!target || !canInvite) {
     throw new Error("You do not have permission to invite others to this recipe.");
   }
   const email = args.email.trim().toLowerCase();
-  const invitee = await prisma.user.findUnique({ where: { email } });
+  const invitee = await db.query.user.findFirst({ where: eq(user.email, email), columns: { id: true, email: true } });
   if (!invitee) {
     throw new Error("No Kitchen account for that email yet. Ask them to sign up first.");
   }
-  if (invitee.id === recipe.ownerId) {
+  if (invitee.id === target.ownerId) {
     throw new Error("You already own this recipe.");
   }
-  await prisma.recipeCollaborator.upsert({
-    where: { recipeId_userId: { recipeId: args.recipeId, userId: invitee.id } },
-    update: { role: args.role },
-    create: { recipeId: args.recipeId, userId: invitee.id, role: args.role },
+  await db
+    .insert(recipeCollaborator)
+    .values({ recipeId: args.recipeId, userId: invitee.id, role: args.role })
+    .onConflictDoUpdate({
+      target: [recipeCollaborator.recipeId, recipeCollaborator.userId],
+      set: { role: args.role },
+    });
+  const actor = await db.query.user.findFirst({ where: eq(user.id, args.actorId), columns: { name: true } });
+  await sendRecipeCollaboratorEmail({
+    to: invitee.email,
+    inviterName: actor?.name ?? target.owner.name,
+    recipeTitle: target.title,
+    role: collabRoleLabel(args.role).toLowerCase(),
+    url: appUrl(`/recipes/${target.id}`),
   });
 }
 
-export async function removeRecipeCollaborator(args: {
-  ownerId: string;
-  recipeId: string;
-  userId: string;
-}) {
-  const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({ where: { id: args.recipeId } });
-  if (!recipe || recipe.ownerId !== args.ownerId) {
+export async function removeRecipeCollaborator(args: { ownerId: string; recipeId: string; userId: string }) {
+  const db = getDb();
+  const target = await db.query.recipe.findFirst({ where: eq(recipe.id, args.recipeId), columns: { ownerId: true } });
+  if (!target || target.ownerId !== args.ownerId) {
     throw new Error("Only the recipe owner can manage access.");
   }
-  await prisma.recipeCollaborator.deleteMany({
-    where: { recipeId: args.recipeId, userId: args.userId },
-  });
+  await db
+    .delete(recipeCollaborator)
+    .where(and(eq(recipeCollaborator.recipeId, args.recipeId), eq(recipeCollaborator.userId, args.userId)));
 }
 
 export async function copyRecipeToMyBook(userId: string, recipeId: string) {
@@ -331,15 +362,15 @@ export async function copyRecipeToMyBook(userId: string, recipeId: string) {
 }
 
 export async function addNote(userId: string, recipeId: string, body: string) {
-  const prisma = await getPrisma();
-  const recipe = await getRecipeForUser(recipeId, userId);
-  if (!recipe) {
+  const db = getDb();
+  const target = await getRecipeForUser(recipeId, userId);
+  if (!target) {
     throw new Error("Recipe not found.");
   }
   const canComment = canCommentOnRecipe({
     userId,
-    recipeOwnerId: recipe.ownerId,
-    collaboratorRole: recipe.collaboratorRole ?? null,
+    recipeOwnerId: target.ownerId,
+    collaboratorRole: target.collaboratorRole ?? null,
     canView: true,
   });
   if (!canComment) {
@@ -349,38 +380,12 @@ export async function addNote(userId: string, recipeId: string, body: string) {
   if (!text) {
     throw new Error("Write a note first.");
   }
-  return prisma.recipeNote.create({
-    data: { userId, recipeId, body: text },
-  });
+  const [note] = await db.insert(recipeNote).values({ userId, recipeId, body: text }).returning();
+  return note;
 }
 
 async function saveRecipePhoto(recipeId: string, photo: File) {
-  const prisma = await getPrisma();
-  let photoPath: string;
-
-  try {
-    photoPath = await uploadRecipePhoto(recipeId, photo);
-  } catch {
-    const ext = PHOTO_TYPES[photo.type];
-    if (!ext) {
-      throw new Error("Use a JPG, PNG, or WebP photo.");
-    }
-    if (photo.size > 1 * 1024 * 1024) {
-      throw new Error("Photos need to be under 1MB.");
-    }
-    const dir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(dir, { recursive: true });
-    const filename = `${randomBytes(8).toString("hex")}.${ext}`;
-    const buffer = Buffer.from(await photo.arrayBuffer());
-    await writeFile(path.join(dir, filename), buffer);
-    photoPath = `/uploads/${filename}`;
-  }
-
-  await prisma.recipePhoto.create({
-    data: {
-      recipeId,
-      path: photoPath,
-      alt: "Finished dish",
-    },
-  });
+  const db = getDb();
+  const { key, contentType } = await uploadRecipePhoto(recipeId, photo);
+  await db.insert(recipePhoto).values({ recipeId, path: key, contentType, alt: "Finished dish" });
 }
