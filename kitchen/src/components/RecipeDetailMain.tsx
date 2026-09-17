@@ -16,6 +16,7 @@ export type RecipeDetailMainProps = {
   canEdit: boolean;
   metaLine: ReactNode;
   sourceAttribution?: string | null;
+  provenance?: ReactNode;
   ingredients: string;
   cookingSteps: string[];
   bakingSteps: string[];
@@ -34,6 +35,7 @@ export function RecipeDetailMain({
   canEdit,
   metaLine,
   sourceAttribution,
+  provenance,
   ingredients,
   cookingSteps,
   bakingSteps,
@@ -75,6 +77,7 @@ export function RecipeDetailMain({
 
       <p className="text-muted">{metaLine}</p>
       {sourceAttribution ? <p className="text-sm text-muted">{sourceAttribution}</p> : null}
+      {provenance}
 
       <div className="flex flex-wrap items-end gap-6">
         <ServingsControl value={servings} onChange={onServingsChange} />

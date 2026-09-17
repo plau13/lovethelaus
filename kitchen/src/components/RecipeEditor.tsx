@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { COMMON_INGREDIENTS } from "@/lib/common-ingredients";
+import { ProvenanceFields, type AdaptableRecipe, type PersonOption, type ProvenanceDefaults } from "@/components/ProvenanceFields";
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES, RECIPE_TYPES, type RecipeCategory, type RecipeDifficulty, type RecipeType } from "@/lib/types";
 
 function parseIngredientLines(value: string): string[] {
@@ -22,12 +23,16 @@ export function RecipeEditor({
   defaultServings,
   defaults,
   hiddenFields,
+  people = [],
+  adaptableRecipes = [],
 }: {
   saveAction: (formData: FormData) => Promise<void>;
   importAction?: (formData: FormData) => Promise<void>;
   submitLabel: string;
   defaultServings?: number;
-  defaults?: {
+  people?: PersonOption[];
+  adaptableRecipes?: AdaptableRecipe[];
+  defaults?: ProvenanceDefaults & {
     title?: string;
     ingredients?: string;
     steps?: string;
@@ -159,6 +164,8 @@ export function RecipeEditor({
               className="rounded-xl border border-line bg-white px-3 py-3"
             />
           </label>
+
+          <ProvenanceFields people={people} adaptableRecipes={adaptableRecipes} defaults={defaults} />
 
           <div className="grid gap-3">
             <span className="font-medium">Ingredients</span>

@@ -217,6 +217,8 @@ export async function updateCookbookSettings(args: {
   title: string;
   description: string;
   visibility: string;
+  familyName?: string | null;
+  dedication?: string | null;
 }) {
   const db = getDb();
   const existing = await db.query.cookbook.findFirst({ where: eq(cookbook.id, args.cookbookId), columns: { id: true } });
@@ -234,6 +236,8 @@ export async function updateCookbookSettings(args: {
       title: args.title.trim(),
       description: args.description.trim(),
       visibility,
+      ...(args.familyName !== undefined ? { familyName: args.familyName?.trim() || null } : {}),
+      ...(args.dedication !== undefined ? { dedication: (args.dedication ?? "").trim() } : {}),
     })
     .where(eq(cookbook.id, args.cookbookId))
     .returning();

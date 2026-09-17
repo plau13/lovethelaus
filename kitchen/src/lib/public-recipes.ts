@@ -38,6 +38,7 @@ export async function getPublicRecipe(slugOrId: string) {
     with: {
       photos: { orderBy: [recipePhoto.createdAt], columns: { path: true, alt: true } },
       owner: { columns: { name: true } },
+      originPerson: { columns: { name: true, relationship: true } },
       cookbookRecipes: {
         columns: { id: true },
         with: { cookbook: { columns: { id: true, slug: true, title: true, visibility: true } } },

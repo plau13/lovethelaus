@@ -2,9 +2,12 @@ import { saveNewRecipe } from "@/app/actions/recipes";
 import { startImport } from "@/app/actions/import";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireOnboardedUser } from "@/lib/auth";
+import { listPeople } from "@/lib/people";
+import { listVisibleRecipes } from "@/lib/recipes";
 
 export default async function NewRecipePage() {
-  await requireOnboardedUser();
+  const user = await requireOnboardedUser();
+  const [people, visible] = await Promise.all([listPeople(user.id), listVisibleRecipes(user.id)]);
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">Add a recipe</h1>
@@ -13,6 +16,8 @@ export default async function NewRecipePage() {
         importAction={startImport}
         submitLabel="Save recipe"
         defaultServings={4}
+        people={people.map((entry) => ({ id: entry.id, name: entry.name, relationship: entry.relationship }))}
+        adaptableRecipes={visible.map((entry) => ({ id: entry.id, title: entry.title }))}
       />
     </main>
   );

@@ -36,6 +36,8 @@ export async function saveCookbookSettings(formData: FormData) {
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
     visibility: String(formData.get("visibility") ?? "private"),
+    familyName: String(formData.get("familyName") ?? ""),
+    dedication: String(formData.get("dedication") ?? ""),
   });
   await revalidatePublicCookbook(cookbookId);
   redirect(`/cookbooks/${cookbookId}/settings`);

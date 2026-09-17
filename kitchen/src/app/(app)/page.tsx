@@ -83,6 +83,14 @@ export default async function HomePage() {
         )}
       </section>
 
+      <section className="grid gap-2 rounded-2xl border border-line bg-white p-5">
+        <h2 className="font-serif text-2xl">Family</h2>
+        <p className="text-muted">Who each recipe came from, and every time someone made it.</p>
+        <Link href="/family" className="text-clay">
+          Open the family timeline
+        </Link>
+      </section>
+
       <section className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Cookbooks</h2>

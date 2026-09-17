@@ -5,6 +5,7 @@ import { AdSlot } from "@/components/ads/AdSlot";
 import { IngredientsCard, StepsCard } from "@/components/RecipeSections";
 import { PublicShell } from "@/components/PublicShell";
 import { photoUrl, publicCookbookPath, publicRecipeUrl } from "@/lib/paths";
+import { provenanceLine } from "@/lib/heritage";
 import { getPublicRecipe } from "@/lib/public-recipes";
 import { recipeDescription, recipeImageUrl, recipeJsonLd } from "@/lib/public-seo";
 import { parseTags, splitLines } from "@/lib/tags";
@@ -61,6 +62,7 @@ export default async function PublicRecipePage({ params }: Params) {
   ].filter(Boolean);
   const photo = recipe.photos[0] ?? null;
   const jsonLd = recipeJsonLd(recipe);
+  const provenance = provenanceLine({ person: recipe.originPerson, firstMadeYear: recipe.firstMadeYear, occasion: recipe.occasion });
 
   return (
     <PublicShell ads={indexable}>
@@ -77,6 +79,7 @@ export default async function PublicRecipePage({ params }: Params) {
         </nav>
         <h1 className="font-serif text-4xl leading-tight">{recipe.title}</h1>
         <p className="text-muted">From {recipe.owner.name}&rsquo;s kitchen</p>
+        {provenance ? <p className="font-serif text-2xl leading-snug">{provenance}</p> : null}
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photoUrl(photo.path)} alt={photo.alt || recipe.title} className="max-h-96 w-full rounded-2xl object-cover" />

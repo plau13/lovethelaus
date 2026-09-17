@@ -6,7 +6,7 @@ import { getSessionCookie } from "better-auth/cookies";
  * `requireUser()`; this just bounces signed-out visitors to sign-in with a returnTo.
  * Paths here are basePath-relative (`/kitchen` is already stripped).
  */
-const PROTECTED = [/^\/recipes(\/|$)/, /^\/cookbooks(\/|$)/, /^\/settings(\/|$)/, /^\/onboarding(\/|$)/, /^\/import(\/|$)/, /^\/interview(\/|$)/, /^\/loved-ones(\/|$)/];
+const PROTECTED = [/^\/recipes(\/|$)/, /^\/cookbooks(\/|$)/, /^\/settings(\/|$)/, /^\/onboarding(\/|$)/, /^\/import(\/|$)/, /^\/interview(\/|$)/, /^\/loved-ones(\/|$)/, /^\/family(\/|$)/];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

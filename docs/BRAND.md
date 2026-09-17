@@ -83,6 +83,13 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `but
 - **Servings control** (`ServingsControl`): stepper below title; scales ingredient quantities client-side (best-effort for lines with leading numbers/fractions)
 - **Recipe photo**: hero image above ingredients when uploaded; dashed placeholder with edit link when missing (editors only)
 
+### Heritage (“Where it comes from”)
+
+- **Provenance card** (`ProvenanceBlock`): white card, uppercase `text-xs` label “Where it comes from”, provenance line in **serif `text-2xl`** (“From Grandma Rose (grandmother) · first made 1974 · Sunday dinner”), story in `text-lg leading-relaxed`, lineage lines in `text-muted`. Editors see a dashed paper card with an “Add it” link when empty.
+- **Editor card** (`ProvenanceFields`): same shell as other editor sections; person select with an inline “+ Add someone” mini-form; all fields optional.
+- **Made this** (`MadeThisButton`): secondary (white, `border-line`) button with a ✓; expands into a date + note form. Never clay: it is a memory, not a primary action.
+- **Family timeline** (`/family`): people as cards (serif name, muted relationship · years · recipe count); timeline as a left-bordered list with clay dots.
+
 ### Auth screens
 
 - Kitchen: `AuthShell` component (`kitchen/src/components/AuthShell.tsx`)
@@ -101,7 +108,7 @@ Minimum **48px** height for buttons and primary taps (kitchen counter / phone us
 | Kitchen header     | `max-w-4xl`                     |
 | Marketing sections | `max-w-7xl` (AstroWind default) |
 
-Kitchen nav: logo left, **Home · Recipes · Cookbooks** centered, user menu right.
+Kitchen nav: logo left, **Home · Recipes · Cookbooks · Family** centered, user menu right.
 
 ## Do / Don't
 

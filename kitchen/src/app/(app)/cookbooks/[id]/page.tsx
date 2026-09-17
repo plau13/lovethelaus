@@ -41,6 +41,7 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
         {cookbook.visibility} · your role: {role ?? "viewer"}
       </p>
       {cookbook.description ? <p>{cookbook.description}</p> : null}
+      {cookbook.dedication ? <p className="font-serif text-lg italic text-muted">{cookbook.dedication}</p> : null}
       {cookbook.recipes.length === 0 ? (
         <p className="text-muted">No recipes in this cookbook yet.</p>
       ) : (

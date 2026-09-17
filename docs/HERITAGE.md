@@ -16,6 +16,12 @@ The interview script ([`kitchen/docs/mom-interview.md`](../kitchen/docs/mom-inte
 | `recipe_memory`                              | "I made this": `madeOn`, note, optional media. Feeds the timeline.                                                                                                            |
 | `cookbook.dedication`, `cookbook.familyName` | The cookbook reads like a book.                                                                                                                                               |
 
+## Status
+
+**Phase 3a (done):** people, “Where it comes from” (person, story, lineage, first made, occasion) on the recipe page, editor and public page; “I made this” memories; `/family` timeline and person pages; cookbook dedication and family name. Everything free-tier.
+
+**Phase 3b (next):** scanned cards and voice memos via `recipe_media`, the flip view, playback in cook mode, AI transcription, PDF book export.
+
 ## UI, in priority order (Phase 3)
 
 1. **Provenance block** at the top of the recipe page: "From Grandma Rose · first made 1974 · adapted from Rose's original by Mom in 2003". Lineage renders as a breadcrumb of linked recipes. The editor gets a "Where it comes from" card: person picker (create inline), story textarea, year, occasion.

@@ -38,6 +38,11 @@ function recipeSnapshot(entry: {
   category: string | null;
   cookMinutes: number | null;
   difficulty: string | null;
+  story?: string;
+  originPersonId?: string | null;
+  adaptedFromRecipeId?: string | null;
+  firstMadeYear?: number | null;
+  occasion?: string | null;
 }) {
   return JSON.stringify({
     title: entry.title,
@@ -50,7 +55,54 @@ function recipeSnapshot(entry: {
     category: entry.category,
     cookMinutes: entry.cookMinutes,
     difficulty: entry.difficulty,
+    story: entry.story ?? "",
+    originPersonId: entry.originPersonId ?? null,
+    adaptedFromRecipeId: entry.adaptedFromRecipeId ?? null,
+    firstMadeYear: entry.firstMadeYear ?? null,
+    occasion: entry.occasion ?? null,
   });
+}
+
+/** Heritage fields shared by create and update. All optional; validated against the acting user. */
+export type HeritageArgs = {
+  story?: string | null;
+  originPersonId?: string | null;
+  adaptedFromRecipeId?: string | null;
+  firstMadeYear?: number | null;
+  occasion?: string | null;
+};
+
+async function heritageValues(userId: string, args: HeritageArgs, selfId?: string) {
+  const db = getDb();
+  let originPersonId: string | null = null;
+  if (args.originPersonId) {
+    const owned = await db.query.person.findFirst({
+      where: and(eq(schema.person.id, args.originPersonId), eq(schema.person.ownerUserId, userId)),
+      columns: { id: true },
+    });
+    if (!owned) {
+      throw new Error("Pick a person from your family list.");
+    }
+    originPersonId = owned.id;
+  }
+  let adaptedFromRecipeId: string | null = null;
+  if (args.adaptedFromRecipeId) {
+    if (selfId && args.adaptedFromRecipeId === selfId) {
+      throw new Error("A recipe cannot be adapted from itself.");
+    }
+    const source = await getRecipeForUser(args.adaptedFromRecipeId, userId);
+    if (!source) {
+      throw new Error("Pick a recipe you can see as the original.");
+    }
+    adaptedFromRecipeId = source.id;
+  }
+  return {
+    story: (args.story ?? "").trim(),
+    originPersonId,
+    adaptedFromRecipeId,
+    firstMadeYear: args.firstMadeYear ?? null,
+    occasion: args.occasion?.trim() || null,
+  };
 }
 
 /** SQL: the given user can see this recipe (owner, collaborator, or member of a cookbook containing it). */
@@ -134,6 +186,10 @@ export async function getRecipeForUser(recipeId: string, userId: string | null) 
       owner: true,
       collaborators: { with: { user: true } },
       revisions: { with: { editor: true }, orderBy: [desc(recipeRevision.createdAt)], limit: 20 },
+      originPerson: true,
+      adaptedFrom: { columns: { id: true, title: true, slug: true, ownerId: true }, with: { owner: { columns: { name: true } } } },
+      adaptations: { columns: { id: true, title: true, ownerId: true }, with: { owner: { columns: { name: true } } } },
+      memories: { with: { user: { columns: { id: true, name: true } } }, orderBy: [desc(schema.recipeMemory.madeOn)], limit: 20 },
       ...accessContext,
       ...(userId ? { favorites: { where: eq(recipeFavorite.userId, userId), columns: { id: true }, limit: 1 } } : {}),
     },
@@ -177,18 +233,20 @@ export async function createRecipe(args: {
   sourceUrl: string | null;
   sourceAttribution: string | null;
   photo?: File | null;
-}) {
+} & HeritageArgs) {
   const db = getDb();
   const title = args.title.trim();
   if (!title) {
     throw new Error("Give the recipe a name.");
   }
+  const heritage = await heritageValues(args.userId, args);
   const cookbook = await ensureDefaultCookbook(args.userId, "My recipes");
   const [created] = await db
     .insert(recipe)
     .values({
       ownerId: args.userId,
       title,
+      ...heritage,
       ingredients: args.ingredients.trim(),
       steps: args.steps.trim(),
       bakingSteps: (args.bakingSteps ?? "").trim(),
@@ -243,7 +301,7 @@ export async function updateRecipe(args: {
   cookMinutes?: number | null;
   difficulty?: RecipeDifficulty | null;
   photo?: File | null;
-}) {
+} & HeritageArgs) {
   const db = getDb();
   const existing = await db.query.recipe.findFirst({
     where: eq(recipe.id, args.recipeId),
@@ -279,6 +337,7 @@ export async function updateRecipe(args: {
       category: args.category ?? null,
       cookMinutes: args.cookMinutes ?? null,
       difficulty: args.difficulty ?? null,
+      ...(await heritageValues(args.userId, args, existing.id)),
       ...(existing.slug ? {} : { slug: recipeSlugFor(args.title, existing.id) }),
     })
     .where(eq(recipe.id, args.recipeId));
@@ -376,6 +435,10 @@ export async function copyRecipeToMyBook(userId: string, recipeId: string) {
     sourceType: source.sourceType,
     sourceUrl: source.sourceUrl,
     sourceAttribution: source.sourceAttribution ?? `Copied from ${source.owner.name}`,
+    story: source.story,
+    firstMadeYear: source.firstMadeYear,
+    occasion: source.occasion,
+    adaptedFromRecipeId: source.id,
   });
 }
 

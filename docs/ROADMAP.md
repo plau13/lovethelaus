@@ -23,9 +23,9 @@
 
 ## Phase 3 checklist
 
-- [ ] Person picker + provenance card in the editor
-- [ ] Provenance block + lineage breadcrumb on the recipe page
+- [x] Person picker + provenance card in the editor
+- [x] Provenance block + lineage on the recipe page
 - [ ] Scan upload → `recipe_media(kind = scan)` and flip view
 - [ ] Voice memo record/play → `recipe_media(kind = voice)`
-- [ ] `/family` timeline with `recipe_memory`
-- [ ] Cookbook dedication/cover/chapters; public page uses the book structure
+- [x] `/family` timeline with `recipe_memory`
+- [x] Cookbook dedication + family name (cover/chapters in 3b)

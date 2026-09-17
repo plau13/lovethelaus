@@ -130,6 +130,67 @@ async function seedDemoContent(userId: string) {
   }
 }
 
+/** People, provenance, and a few "made this" memories so /family and the public pages show the heritage features. */
+async function seedHeritage(userId: string) {
+  const db = createDb();
+  async function upsertPerson(name: string, values: { relationship: string; birthYear?: number; passedYear?: number; bio: string }) {
+    const existing = await db.query.person.findFirst({
+      where: and(eq(schema.person.ownerUserId, userId), eq(schema.person.name, name)),
+      columns: { id: true },
+    });
+    if (existing) {
+      return existing.id;
+    }
+    const [created] = await db.insert(schema.person).values({ ownerUserId: userId, name, ...values }).returning({ id: schema.person.id });
+    return created.id;
+  }
+  const rose = await upsertPerson("Grandma Rose", {
+    relationship: "grandmother",
+    birthYear: 1931,
+    passedYear: 2019,
+    bio: "Never measured anything. Cooked for twelve every Sunday and sent everyone home with leftovers.",
+  });
+  const dad = await upsertPerson("Dad", { relationship: "father", birthYear: 1958, bio: "Grill in any weather. Owns exactly one spice: pepper." });
+
+  const byTitle = async (title: string) =>
+    db.query.recipe.findFirst({ where: and(eq(schema.recipe.ownerId, userId), eq(schema.recipe.title, title)), columns: { id: true } });
+  const roast = await byTitle(DEMO_RECIPES[0].title);
+  const second = await byTitle(DEMO_RECIPES[1]?.title ?? "");
+  const third = await byTitle(DEMO_RECIPES[2]?.title ?? "");
+
+  if (roast) {
+    await db
+      .update(schema.recipe)
+      .set({
+        originPersonId: rose,
+        firstMadeYear: 1974,
+        occasion: "Sunday dinner",
+        story: "Rose made this every Sunday after church. The secret was searing hard and then leaving it alone for three hours.",
+      })
+      .where(eq(schema.recipe.id, roast.id));
+  }
+  if (second) {
+    await db
+      .update(schema.recipe)
+      .set({ originPersonId: dad, firstMadeYear: 1996, occasion: "Summer cookout" })
+      .where(eq(schema.recipe.id, second.id));
+  }
+  if (third && roast) {
+    await db
+      .update(schema.recipe)
+      .set({ adaptedFromRecipeId: roast.id, story: "Rose's method, my spices." })
+      .where(eq(schema.recipe.id, third.id));
+  }
+
+  const existingMemories = await db.query.recipeMemory.findFirst({ where: eq(schema.recipeMemory.userId, userId), columns: { id: true } });
+  if (!existingMemories && roast) {
+    await db.insert(schema.recipeMemory).values([
+      { recipeId: roast.id, userId, madeOn: new Date("2026-08-31T18:00:00Z"), note: "Used the big pot. Everyone went back for seconds." },
+      ...(second ? [{ recipeId: second.id, userId, madeOn: new Date("2026-07-04T18:00:00Z"), note: "Rained. Grilled anyway." }] : []),
+    ]);
+  }
+}
+
 async function main() {
   const email = demoEmail();
   const name = demoName();
@@ -137,6 +198,7 @@ async function main() {
 
   const userId = await ensureDemoUser(email, name, password);
   await seedDemoContent(userId);
+  await seedHeritage(userId);
 
   const appUrl = process.env.APP_URL ?? "https://lovethelaus.com/kitchen";
   console.log(`Demo seed complete for ${email} (${name})`);
