@@ -90,6 +90,12 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `but
 - **Made this** (`MadeThisButton`): secondary (white, `border-line`) button with a ✓; expands into a date + note form. Never clay: it is a memory, not a primary action.
 - **Family timeline** (`/family`): people as cards (serif name, muted relationship · years · recipe count); timeline as a left-bordered list with clay dots.
 
+### Photos
+
+- **Gallery** (`PhotoGallery`): a two-column grid of white cards on the recipe page, cover first and labelled "Cover". Each card carries the photo, its description, and, for editors, "Make this the cover" and "Remove" as quiet text links rather than buttons.
+- **Cover** is what leads the recipe page, the cookbook card and the social preview. It is chosen, never the oldest upload.
+- **Empty state**: "No photos yet. The first one you add becomes the cover."
+
 ### Heritage media
 
 - **“The original card”** (`ScanPanel`): the scan sits beside the typed recipe in the standard white card, never cropped — a handwritten card has to stay legible. Caption in `text-sm text-muted` under the image.

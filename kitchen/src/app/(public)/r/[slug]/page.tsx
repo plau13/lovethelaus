@@ -1,3 +1,4 @@
+import { coverPhoto } from "@/lib/cover-photo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -62,7 +63,7 @@ export default async function PublicRecipePage({ params }: Params) {
     recipe.servings ? `${recipe.servings} servings` : null,
     parseTags(recipe.tags).length ? parseTags(recipe.tags).join(" · ") : null,
   ].filter(Boolean);
-  const photo = recipe.photos[0] ?? null;
+  const photo = coverPhoto(recipe);
   const jsonLd = recipeJsonLd(recipe);
   const publicScan = recipe.media.find((entry) => entry.kind === "scan") ?? null;
   const publicVoice = recipe.media.find((entry) => entry.kind === "voice") ?? null;

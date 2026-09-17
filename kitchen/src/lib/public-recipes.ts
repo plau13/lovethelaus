@@ -28,6 +28,7 @@ const cardColumns = {
   difficulty: true,
   tags: true,
   updatedAt: true,
+  coverPhotoId: true,
 } as const;
 
 /** Public recipe by slug (or id as a permanent fallback). Null when no containing cookbook is public/unlisted. */
@@ -36,7 +37,7 @@ export async function getPublicRecipe(slugOrId: string) {
   const found = await db.query.recipe.findFirst({
     where: (row, { or, eq: equals }) => or(equals(row.slug, slugOrId), equals(row.id, slugOrId)),
     with: {
-      photos: { orderBy: [recipePhoto.createdAt], columns: { path: true, alt: true } },
+      photos: { orderBy: [recipePhoto.position, recipePhoto.createdAt], columns: { id: true, path: true, alt: true, position: true } },
       owner: { columns: { name: true } },
       originPerson: { columns: { name: true, relationship: true } },
       media: { orderBy: [recipeMedia.position] },
@@ -71,7 +72,8 @@ export async function listPublicRecipes(options: { category?: RecipeCategory; of
       where,
       columns: cardColumns,
       with: {
-        photos: { orderBy: [recipePhoto.createdAt], limit: 1, columns: { path: true } },
+        // All photos, not the oldest one: the cover is chosen, not implied.
+        photos: { orderBy: [recipePhoto.position, recipePhoto.createdAt], columns: { id: true, path: true, alt: true, position: true } },
         owner: { columns: { name: true } },
       },
       orderBy: [desc(recipe.updatedAt)],

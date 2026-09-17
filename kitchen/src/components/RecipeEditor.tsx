@@ -342,6 +342,9 @@ export function RecipeEditor({
               />
             ) : null}
             <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" />
+            <span className="text-sm text-muted">
+              Adds one photo, up to 5MB. Manage the whole set, and pick the cover, from the recipe page.
+            </span>
           </label>
 
           <button

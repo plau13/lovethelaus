@@ -1,5 +1,5 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { randomBytes } from "crypto";
+import { baseContentType, mediaBucket } from "@/lib/media-storage";
 
 export const PHOTO_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -7,42 +7,30 @@ export const PHOTO_TYPES: Record<string, string> = {
   "image/webp": "webp",
 };
 
-export const MAX_PHOTO_BYTES = 1 * 1024 * 1024;
+/**
+ * Matches the scanned-card cap from `media-storage.ts`. The old 1MB limit
+ * rejected ordinary photos straight off a phone.
+ */
+export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+export const PHOTO_SIZE_MESSAGE = "Photos need to be under 5MB.";
+export const PHOTO_TYPE_MESSAGE = "Use a JPG, PNG, or WebP photo.";
 
-type PhotoBucket = {
-  put: (
-    key: string,
-    value: ArrayBuffer | ReadableStream,
-    options?: { httpMetadata?: { contentType?: string } }
-  ) => Promise<unknown>;
-  get: (key: string) => Promise<{ body: ReadableStream | null; httpMetadata?: { contentType?: string } } | null>;
-  delete: (keys: string | string[]) => Promise<void>;
-};
-
-function bucket(): PhotoBucket {
-  try {
-    const { env } = getCloudflareContext();
-    const found = (env as { RECIPE_PHOTOS?: PhotoBucket }).RECIPE_PHOTOS;
-    if (found) {
-      return found;
-    }
-  } catch {
-    // fall through
-  }
-  throw new Error(
-    "Photo storage is not configured. Bind the RECIPE_PHOTOS R2 bucket (wrangler.jsonc) — `next dev` uses a local simulation."
-  );
-}
+/** Same bucket as heritage media; photos live at the root, media under `media/`. */
+const bucket = mediaBucket;
 
 export function validatePhoto(photo: File): { ext: string; contentType: string } {
-  const ext = PHOTO_TYPES[photo.type];
+  const contentType = baseContentType(photo.type);
+  const ext = PHOTO_TYPES[contentType];
   if (!ext) {
-    throw new Error("Use a JPG, PNG, or WebP photo.");
+    throw new Error(PHOTO_TYPE_MESSAGE);
+  }
+  if (photo.size === 0) {
+    throw new Error("That file is empty.");
   }
   if (photo.size > MAX_PHOTO_BYTES) {
-    throw new Error("Photos need to be under 1MB.");
+    throw new Error(PHOTO_SIZE_MESSAGE);
   }
-  return { ext, contentType: photo.type };
+  return { ext, contentType };
 }
 
 /** Upload to R2 and return the object key (stored in `recipe_photo.path`). */
@@ -54,7 +42,7 @@ export async function uploadRecipePhoto(recipeId: string, photo: File): Promise<
 }
 
 export async function readRecipePhoto(key: string): Promise<{ body: ReadableStream; contentType: string } | null> {
-  let object: Awaited<ReturnType<PhotoBucket["get"]>>;
+  let object: Awaited<ReturnType<ReturnType<typeof mediaBucket>["get"]>>;
   try {
     object = await bucket().get(key);
   } catch {

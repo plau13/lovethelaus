@@ -214,7 +214,28 @@ Changes to `kitchen/src/lib/{recipes,cookbooks,pagination,search-terms,recipe-fi
 
 ---
 
-## 9. Deploy verification
+## 9. Photos and the installed app
+
+### When to run
+
+Changes to `kitchen/src/lib/{photos,cover-photo,recipe-photos}.ts`, `src/components/photos/**`, `src/app/actions/photos.ts`, `src/app/manifest.ts`, or the committed icons in `public/`.
+
+### Manual
+
+- [ ] Add a photo from a phone; the camera opens and the photo appears in the gallery on the recipe page
+- [ ] A 3MB photo uploads, which the old 1MB cap rejected; a 6MB one is refused with the size message
+- [ ] Add a second photo, then "Make this the cover"; the recipe page, the cookbook card and the public page all follow it
+- [ ] Remove the cover photo; the recipe falls back to the next photo rather than showing none
+- [ ] Remove every photo; the recipe renders with the "add a photo" placeholder and no broken image
+- [ ] Add a photo from the editor's photo field; it lands in the gallery with a position, and becomes the cover if it is the first
+- [ ] A viewer who cannot edit sees the photos but no cover or remove controls
+- [ ] Check the OG image on a public recipe (`/kitchen/r/<slug>`) is the chosen cover, not the oldest photo
+- [ ] Install the app on iOS and on Android; the home-screen icon is the pot on paper, not a generic placeholder, and is not cropped oddly on Android
+- [ ] Long-press the installed icon; Add a recipe, Recipes and Cookbooks shortcuts appear and each opens the right page under `/kitchen`
+
+---
+
+## 10. Deploy verification
 
 | What changed       | Deploy (from repo root)        |
 | ------------------ | ------------------------------ |

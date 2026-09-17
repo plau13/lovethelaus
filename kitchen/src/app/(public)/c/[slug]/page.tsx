@@ -1,3 +1,4 @@
+import { coverPhoto } from "@/lib/cover-photo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -73,7 +74,7 @@ export default async function PublicCookbookPage({ params }: Params) {
                 cookMinutes={recipe.cookMinutes}
                 difficulty={recipe.difficulty}
                 tags={recipe.tags}
-                photoKey={recipe.photos[0]?.path ?? null}
+                photoKey={coverPhoto(recipe)?.path ?? null}
                 ownerName={cookbook.owner.name}
               />
             ))}

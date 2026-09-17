@@ -1,3 +1,4 @@
+import { coverPhoto } from "@/lib/cover-photo";
 import { appUrl, photoUrl, publicRecipeUrl } from "@/lib/paths";
 import { splitLines } from "@/lib/tags";
 import { categoryLabel, formatCookMinutes } from "@/lib/types";
@@ -17,7 +18,8 @@ export type PublicRecipeForSeo = {
   createdAt: Date;
   updatedAt: Date;
   owner: { name: string };
-  photos: { path: string }[];
+  coverPhotoId?: string | null;
+  photos: { id: string; path: string; alt: string; position: number }[];
 };
 
 /** A recipe is indexable when at least one containing cookbook is public. */
@@ -47,9 +49,9 @@ export function recipeDescription(recipe: Pick<PublicRecipeForSeo, "story" | "st
   return clean.length > 155 ? `${clean.slice(0, 152).trimEnd()}…` : clean;
 }
 
-export function recipeImageUrl(recipe: Pick<PublicRecipeForSeo, "photos">): string | null {
-  const first = recipe.photos[0];
-  return first ? appUrl(photoUrl(first.path)) : null;
+export function recipeImageUrl(recipe: Pick<PublicRecipeForSeo, "photos" | "coverPhotoId">): string | null {
+  const cover = coverPhoto(recipe);
+  return cover ? appUrl(photoUrl(cover.path)) : null;
 }
 
 /** schema.org/Recipe JSON-LD. */
