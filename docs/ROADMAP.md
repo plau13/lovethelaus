@@ -6,7 +6,7 @@
 | 1     | Stack migration: Neon + Drizzle + Better Auth + Resend + Stripe + R2 cleanup; heritage columns in the baseline schema                                                                                                       | done              |
 | 2     | Public pages + SEO + ad slots + consent + privacy update ([`ADS.md`](ADS.md))                                                                                                                                               | done              |
 | 3     | Heritage UI ([`HERITAGE.md`](HERITAGE.md)): provenance, scans, voice, family timeline, book structure                                                                                                                       | done              |
-| 4     | Table stakes: photo gallery + cover, structured ingredients + unit conversion, pagination + Postgres full-text search, tag filter, favorites page, real offline cook mode, meal plan + grocery list, step timers, PWA icons | after             |
+| 4     | Table stakes: photo gallery + cover, structured ingredients + unit conversion, pagination + Postgres full-text search, tag filter, favorites page, real offline cook mode, meal plan + grocery list, step timers, PWA icons | in progress       |
 
 ## Phase 2 checklist
 
@@ -32,3 +32,15 @@
 - [x] Free vs Plus media gating: 1 scan + 1 voice memo per recipe free
 - [x] `/family` timeline with `recipe_memory`
 - [x] Cookbook dedication + family name (cover and chapters in the printed book)
+
+## Phase 4 checklist
+
+- [x] Postgres full-text search on recipes (generated `tsvector` + GIN index, `websearch_to_tsquery`, `ts_rank`)
+- [x] Pagination on the recipe list and the public cookbook list; cookbook search moved into SQL
+- [x] Tag filter (clickable tags on the recipe cards) and a favorites filter
+- [ ] Photo gallery, chosen cover, and photo delete
+- [ ] Maskable PWA icons and app shortcuts
+- [ ] Structured ingredients and unit conversion (`preferredUnits` is still unread)
+- [ ] Step timers in cook mode
+- [ ] Meal plan and grocery list
+- [ ] Offline cook mode that actually works offline

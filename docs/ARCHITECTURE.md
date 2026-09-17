@@ -62,6 +62,7 @@ No Worker fetches itself, so `global_fetch_strictly_public` stays on.
 4. **Refresh the session cache after user mutations.** Onboarding, settings, import quota, and the Stripe success page call `refreshSessionCache()` or read with `fresh: true`; otherwise the 5-minute cookie cache causes redirect loops.
 5. **Next applies `basePath` inconsistently.** `redirect()` and `<Link>` add `/kitchen`; `NextResponse.redirect`, `<img src>`, manifest/icon paths, service-worker scope, and the proxy matcher do not. Route everything through `paths.ts`.
 6. **Cookie names differ by scheme.** `__Secure-kitchen.session_token` on https, `kitchen.session_token` on `http://localhost`. `getSessionCookie` handles both.
+7. **Lists filter, rank and page in SQL.** `recipe.search_vector` is a `GENERATED ALWAYS` weighted `tsvector` (title A, tags B, story and ingredients C, steps D) with a GIN index; `to_tsvector(regconfig, text)` is immutable with a literal config, which is what a generated column requires. Searching uses `websearch_to_tsquery` so quoted phrases, `or` and `-exclusions` work for free. Count with `countVisibleRecipes` before fetching a page, so the page number is clamped against the real total. Never load a full list to filter or count it in JavaScript — that was the original defect here.
 
 ## Environment
 

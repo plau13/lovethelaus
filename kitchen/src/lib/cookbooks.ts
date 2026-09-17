@@ -1,10 +1,11 @@
 import { randomBytes } from "crypto";
-import { and, asc, count, desc, eq, exists, gt, inArray, notInArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, gt, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { sendCookbookInviteEmail, sendCookbookMemberAddedEmail } from "@/lib/email-templates";
 import { appUrl } from "@/lib/paths";
 import { canEditCookbookContents, canManageCookbook, canViewCookbook } from "@/lib/permissions";
 import { ensureRecipeSlugs } from "@/lib/recipes";
+import { searchTerms } from "@/lib/search-terms";
 import { slugify } from "@/lib/slug";
 import type { CookbookListFilter, CookbookRole, Visibility } from "@/lib/types";
 import { COOKBOOK_ROLES, VISIBILITIES } from "@/lib/types";
@@ -103,47 +104,88 @@ export async function listMyCookbooks(userId: string) {
   return withListCounts(rows, userId);
 }
 
-function matchesCookbookQuery(entry: { title: string; description: string }, query: string): boolean {
-  const needle = query.trim().toLowerCase();
-  if (!needle) {
-    return true;
+export const PUBLIC_COOKBOOKS_PER_PAGE = 20;
+
+/** SQL: title or description contains the search text. Null when there is no query. */
+function cookbookMatches(query: string): SQL | null {
+  if (!query) {
+    return null;
   }
-  return `${entry.title} ${entry.description}`.toLowerCase().includes(needle);
+  const needle = `%${query.replace(/[%_]/g, (char) => `\\${char}`)}%`;
+  return or(ilike(cookbook.title, needle), ilike(cookbook.description, needle))!;
 }
 
-export async function listCookbooksForUser(userId: string, options: { q?: string; filter?: CookbookListFilter } = {}) {
+/** Public cookbooks matching a search, without loading them. Fixes the page number. */
+export async function countPublicCookbooks(userId: string, q = ""): Promise<number> {
   const db = getDb();
-  const { q = "", filter = "all" } = options;
+  const matches = cookbookMatches(searchTerms(q));
+  const notMine = sql`NOT ${memberOf(userId)}`;
+  const where = matches
+    ? and(eq(cookbook.visibility, "public"), notMine, matches)
+    : and(eq(cookbook.visibility, "public"), notMine);
+  const [row] = await db.select({ total: count() }).from(cookbook).where(where);
+  return Number(row?.total ?? 0);
+}
 
-  const memberRows = await db.query.cookbook.findMany({
-    where: memberOf(userId),
-    orderBy: [desc(cookbook.isDefault), desc(cookbook.updatedAt)],
-  });
-  const memberIds = memberRows.map((row) => row.id);
+/**
+ * The cookbooks a user can reach, grouped as the index page shows them. The
+ * user's own and shared books are bounded by their memberships and come back
+ * whole; the public list is unbounded, so it is filtered and paged in Postgres.
+ */
+export async function listCookbooksForUser(
+  userId: string,
+  options: { q?: string; filter?: CookbookListFilter; limit?: number; offset?: number } = {}
+) {
+  const db = getDb();
+  const { q = "", filter = "all", limit = PUBLIC_COOKBOOKS_PER_PAGE, offset = 0 } = options;
+  const query = searchTerms(q);
+  const matches = cookbookMatches(query);
 
-  const publicRows = await db.query.cookbook.findMany({
-    where: memberIds.length > 0 ? and(eq(cookbook.visibility, "public"), notInArray(cookbook.id, memberIds)) : eq(cookbook.visibility, "public"),
-    orderBy: [desc(cookbook.updatedAt)],
-  });
+  const wantsMembers = filter === "all" || filter === "private" || filter === "shared";
+  const wantsPublic = filter === "all" || filter === "public";
+
+  const memberRows = wantsMembers
+    ? await db.query.cookbook.findMany({
+        where: matches ? and(memberOf(userId), matches) : memberOf(userId),
+        orderBy: [desc(cookbook.isDefault), desc(cookbook.updatedAt)],
+      })
+    : [];
+
+  let publicRows: CookbookRow[] = [];
+  let publicTotal = 0;
+  if (wantsPublic) {
+    // Books the user is already a member of appear in their own sections instead.
+    const notMine = sql`NOT ${memberOf(userId)}`;
+    const publicWhere = matches
+      ? and(eq(cookbook.visibility, "public"), notMine, matches)
+      : and(eq(cookbook.visibility, "public"), notMine);
+    const [countRow] = await db.select({ total: count() }).from(cookbook).where(publicWhere);
+    publicTotal = Number(countRow?.total ?? 0);
+    publicRows = await db.query.cookbook.findMany({
+      where: publicWhere,
+      orderBy: [desc(cookbook.updatedAt)],
+      limit,
+      ...(offset ? { offset } : {}),
+    });
+  }
 
   const [memberCookbooks, publicCookbooks] = await Promise.all([
     withListCounts(memberRows, userId),
     withListCounts(publicRows, userId),
   ]);
 
-  const own = memberCookbooks.filter((entry) => entry.ownerId === userId && matchesCookbookQuery(entry, q));
-  const shared = memberCookbooks.filter((entry) => entry.ownerId !== userId && matchesCookbookQuery(entry, q));
-  const pub = publicCookbooks.filter((entry) => matchesCookbookQuery(entry, q));
+  const own = memberCookbooks.filter((entry) => entry.ownerId === userId);
+  const shared = memberCookbooks.filter((entry) => entry.ownerId !== userId);
 
   switch (filter) {
     case "private":
-      return { own: own.filter((c) => c.visibility === "private"), shared: [], public: [] };
+      return { own: own.filter((entry) => entry.visibility === "private"), shared: [], public: [], publicTotal: 0 };
     case "shared":
-      return { own: [], shared, public: [] };
+      return { own: [], shared, public: [], publicTotal: 0 };
     case "public":
-      return { own: [], shared: [], public: pub };
+      return { own: [], shared: [], public: publicCookbooks, publicTotal };
     case "all":
-      return { own, shared, public: pub };
+      return { own, shared, public: publicCookbooks, publicTotal };
     default: {
       const _exhaustive: never = filter;
       return _exhaustive;

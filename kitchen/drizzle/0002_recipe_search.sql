@@ -1,0 +1,2 @@
+ALTER TABLE "recipe" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('english', "title"), 'A') || setweight(to_tsvector('english', "tags"), 'B') || setweight(to_tsvector('english', "story"), 'C') || setweight(to_tsvector('english', "ingredients"), 'C') || setweight(to_tsvector('english', "steps"), 'D')) STORED;--> statement-breakpoint
+CREATE INDEX "recipe_search_idx" ON "recipe" USING gin ("search_vector");

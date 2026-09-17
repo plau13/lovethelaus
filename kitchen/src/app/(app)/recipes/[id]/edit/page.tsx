@@ -5,7 +5,7 @@ import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireOnboardedUser } from "@/lib/auth";
 import { photoUrl } from "@/lib/paths";
 import { listPeople } from "@/lib/people";
-import { listVisibleRecipes } from "@/lib/recipes";
+import { listRecipeTitleOptions } from "@/lib/recipes";
 import { canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import type { RecipeCategory, RecipeDifficulty, RecipeType } from "@/lib/types";
@@ -24,7 +24,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
   ) {
     notFound();
   }
-  const [people, visible] = await Promise.all([listPeople(user.id), listVisibleRecipes(user.id)]);
+  const [people, visible] = await Promise.all([listPeople(user.id), listRecipeTitleOptions(user.id)]);
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">Edit recipe</h1>

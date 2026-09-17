@@ -7,7 +7,7 @@ import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
 import { canExportCookbook } from "@/lib/export-eligibility";
 import { canEditCookbookContents, canManageCookbook } from "@/lib/permissions";
 import { appUrl } from "@/lib/paths";
-import { listVisibleRecipes } from "@/lib/recipes";
+import { listRecipeTitleOptions } from "@/lib/recipes";
 
 export default async function CookbookPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireOnboardedUser();
@@ -17,7 +17,7 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
     notFound();
   }
   const role = await memberRole(cookbook.id, user.id);
-  const ownedRecipes = (await listVisibleRecipes(user.id, {})).filter((recipe) => recipe.ownerId === user.id);
+  const ownedRecipes = await listRecipeTitleOptions(user.id, { ownedOnly: true });
   const canExport = await canExportCookbook(user.id, cookbook.id);
   const isOwner = cookbook.ownerId === user.id;
   const publicShareUrl =

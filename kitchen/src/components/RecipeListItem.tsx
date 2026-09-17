@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buildRecipesQuery } from "@/lib/recipe-filters";
 import { parseTags } from "@/lib/tags";
 import { categoryLabel, difficultyLabel, formatCookMinutes } from "@/lib/types";
 
@@ -35,15 +36,33 @@ export function RecipeListItem({
   cookMinutes,
   difficulty,
   tags,
-}: RecipeListItemProps) {
-  const meta = recipeListMeta({ category, cookMinutes, difficulty, tags });
+  linkTags = false,
+}: RecipeListItemProps & { linkTags?: boolean }) {
+  const tagList = parseTags(tags);
+  // Without clickable tags the tag filter has no way in from the list.
+  const meta = linkTags
+    ? recipeListMeta({ category, cookMinutes, difficulty, tags: "" })
+    : recipeListMeta({ category, cookMinutes, difficulty, tags });
 
   return (
     <li className="rounded-xl border border-line bg-white p-4 shadow-sm">
       <Link href={`/recipes/${id}`} className="font-serif text-2xl text-ink no-underline">
         {title}
       </Link>
-      <p className="mt-1 text-muted">{meta || "Untagged"}</p>
+      <p className="mt-1 text-muted">{meta || (linkTags && tagList.length > 0 ? "" : "Untagged")}</p>
+      {linkTags && tagList.length > 0 ? (
+        <p className="mt-1 flex flex-wrap gap-2">
+          {tagList.map((tag) => (
+            <Link
+              key={tag}
+              href={buildRecipesQuery({ tag })}
+              className="text-sm text-muted no-underline hover:text-clay"
+            >
+              #{tag}
+            </Link>
+          ))}
+        </p>
+      ) : null}
     </li>
   );
 }

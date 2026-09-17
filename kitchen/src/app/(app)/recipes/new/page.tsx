@@ -3,11 +3,11 @@ import { startImport } from "@/app/actions/import";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listPeople } from "@/lib/people";
-import { listVisibleRecipes } from "@/lib/recipes";
+import { listRecipeTitleOptions } from "@/lib/recipes";
 
 export default async function NewRecipePage() {
   const user = await requireOnboardedUser();
-  const [people, visible] = await Promise.all([listPeople(user.id), listVisibleRecipes(user.id)]);
+  const [people, visible] = await Promise.all([listPeople(user.id), listRecipeTitleOptions(user.id)]);
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">Add a recipe</h1>

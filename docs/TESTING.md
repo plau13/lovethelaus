@@ -192,7 +192,29 @@ Changes to `kitchen/src/lib/{media,media-storage,media-limits,transcribe-scan,an
 
 ---
 
-## 8. Deploy verification
+## 8. Search, filters, and pagination
+
+### When to run
+
+Changes to `kitchen/src/lib/{recipes,cookbooks,pagination,search-terms,recipe-filters}.ts`, `src/components/{Pager,RecipeFiltersBar,RecipeListItem}.tsx`, the recipes or cookbooks index pages, or the `recipe.search_vector` column.
+
+### Manual
+
+- [ ] Seed or add more than 20 recipes; `/kitchen/recipes` shows one page with a working Next link and an accurate "Showing 1–20 of N"
+- [ ] Page 2 keeps every active filter in the URL; changing any filter returns to page 1
+- [ ] A search for a word that appears only in a recipe's ingredients finds it; one that appears only in its story finds it too
+- [ ] A title match ranks above a match that only appears in the steps
+- [ ] A two-word search returns only recipes containing both words, matching the old behaviour
+- [ ] `"pot roast"` in quotes matches the phrase; `-beef` excludes
+- [ ] A search with no matches shows the empty state, not an error
+- [ ] Clicking a tag on a recipe card filters to that tag; the chip clears it
+- [ ] The Favorites filter shows only favorited recipes and nothing when there are none
+- [ ] Cookbook search returns the same results it did before, and the public section pages independently of your own books
+- [ ] A recipe you cannot see never appears in any search result, on any page (check as a second account)
+
+---
+
+## 9. Deploy verification
 
 | What changed       | Deploy (from repo root)        |
 | ------------------ | ------------------------------ |
