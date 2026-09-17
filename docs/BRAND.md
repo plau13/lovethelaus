@@ -12,32 +12,32 @@ Shared visual and voice standards for the **marketing site** (Astro, repo root) 
 
 ### Light mode (primary)
 
-| Token | Hex | CSS variable | Usage |
-|-------|-----|--------------|-------|
-| Paper | `#faf6f0` | `--color-paper` / `--aw-color-bg-page` | Page background |
-| Ink | `#2c1810` | `--color-ink` / `--aw-color-text-default` | Body text, headings |
-| Muted | `#6b5348` | `--color-muted` / `--aw-color-text-muted` | Secondary text, labels |
-| Clay | `#8b3a2a` | `--color-clay` / `--aw-color-primary` | Primary actions, links |
-| Clay dark | `#6e2c20` | `--color-clay-dark` / `--aw-color-secondary` | Hover states |
-| Line | `#e6d8cc` | `--color-line` / `--aw-color-line` | Borders, dividers |
+| Token     | Hex       | CSS variable                                 | Usage                  |
+| --------- | --------- | -------------------------------------------- | ---------------------- |
+| Paper     | `#faf6f0` | `--color-paper` / `--aw-color-bg-page`       | Page background        |
+| Ink       | `#2c1810` | `--color-ink` / `--aw-color-text-default`    | Body text, headings    |
+| Muted     | `#6b5348` | `--color-muted` / `--aw-color-text-muted`    | Secondary text, labels |
+| Clay      | `#8b3a2a` | `--color-clay` / `--aw-color-primary`        | Primary actions, links |
+| Clay dark | `#6e2c20` | `--color-clay-dark` / `--aw-color-secondary` | Hover states           |
+| Line      | `#e6d8cc` | `--color-line` / `--aw-color-line`           | Borders, dividers      |
 
 ### Dark mode (marketing)
 
-| Token | Usage |
-|-------|-------|
-| `--aw-color-bg-page: rgb(44 24 16)` | Dark page background |
-| `--aw-color-text-default: rgb(250 246 240)` | Light text |
-| `--aw-color-primary: rgb(196 120 100)` | Links and accents in dark mode |
+| Token                                       | Usage                          |
+| ------------------------------------------- | ------------------------------ |
+| `--aw-color-bg-page: rgb(44 24 16)`         | Dark page background           |
+| `--aw-color-text-default: rgb(250 246 240)` | Light text                     |
+| `--aw-color-primary: rgb(196 120 100)`      | Links and accents in dark mode |
 
 Kitchen app is light-mode first; marketing supports dark via `.dark` class.
 
 ## Typography
 
-| Role | Font | Where |
-|------|------|-------|
-| Headings & recipe titles | **Source Serif 4** | `font-serif`, `--font-serif`, `--aw-font-heading` |
-| UI & body | **Source Sans 3** | `font-sans`, `--font-sans`, `--aw-font-sans` |
-| Base size (Kitchen) | 18px | `html { font-size: 18px }` in `kitchen/src/app/globals.css` |
+| Role                     | Font               | Where                                                       |
+| ------------------------ | ------------------ | ----------------------------------------------------------- |
+| Headings & recipe titles | **Source Serif 4** | `font-serif`, `--font-serif`, `--aw-font-heading`           |
+| UI & body                | **Source Sans 3**  | `font-sans`, `--font-sans`, `--aw-font-sans`                |
+| Base size (Kitchen)      | 18px               | `html { font-size: 18px }` in `kitchen/src/app/globals.css` |
 
 Use serif for recipe names and page titles; sans for navigation, forms, and metadata.
 
@@ -64,7 +64,7 @@ Do not use filled or blue variants. Keep the hat outline consistent across surfa
 <a class="btn-clay btn-clay-hover ...">Add recipe</a>
 
 <!-- Button -->
-<button class="btn rounded-xl bg-clay px-5 py-3 text-white hover:bg-clay-dark">
+<button class="btn rounded-xl bg-clay px-5 py-3 text-white hover:bg-clay-dark"></button>
 ```
 
 Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `button.bg-clay` force white text.
@@ -95,34 +95,34 @@ Minimum **48px** height for buttons and primary taps (kitchen counter / phone us
 
 ## Layout
 
-| Area | Max width |
-|------|-----------|
-| Kitchen content | `max-w-3xl` |
-| Kitchen header | `max-w-4xl` |
+| Area               | Max width                       |
+| ------------------ | ------------------------------- |
+| Kitchen content    | `max-w-3xl`                     |
+| Kitchen header     | `max-w-4xl`                     |
 | Marketing sections | `max-w-7xl` (AstroWind default) |
 
 Kitchen nav: logo left, **Home · Recipes · Cookbooks** centered, user menu right.
 
 ## Do / Don't
 
-| Do | Don't |
-|----|-------|
-| Use clay + white for primary CTAs | Put clay-colored link text on clay buttons |
-| Match marketing and Kitchen warm palette | Introduce blue, slate, or generic Bootstrap colors |
-| Use serif for recipe titles | Use all-caps system fonts for headings |
-| Test light and dark on marketing auth pages | Assume Kitchen dark mode exists (it doesn't yet) |
+| Do                                                            | Don't                                              |
+| ------------------------------------------------------------- | -------------------------------------------------- |
+| Use clay + white for primary CTAs                             | Put clay-colored link text on clay buttons         |
+| Match marketing and Kitchen warm palette                      | Introduce blue, slate, or generic Bootstrap colors |
+| Use serif for recipe titles                                   | Use all-caps system fonts for headings             |
+| Test light and dark on marketing auth pages                   | Assume Kitchen dark mode exists (it doesn't yet)   |
 | Link to [`docs/TESTING.md`](TESTING.md) when changing auth UI | Fix one auth flow without checking the full matrix |
 
 ## File reference
 
-| What to change | File |
-|----------------|------|
-| Kitchen colors & utilities | `kitchen/src/app/globals.css` |
-| Marketing colors (light/dark) | `src/components/CustomStyles.astro` |
-| Marketing Tailwind theme | `src/assets/styles/tailwind.css` |
-| Kitchen fonts | `kitchen/src/app/layout.tsx` (next/font) |
-| Marketing fonts | `astro.config.ts` → `Layout.astro` |
-| Favicon (marketing) | `src/assets/favicons/favicon.svg`, `src/components/Favicons.astro` |
-| Favicon (Kitchen) | `kitchen/public/icon.svg`, `kitchen/src/app/layout.tsx` metadata |
+| What to change                | File                                                               |
+| ----------------------------- | ------------------------------------------------------------------ |
+| Kitchen colors & utilities    | `kitchen/src/app/globals.css`                                      |
+| Marketing colors (light/dark) | `src/components/CustomStyles.astro`                                |
+| Marketing Tailwind theme      | `src/assets/styles/tailwind.css`                                   |
+| Kitchen fonts                 | `kitchen/src/app/layout.tsx` (next/font)                           |
+| Marketing fonts               | `astro.config.ts` → `Layout.astro`                                 |
+| Favicon (marketing)           | `src/assets/favicons/favicon.svg`, `src/components/Favicons.astro` |
+| Favicon (Kitchen)             | `kitchen/public/icon.svg`, `kitchen/src/app/layout.tsx` metadata   |
 
 When adding a new color or pattern, update **this document** and both code locations if the change applies to both surfaces.
