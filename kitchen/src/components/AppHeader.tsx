@@ -5,6 +5,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/recipes", label: "Recipes" },
   { href: "/cookbooks", label: "Cookbooks" },
+  { href: "/family", label: "Family" },
 ] as const;
 
 export function AppHeader({ userName }: { userName: string | null }) {

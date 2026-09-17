@@ -38,6 +38,22 @@ export default async function CookbookSettingsPage({ params }: { params: Promise
             className="rounded-xl border border-line bg-white px-3 py-3"
           />
         </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-1">
+            <span>Family name (optional)</span>
+            <input name="familyName" defaultValue={cookbook.familyName ?? ""} placeholder="Lau" className="rounded-xl border border-line bg-white px-3 py-3" />
+          </label>
+        </div>
+        <label className="grid gap-1">
+          <span>Dedication (optional)</span>
+          <textarea
+            name="dedication"
+            defaultValue={cookbook.dedication}
+            rows={2}
+            placeholder="For Grandma Rose, who never measured anything."
+            className="rounded-xl border border-line bg-white px-3 py-3"
+          />
+        </label>
         <label className="grid gap-1">
           <span>Visibility</span>
           <select name="visibility" defaultValue={cookbook.visibility} className="rounded-xl border border-line bg-white px-3 py-3">

@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
+import { MemoriesSection } from "@/components/MemoriesSection";
+import { ProvenanceBlock } from "@/components/ProvenanceBlock";
 import { RecipeDetailClient } from "@/components/RecipeDetailClient";
 import { requireOnboardedUser } from "@/lib/auth";
 import { exportAccessFromLoadedRecipe } from "@/lib/export-eligibility";
@@ -30,9 +32,15 @@ function parseRevisionSnapshot(snapshot: string): { title?: string } {
   }
 }
 
-export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RecipePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ made?: string }>;
+}) {
   const user = await requireOnboardedUser();
-  const { id } = await params;
+  const [{ id }, { made }] = await Promise.all([params, searchParams]);
   const recipe = await getRecipeForUser(id, user.id);
   if (!recipe) {
     notFound();
@@ -61,6 +69,15 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const baseServings = recipe.servings ?? 4;
   const cookTimeLabel = recipe.cookMinutes ? formatCookMinutes(recipe.cookMinutes) : null;
   const firstPhoto = recipe.photos[0] ?? null;
+  const adaptedFrom = recipe.adaptedFrom
+    ? {
+        id: recipe.adaptedFrom.id,
+        title: recipe.adaptedFrom.title,
+        ownerName: recipe.adaptedFrom.owner.name,
+        // Link only when the viewer can open the original.
+        viewable: recipe.adaptedFrom.ownerId === user.id || (await getRecipeForUser(recipe.adaptedFrom.id, user.id)) !== null,
+      }
+    : null;
 
   const metaParts = [
     recipeTypeLabel(recipe.recipeType),
@@ -104,11 +121,25 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
             </>
           ),
           sourceAttribution: recipe.sourceAttribution,
+          provenance: (
+            <ProvenanceBlock
+              recipeId={recipe.id}
+              canEdit={editable}
+              person={recipe.originPerson ? { id: recipe.originPerson.id, name: recipe.originPerson.name, relationship: recipe.originPerson.relationship } : null}
+              story={recipe.story}
+              firstMadeYear={recipe.firstMadeYear}
+              occasion={recipe.occasion}
+              adaptedFrom={adaptedFrom}
+              adaptations={recipe.adaptations.map((entry) => ({ id: entry.id, title: entry.title, ownerName: entry.owner.name }))}
+            />
+          ),
           cookingSteps,
           bakingSteps,
           cookTimeLabel,
         }}
       >
+        <MemoriesSection recipeId={recipe.id} memories={recipe.memories} currentUserId={user.id} justSaved={made === "1"} />
+
         {recipe.revisions.length > 0 ? (
           <section className="grid gap-2 no-print">
             <h2 className="text-xl font-semibold">Version history</h2>

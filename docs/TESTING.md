@@ -149,7 +149,27 @@ Changes under `kitchen/src/app/(public)/`, `components/PublicShell.tsx`, `compon
 
 ---
 
-## 6. Deploy verification
+## 6. Heritage (people, provenance, memories, family)
+
+### When to run
+
+Changes to `kitchen/src/lib/{people,memories,heritage}.ts`, `components/{ProvenanceBlock,ProvenanceFields,MadeThisButton,MemoriesSection,PersonForm}.tsx`, `src/app/(app)/family/**`, `actions/people.ts`, or the heritage fields in `actions/recipes.ts` / `lib/recipes.ts`.
+
+### Manual
+
+- [ ] Editor → “Where it comes from” → “+ Add someone” adds a person inline and selects them; save; the recipe page shows the provenance card with the person linked to `/family/people/<id>`
+- [ ] First-made year rejects `1799` and next year; occasion suggestions appear; story renders with line breaks
+- [ ] Set “Adapted from” to another recipe; both pages show the lineage (Adapted from / Adapted by); a recipe cannot be adapted from itself
+- [ ] “I made this” on the recipe page and at the bottom of cook mode records a dated entry; summary line updates (“Made once · last by …”); only the author sees Remove
+- [ ] `/family` lists people with recipe counts and the timeline (memories + origins by year); `/loved-ones` redirects to `/family`
+- [ ] Person page lists their recipes; Edit and Remove work; removing clears the origin on the recipes but keeps the recipes
+- [ ] Cookbook settings save Family name and Dedication; the cookbook page and `/kitchen/c/<slug>` show the dedication
+- [ ] Public `/kitchen/r/<slug>` shows the provenance line and story; nothing about people leaks beyond name and relationship
+- [ ] Header nav shows Home · Recipes · Cookbooks · Family
+
+---
+
+## 7. Deploy verification
 
 | What changed       | Deploy (from repo root)        |
 | ------------------ | ------------------------------ |

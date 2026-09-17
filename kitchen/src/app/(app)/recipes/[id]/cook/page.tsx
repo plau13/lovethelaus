@@ -2,13 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfflineCookCache } from "@/components/OfflineCookCache";
 import { KitchenView } from "@/components/KitchenView";
+import { MadeThisButton } from "@/components/MadeThisButton";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getRecipeForUser } from "@/lib/recipes";
 import { isSubscriber } from "@/lib/subscription";
 
-export default async function CookPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CookPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ made?: string }>;
+}) {
   const user = await requireOnboardedUser();
-  const { id } = await params;
+  const [{ id }, { made }] = await Promise.all([params, searchParams]);
   const recipe = await getRecipeForUser(id, user.id);
   if (!recipe) {
     notFound();
@@ -39,6 +46,10 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
         steps={recipe.steps}
         bakingSteps={recipe.bakingSteps}
       />
+      <div className="no-print grid gap-2 border-t border-line pt-6">
+        {made === "1" ? <p className="text-clay">Saved to the family timeline.</p> : null}
+        <MadeThisButton recipeId={recipe.id} returnTo="cook" large />
+      </div>
     </main>
   );
 }
