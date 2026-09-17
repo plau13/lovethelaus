@@ -38,8 +38,8 @@
 - [x] Postgres full-text search on recipes (generated `tsvector` + GIN index, `websearch_to_tsquery`, `ts_rank`)
 - [x] Pagination on the recipe list and the public cookbook list; cookbook search moved into SQL
 - [x] Tag filter (clickable tags on the recipe cards) and a favorites filter
-- [ ] Photo gallery, chosen cover, and photo delete
-- [ ] Maskable PWA icons and app shortcuts
+- [x] Photo gallery, chosen cover, and photo delete
+- [x] Maskable PWA icons and app shortcuts
 - [ ] Structured ingredients and unit conversion (`preferredUnits` is still unread)
 - [ ] Step timers in cook mode
 - [ ] Meal plan and grocery list

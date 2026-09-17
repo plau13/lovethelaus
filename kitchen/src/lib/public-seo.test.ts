@@ -21,7 +21,8 @@ const recipe = {
   createdAt: new Date("2026-01-02T00:00:00Z"),
   updatedAt: new Date("2026-02-03T00:00:00Z"),
   owner: { name: "Rose" },
-  photos: [{ path: "abc123xyz789/1a2b.jpg" }],
+  coverPhotoId: null,
+  photos: [{ id: "p1", path: "abc123xyz789/1a2b.jpg", alt: "", position: 0 }],
 };
 
 describe("visibility helpers", () => {

@@ -76,6 +76,8 @@ export const recipe = pgTable(
     }),
     firstMadeYear: integer("first_made_year"),
     occasion: text("occasion"),
+    /** The photo chosen as the cover. Null falls back to the first by position. */
+    coverPhotoId: text("cover_photo_id").references((): AnyPgColumn => recipePhoto.id, { onDelete: "set null" }),
     searchVector: tsvector("search_vector").generatedAlwaysAs(RECIPE_SEARCH_DOCUMENT),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -119,6 +121,7 @@ export const recipePhoto = pgTable(
     path: text("path").notNull(),
     contentType: text("content_type"),
     alt: text("alt").notNull().default(""),
+    position: integer("position").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

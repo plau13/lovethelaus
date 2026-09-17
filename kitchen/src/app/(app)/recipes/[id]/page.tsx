@@ -1,6 +1,8 @@
+import { coverPhoto } from "@/lib/cover-photo";
 import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
 import { MediaSection } from "@/components/media/MediaSection";
+import { PhotoGallery } from "@/components/photos/PhotoGallery";
 import { MemoriesSection } from "@/components/MemoriesSection";
 import { ProvenanceBlock } from "@/components/ProvenanceBlock";
 import { RecipeDetailClient } from "@/components/RecipeDetailClient";
@@ -71,7 +73,7 @@ export default async function RecipePage({
   const exportAccess = exportAccessFromLoadedRecipe(user, recipe);
   const baseServings = recipe.servings ?? 4;
   const cookTimeLabel = recipe.cookMinutes ? formatCookMinutes(recipe.cookMinutes) : null;
-  const firstPhoto = recipe.photos[0] ?? null;
+  const cover = coverPhoto(recipe);
   const adaptedFrom = recipe.adaptedFrom
     ? {
         id: recipe.adaptedFrom.id,
@@ -109,7 +111,7 @@ export default async function RecipePage({
         main={{
           ownerName: recipe.owner.name,
           coAuthorNames: coAuthors.map((entry) => entry.user.name),
-          photo: firstPhoto ? { path: photoUrl(firstPhoto.path), alt: firstPhoto.alt } : null,
+          photo: cover ? { path: photoUrl(cover.path), alt: cover.alt } : null,
           canEdit: editable,
           metaLine: (
             <>
@@ -142,6 +144,13 @@ export default async function RecipePage({
           cookTimeLabel,
         }}
       >
+        <PhotoGallery
+          recipeId={recipe.id}
+          coverPhotoId={recipe.coverPhotoId}
+          photos={recipe.photos}
+          canEdit={editable}
+        />
+
         <MediaSection
           recipeId={recipe.id}
           media={recipe.media}

@@ -21,14 +21,16 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 - Paths: always build `/kitchen` URLs with `src/lib/paths.ts`; post-login redirects with `src/lib/post-auth.ts`.
 - Email via **Resend** (`src/lib/email.ts`); no API key locally = emails print to the console.
 - Billing via **Stripe** (`src/lib/stripe.ts`, `src/app/api/stripe/webhook/route.ts`); tier helpers in `src/lib/billing.ts`, `src/lib/subscription.ts`.
-- Photos in **R2** (`src/lib/recipe-photos.ts`); the DB stores keys, `photoUrl(key)` builds the URL.
+- Photos in **R2** (`src/lib/recipe-photos.ts`); the DB stores keys, `photoUrl(key)` builds the URL. Up to 5MB, same bucket accessor as heritage media (`mediaBucket`).
+- **The cover photo is chosen, never implied.** `recipe.coverPhotoId` names it; `coverPhoto()` in `src/lib/cover-photo.ts` (pure, no DB import, so SEO can use it) falls back to the lowest `position` when it is unset or deleted. Never read `photos[0]`. Gallery rows live in `src/lib/photos.ts`, actions in `src/app/actions/photos.ts`, UI in `src/components/photos/`.
 - Heritage media (scanned cards, voice memos) shares that bucket under a `media/` prefix: storage in `src/lib/media-storage.ts`, rows in `src/lib/media.ts`, free/Plus gate in `src/lib/media-limits.ts`, served by `src/app/api/recipe-media/[...key]/route.ts` (recipe visibility rules + HTTP Range for audio), URLs from `mediaUrl(key)`.
 - **One AI provider.** Claude via `@anthropic-ai/sdk` (`src/lib/anthropic.ts`, model `claude-opus-5`): card transcription in `src/lib/transcribe-scan.ts`, import structuring in `src/lib/import-ai.ts`. No `ANTHROPIC_API_KEY` = both degrade quietly. There is no OpenAI path.
 - Print-ready book at `/cookbooks/[id]/book` (Kitchen Plus): pure layout helpers in `src/lib/book.ts`, print rules in that route's `book.css`.
 - **Search and lists run in Postgres, never in JavaScript.** `recipe.search_vector` is a generated weighted `tsvector` with a GIN index; `listVisibleRecipes` matches it with `websearch_to_tsquery` and ranks with `ts_rank`, and takes `limit`/`offset`. Pair it with `countVisibleRecipes` to fix the page first. Page arithmetic is `src/lib/pagination.ts`, query and tag normalization is `src/lib/search-terms.ts`. Use `listRecipeTitleOptions` for pickers that genuinely need every title. Never load a whole list to filter it in memory.
 - Demo seed: `npm run db:seed:demo` (`demo@lovethelaus.com` + sample recipes)
 - Purge legacy seed users: `npm run db:purge-seed-users`
-- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates, heritage, media limits and storage, book layout, pagination, search terms, recipe filters)
+- PWA icons: `npm run icons` regenerates the committed PNGs from `src/app/icon.svg`; re-run it whenever that SVG changes.
+- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates, heritage, media limits and storage, book layout, pagination, search terms, recipe filters, cover photo, photo validation)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
 - Nav: Home, Recipes, Cookbooks, Family + user menu (Settings)
 - Brand: [`docs/BRAND.md`](../docs/BRAND.md)

@@ -5,7 +5,7 @@ import { sendRecipeCollaboratorEmail } from "@/lib/email-templates";
 import { appUrl } from "@/lib/paths";
 import { canCommentOnRecipe, canEditRecipe, canViewRecipe } from "@/lib/permissions";
 import { deleteMedia } from "@/lib/media-storage";
-import { deleteRecipePhotos, uploadRecipePhoto } from "@/lib/recipe-photos";
+import { deleteRecipePhotos } from "@/lib/recipe-photos";
 import { recipeSlugFor } from "@/lib/slug";
 import { normalizeTag, searchTerms } from "@/lib/search-terms";
 import { parseTags } from "@/lib/tags";
@@ -334,7 +334,7 @@ export async function createRecipe(args: {
     .values({ cookbookId: cookbook.id, recipeId: created.id, position: 0 })
     .onConflictDoNothing();
   if (args.photo && args.photo.size > 0) {
-    await saveRecipePhoto(created.id, args.photo);
+    await saveRecipePhoto(created.id, args.userId, args.photo);
   }
   return { ...created, slug: recipeSlugFor(title, created.id) };
 }
@@ -409,7 +409,7 @@ export async function updateRecipe(args: {
     })
     .where(eq(recipe.id, args.recipeId));
   if (args.photo && args.photo.size > 0) {
-    await saveRecipePhoto(args.recipeId, args.photo);
+    await saveRecipePhoto(args.recipeId, args.userId, args.photo);
   }
 }
 
@@ -533,8 +533,12 @@ export async function addNote(userId: string, recipeId: string, body: string) {
   return note;
 }
 
-async function saveRecipePhoto(recipeId: string, photo: File) {
-  const db = getDb();
-  const { key, contentType } = await uploadRecipePhoto(recipeId, photo);
-  await db.insert(recipePhoto).values({ recipeId, path: key, contentType, alt: "Finished dish" });
+/**
+ * The editor's single photo field. Goes through `addRecipePhoto` so a photo added
+ * here gets a position and becomes the cover when the recipe has none, exactly
+ * like one added from the gallery.
+ */
+async function saveRecipePhoto(recipeId: string, userId: string, photo: File) {
+  const { addRecipePhoto } = await import("@/lib/photos");
+  await addRecipePhoto({ userId, recipeId, file: photo });
 }
