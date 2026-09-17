@@ -20,6 +20,8 @@ lovethelaus.com
        └── /*          →  marketing static assets (dist/)
 ```
 
+> **Setting up for the first time?** [`CREDENTIALS.md`](CREDENTIALS.md) walks through every account and key, and how to obtain each one.
+
 ## Prerequisites
 
 ```bash

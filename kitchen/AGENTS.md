@@ -36,4 +36,5 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 - Brand: [`docs/BRAND.md`](../docs/BRAND.md)
 - Architecture and gotchas: [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)
 - Testing: [`docs/TESTING.md`](../docs/TESTING.md) — run the full Auth matrix when touching auth/email; the Billing section when touching Stripe
+- Credentials and provider setup: [`docs/CREDENTIALS.md`](../docs/CREDENTIALS.md)
 - Roadmap: [`docs/ROADMAP.md`](../docs/ROADMAP.md), ads: [`docs/ADS.md`](../docs/ADS.md), differentiation: [`docs/HERITAGE.md`](../docs/HERITAGE.md)
