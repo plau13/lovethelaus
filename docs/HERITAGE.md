@@ -20,7 +20,21 @@ The interview script ([`kitchen/docs/mom-interview.md`](../kitchen/docs/mom-inte
 
 **Phase 3a (done):** people, “Where it comes from” (person, story, lineage, first made, occasion) on the recipe page, editor and public page; “I made this” memories; `/family` timeline and person pages; cookbook dedication and family name. Everything free-tier.
 
-**Phase 3b (next):** scanned cards and voice memos via `recipe_media`, the flip view, playback in cook mode, AI transcription, PDF book export.
+**Phase 3b (done):** scanned cards and voice memos via `recipe_media`, served from R2 through `/api/recipe-media/[...key]` with the recipe's own visibility rules and HTTP Range support so audio scrubs; playback on the recipe page, the public page and in cook mode; Claude reads a scanned card into a transcript that an editor can apply to an empty recipe; the print-ready book at `/cookbooks/[id]/book`.
+
+**Free vs Kitchen Plus.** Story, provenance, memories and the family timeline are free, as is one scanned card and one voice memo per recipe (`src/lib/media-limits.ts`). Plus removes the per-recipe cap, adds "Read this card" transcription, and unlocks the print-ready book.
+
+### Modules
+
+| Module                       | Job                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| `src/lib/media-storage.ts`   | R2 helpers shared with recipe photos: per-kind type/size rules, upload, range reads.       |
+| `src/lib/media-limits.ts`    | Pure free/Plus gate (`canAddMedia`) and the copy for the upgrade nudge.                    |
+| `src/lib/media.ts`           | List, add and remove `recipe_media` rows; stores transcripts.                              |
+| `src/lib/transcribe-scan.ts` | Claude vision transcription of a scanned card into `{ title, ingredients, steps, notes }`. |
+| `src/lib/book.ts`            | Pure book layout: chapters by occasion, book title, contributors.                          |
+
+Media objects share the `RECIPE_PHOTOS` bucket under a `media/<recipeId>/` prefix, so there is no second bucket to provision.
 
 ## UI, in priority order (Phase 3)
 

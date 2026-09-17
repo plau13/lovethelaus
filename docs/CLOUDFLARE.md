@@ -48,7 +48,6 @@ npx wrangler secret put DEMO_USER_EMAIL       # demo@lovethelaus.com
 npx wrangler secret put DEMO_USER_PASSWORD    # same value used for db:seed:demo
 # optional
 npx wrangler secret put ANTHROPIC_API_KEY
-npx wrangler secret put OPENAI_API_KEY
 ```
 
 Remove the retired Supabase secrets once the cutover is verified:
@@ -88,16 +87,16 @@ After changing bindings run `npm run cf-typegen` locally to regenerate `cloudfla
 
 Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 
-| Secret                                 | Sensitive?         | Notes                                                 |
-| -------------------------------------- | ------------------ | ----------------------------------------------------- |
-| `DATABASE_URL`                         | **Yes**            | Neon pooled connection string; never in repo          |
-| `BETTER_AUTH_SECRET`                   | **Yes**            | Signs session cookies; rotating it signs everyone out |
-| `RESEND_API_KEY`                       | **Yes**            | Transactional email                                   |
-| `STRIPE_SECRET_KEY`                    | **Yes**            | Server-side Stripe API                                |
-| `STRIPE_WEBHOOK_SECRET`                | **Yes**            | Verifies webhook signatures                           |
-| `DEMO_USER_EMAIL`                      | No                 | Demo sign-in email (Try demo)                         |
-| `DEMO_USER_PASSWORD`                   | **Yes**            | Demo account password; set before `db:seed:demo`      |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | **Yes** (optional) | AI structuring of imported drafts                     |
+| Secret                  | Sensitive?         | Notes                                                 |
+| ----------------------- | ------------------ | ----------------------------------------------------- |
+| `DATABASE_URL`          | **Yes**            | Neon pooled connection string; never in repo          |
+| `BETTER_AUTH_SECRET`    | **Yes**            | Signs session cookies; rotating it signs everyone out |
+| `RESEND_API_KEY`        | **Yes**            | Transactional email                                   |
+| `STRIPE_SECRET_KEY`     | **Yes**            | Server-side Stripe API                                |
+| `STRIPE_WEBHOOK_SECRET` | **Yes**            | Verifies webhook signatures                           |
+| `DEMO_USER_EMAIL`       | No                 | Demo sign-in email (Try demo)                         |
+| `DEMO_USER_PASSWORD`    | **Yes**            | Demo account password; set before `db:seed:demo`      |
+| `ANTHROPIC_API_KEY`     | **Yes** (optional) | Card transcription and AI structuring of imports      |
 
 List what's configured (names only, not values):
 

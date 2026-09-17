@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { KitchenView } from "@/components/KitchenView";
+import type { VoiceMedia } from "@/components/media/VoicePlayer";
 import { RecipeDetailMain, type RecipeDetailMainProps } from "@/components/RecipeDetailMain";
 import { RecipeDetailToolbar } from "@/components/RecipeDetailToolbar";
 import { scaleIngredientLines } from "@/lib/scale-ingredients";
@@ -28,6 +29,7 @@ type RecipeDetailClientProps = {
   isOwner: boolean;
   collaborators: Collaborator[];
   exportHref: string;
+  voice?: VoiceMedia | null;
   main: Omit<
     RecipeDetailMainProps,
     "recipeId" | "title" | "ingredients" | "baseServings" | "servings" | "onServingsChange"
@@ -49,6 +51,7 @@ export function RecipeDetailClient({
   isOwner,
   collaborators,
   exportHref,
+  voice = null,
   main,
   children,
 }: RecipeDetailClientProps) {
@@ -73,7 +76,7 @@ export function RecipeDetailClient({
         onCookModeChange={setCookModeOn}
       />
       {cookModeOn ? (
-        <KitchenView title={title} ingredients={scaledIngredients} steps={steps} bakingSteps={bakingSteps} />
+        <KitchenView title={title} ingredients={scaledIngredients} steps={steps} bakingSteps={bakingSteps} voice={voice} />
       ) : (
         <>
           <RecipeDetailMain

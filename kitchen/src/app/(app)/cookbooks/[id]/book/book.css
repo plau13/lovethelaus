@@ -1,0 +1,92 @@
+/* Print-ready cookbook. Screen styling stays close to the app; the @media print
+   block is what turns the page into a bound book. */
+
+.book-sheet {
+  display: grid;
+  gap: 3rem;
+}
+
+.book-cover {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.book-running-head {
+  display: none;
+}
+
+.book-recipe {
+  display: grid;
+  gap: 1rem;
+}
+
+.book-ingredients,
+.book-steps {
+  break-inside: avoid;
+}
+
+@page {
+  size: letter;
+  margin: 0.75in;
+}
+
+@media print {
+  /* The app shell centers content in a 3xl column; a printed page needs the
+     full text block, so neutralize the wrapper this page renders inside. */
+  div:has(> .book-sheet) {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .book-sheet {
+    gap: 0;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .book-cover,
+  .book-contributors,
+  .book-recipe {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .book-sheet > :last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .book-cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 8in;
+    padding: 0;
+  }
+
+  .book-running-head {
+    display: block;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b6257;
+    border-bottom: 1px solid #ddd6cc;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .book-recipe h2 {
+    margin-top: 0;
+  }
+
+  .book-recipe img {
+    max-height: 3in;
+    object-fit: cover;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}

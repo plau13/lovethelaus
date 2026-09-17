@@ -428,3 +428,32 @@ export async function removeCookbookMember(args: { ownerId: string; cookbookId: 
     .delete(cookbookMember)
     .where(and(eq(cookbookMember.cookbookId, args.cookbookId), eq(cookbookMember.userId, args.userId)));
 }
+
+/**
+ * Cookbook loaded for the print-ready book: every recipe with its provenance
+ * person, in cookbook order. Returns null when the caller cannot view the book.
+ */
+export async function getCookbookForBook(cookbookId: string, userId: string) {
+  const db = getDb();
+  const found = await db.query.cookbook.findFirst({
+    where: eq(cookbook.id, cookbookId),
+    with: {
+      members: { columns: { userId: true } },
+      owner: { columns: { id: true, name: true } },
+      recipes: {
+        with: { recipe: { with: { originPerson: true } } },
+        orderBy: [asc(cookbookRecipe.position)],
+      },
+    },
+  });
+  if (!found) {
+    return null;
+  }
+  const allowed = canViewCookbook({
+    userId,
+    ownerId: found.ownerId,
+    visibility: found.visibility,
+    memberUserIds: found.members.map((member) => member.userId),
+  });
+  return allowed ? found : null;
+}

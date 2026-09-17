@@ -3,7 +3,7 @@ import { getDb, schema } from "@/db/client";
 import { isIndexable, isPubliclyViewable } from "@/lib/public-seo";
 import type { RecipeCategory } from "@/lib/types";
 
-const { recipe, cookbook, cookbookRecipe, recipePhoto } = schema;
+const { recipe, cookbook, cookbookRecipe, recipePhoto, recipeMedia } = schema;
 
 export const EXPLORE_PAGE_SIZE = 24;
 
@@ -39,6 +39,7 @@ export async function getPublicRecipe(slugOrId: string) {
       photos: { orderBy: [recipePhoto.createdAt], columns: { path: true, alt: true } },
       owner: { columns: { name: true } },
       originPerson: { columns: { name: true, relationship: true } },
+      media: { orderBy: [recipeMedia.position] },
       cookbookRecipes: {
         columns: { id: true },
         with: { cookbook: { columns: { id: true, slug: true, title: true, visibility: true } } },

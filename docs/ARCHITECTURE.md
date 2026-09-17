@@ -66,7 +66,7 @@ No Worker fetches itself, so `global_fetch_strictly_public` stays on.
 ## Environment
 
 Worker `vars` (non-secret): `APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS`.
-Worker secrets: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`, optional `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`.
+Worker secrets: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`, optional `ANTHROPIC_API_KEY`.
 Local only: `DATABASE_URL_UNPOOLED` for `drizzle-kit migrate`.
 
 See [`CLOUDFLARE.md`](CLOUDFLARE.md) for the runbook.

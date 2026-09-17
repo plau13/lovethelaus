@@ -19,6 +19,7 @@ export function CookbookDetailClient({
   members,
   publicShareUrl,
   exportHref,
+  bookHref,
   children,
 }: {
   cookbookId: string;
@@ -29,6 +30,7 @@ export function CookbookDetailClient({
   members: Member[];
   publicShareUrl: string | null;
   exportHref: string;
+  bookHref: string | null;
   children: ReactNode;
 }) {
   return (
@@ -42,6 +44,7 @@ export function CookbookDetailClient({
         members={members}
         publicShareUrl={publicShareUrl}
         exportHref={exportHref}
+        bookHref={bookHref}
       />
       {children}
     </div>

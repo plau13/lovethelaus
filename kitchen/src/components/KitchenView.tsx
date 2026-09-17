@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { VoicePlayer, type VoiceMedia } from "@/components/media/VoicePlayer";
 import { splitLines } from "@/lib/tags";
 
 type WakeLockSentinel = { release: () => Promise<void> };
@@ -25,11 +26,13 @@ export function KitchenView({
   ingredients,
   steps,
   bakingSteps = "",
+  voice = null,
 }: {
   title: string;
   ingredients: string;
   steps: string;
   bakingSteps?: string;
+  voice?: VoiceMedia | null;
 }) {
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
@@ -56,6 +59,11 @@ export function KitchenView({
   return (
     <div className="grid gap-8">
       <h1 className="font-serif text-4xl leading-tight sm:text-5xl">{title}</h1>
+      {voice ? (
+        <RecipeSectionCard title="Hear how they made it">
+          <VoicePlayer voice={voice} compact />
+        </RecipeSectionCard>
+      ) : null}
       <RecipeSectionCard title="Ingredients">
         <ul className="divide-y divide-line text-xl">
           {ingredientLines.map((line, index) => (

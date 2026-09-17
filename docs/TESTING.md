@@ -169,7 +169,30 @@ Changes to `kitchen/src/lib/{people,memories,heritage}.ts`, `components/{Provena
 
 ---
 
-## 7. Deploy verification
+## 7. Heritage media (scans, voice, transcription, the book)
+
+### When to run
+
+Changes to `kitchen/src/lib/{media,media-storage,media-limits,transcribe-scan,anthropic,book}.ts`, `src/components/media/**`, `src/components/book/**`, `src/app/api/recipe-media/**`, `src/app/actions/{media,transcribe}.ts`, or `src/app/(app)/cookbooks/[id]/book/**`.
+
+### Manual
+
+- [ ] On a phone, “Add the original card” opens the camera; the uploaded scan appears beside the typed recipe with its caption
+- [ ] A 6MB card photo is rejected with the size message; a PDF is rejected with the type message
+- [ ] Record a voice memo in Chrome and in Safari; both save and play back on the recipe page
+- [ ] Scrub the memo partway through in Safari; playback continues from the new position (proves `Range` → `206`)
+- [ ] Cook mode shows “Hear how they made it” above the ingredients and plays the memo
+- [ ] A free account is refused a second scan and a second memo on the same recipe with the Kitchen Plus nudge; a Plus account is not
+- [ ] With `ANTHROPIC_API_KEY` set, “Read this card” fills a transcript; “Use as ingredients and steps” writes the recipe and leaves an undoable revision
+- [ ] “Use as ingredients and steps” refuses when the recipe already has ingredients or steps, and says why
+- [ ] Without `ANTHROPIC_API_KEY`, the recipe page hides “Read this card” and an import still saves the raw draft
+- [ ] A logged-out visitor sees the scan and hears the memo on a public `/kitchen/r/<slug>`; a private recipe’s media returns 403
+- [ ] `/kitchen/cookbooks/<id>/book` nudges a free account to upgrade and renders for Plus
+- [ ] Print preview of the book shows the cover, the contributors page, and one recipe per page, with chapters ordered by occasion and “Other recipes” last
+
+---
+
+## 8. Deploy verification
 
 | What changed       | Deploy (from repo root)        |
 | ------------------ | ------------------------------ |

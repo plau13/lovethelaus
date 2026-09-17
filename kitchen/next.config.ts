@@ -6,8 +6,8 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // Phase 3 (voice memos) relaxes `microphone` for app routes.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // Voice memos use MediaRecorder and card scans use the camera capture input, both same-origin.
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
 ];
 
 const nextConfig: NextConfig = {

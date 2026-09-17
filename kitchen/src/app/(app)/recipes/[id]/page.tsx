@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
+import { MediaSection } from "@/components/media/MediaSection";
 import { MemoriesSection } from "@/components/MemoriesSection";
 import { ProvenanceBlock } from "@/components/ProvenanceBlock";
 import { RecipeDetailClient } from "@/components/RecipeDetailClient";
 import { requireOnboardedUser } from "@/lib/auth";
+import { hasAnthropicKey } from "@/lib/anthropic";
 import { exportAccessFromLoadedRecipe } from "@/lib/export-eligibility";
 import { canCommentOnRecipe, canEditRecipe, canInviteOnRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import { photoUrl } from "@/lib/paths";
+import { isSubscriber } from "@/lib/subscription";
 import { parseTags } from "@/lib/tags";
 import { difficultyLabel, formatCookMinutes, categoryLabel } from "@/lib/types";
 
@@ -102,6 +105,7 @@ export default async function RecipePage({
         isOwner={isOwner}
         collaborators={recipe.collaborators}
         exportHref={`/api/export?format=json&recipeId=${recipe.id}`}
+        voice={recipe.media.find((entry) => entry.kind === "voice") ?? null}
         main={{
           ownerName: recipe.owner.name,
           coAuthorNames: coAuthors.map((entry) => entry.user.name),
@@ -138,6 +142,15 @@ export default async function RecipePage({
           cookTimeLabel,
         }}
       >
+        <MediaSection
+          recipeId={recipe.id}
+          media={recipe.media}
+          canEdit={editable}
+          subscriber={isSubscriber(user)}
+          aiConfigured={hasAnthropicKey()}
+          recipeIsEmpty={recipe.ingredients.trim() === "" && recipe.steps.trim() === ""}
+        />
+
         <MemoriesSection recipeId={recipe.id} memories={recipe.memories} currentUserId={user.id} justSaved={made === "1"} />
 
         {recipe.revisions.length > 0 ? (
