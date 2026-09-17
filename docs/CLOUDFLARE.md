@@ -36,18 +36,37 @@ npx wrangler r2 bucket create kitchen-recipe-photos
 
 ## Kitchen secrets
 
-From `kitchen/`:
+Non-secret config lives in `kitchen/wrangler.jsonc` under `vars` (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS`). Secrets are set from `kitchen/`:
 
 ```bash
-npx wrangler secret put APP_URL           # https://lovethelaus.com/kitchen
-npx wrangler secret put DATABASE_URL
-npx wrangler secret put NEXT_PUBLIC_SUPABASE_URL
-npx wrangler secret put NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-npx wrangler secret put DEMO_USER_EMAIL      # demo@lovethelaus.com
-npx wrangler secret put DEMO_USER_PASSWORD   # same value used for db:seed:demo
+npx wrangler secret put DATABASE_URL          # Neon pooled connection string
+npx wrangler secret put BETTER_AUTH_SECRET    # openssl rand -base64 32
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET # from the Stripe webhook endpoint
+npx wrangler secret put DEMO_USER_EMAIL       # demo@lovethelaus.com
+npx wrangler secret put DEMO_USER_PASSWORD    # same value used for db:seed:demo
+# optional
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put OPENAI_API_KEY
 ```
 
-Optional Hyperdrive: add to `kitchen/wrangler.jsonc` after creating in dashboard.
+Remove the retired Supabase secrets once the cutover is verified:
+
+```bash
+npx wrangler secret delete NEXT_PUBLIC_SUPABASE_URL
+npx wrangler secret delete NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+```
+
+After changing bindings run `npm run cf-typegen` and commit `cloudflare-env.d.ts`.
+
+### One-time provider setup
+
+| Provider | Steps |
+|----------|-------|
+| **Neon** | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only). |
+| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner. |
+| **Stripe** | Product "Kitchen Plus" with one recurring price → `STRIPE_PRICE_KITCHEN_PLUS`. Webhook endpoint `https://lovethelaus.com/kitchen/api/stripe/webhook` with events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` → `STRIPE_WEBHOOK_SECRET`. Enable the Customer Portal. |
 
 ## Secrets & environment variables
 
@@ -67,12 +86,14 @@ Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 
 | Secret | Sensitive? | Notes |
 |--------|------------|-------|
-| `DATABASE_URL` | **Yes** | Supabase pooler password; never in repo |
-| `APP_URL` | No | Public URL (`https://lovethelaus.com/kitchen`) |
-| `NEXT_PUBLIC_SUPABASE_URL` | No | Public Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Low | Client-side key; RLS protects data |
+| `DATABASE_URL` | **Yes** | Neon pooled connection string; never in repo |
+| `BETTER_AUTH_SECRET` | **Yes** | Signs session cookies; rotating it signs everyone out |
+| `RESEND_API_KEY` | **Yes** | Transactional email |
+| `STRIPE_SECRET_KEY` | **Yes** | Server-side Stripe API |
+| `STRIPE_WEBHOOK_SECRET` | **Yes** | Verifies webhook signatures |
 | `DEMO_USER_EMAIL` | No | Demo sign-in email (Try demo) |
 | `DEMO_USER_PASSWORD` | **Yes** | Demo account password; set before `db:seed:demo` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | **Yes** (optional) | AI structuring of imported drafts |
 
 List what's configured (names only, not values):
 
@@ -84,7 +105,7 @@ Rotate a secret: run `wrangler secret put <NAME>` again with the new value.
 
 ### What is NOT secret
 
-- `NEXT_PUBLIC_*` vars are embedded in client bundles by design.
+- `wrangler.jsonc` `vars` (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS`) are public config.
 - Marketing `PUBLIC_KITCHEN_URL` is compiled into static HTML — that's fine; it's a public URL.
 - The **router Worker** (`lovethelaus`) has no secrets — it only routes traffic and serves public static files.
 
@@ -92,15 +113,15 @@ Rotate a secret: run `wrangler secret put <NAME>` again with the new value.
 
 - `kitchen/.env`, `kitchen/.env.local`, `kitchen/.dev.vars`
 - Root `.env`
-- Any file containing `DATABASE_URL`, `DIRECT_URL`, or API keys
+- Any file containing `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, or API keys
 
 Only `.env.example` and `.dev.vars.example` (placeholders) belong in git.
 
 ### Local vs production
 
-- **Local:** copy `kitchen/.env.example` → `kitchen/.env` with your Supabase credentials.
+- **Local:** copy `kitchen/.env.example` → `kitchen/.env` with your Neon `dev` branch credentials. Without `RESEND_API_KEY` emails are printed to the dev server console.
 - **Production:** use Wrangler secrets only; do not upload `.env` to Cloudflare.
-- **Migrations:** run locally/CI with `DIRECT_URL` — do not put `DIRECT_URL` in Worker secrets unless you have a specific need.
+- **Migrations:** run locally/CI with `DATABASE_URL_UNPOOLED` — never from the Worker.
 
 ## Deploy everything
 
@@ -135,11 +156,16 @@ Set `PUBLIC_KITCHEN_URL=http://localhost:3000/kitchen` and `APP_URL=http://local
 
 ## Migrations
 
-Run against Supabase (not from Workers):
+Drizzle migrations live in `kitchen/drizzle/`. Run against Neon from a laptop or CI (not from Workers):
 
 ```bash
-cd kitchen && npm run db:deploy
+cd kitchen
+npm run db:generate   # after editing src/db/schema/*
+npm run db:migrate    # applies pending migrations using DATABASE_URL_UNPOOLED
+npm run db:seed:demo  # demo account + sample recipes
 ```
+
+Local Stripe webhooks: `stripe listen --forward-to localhost:3000/kitchen/api/stripe/webhook`.
 
 ## Verify
 

@@ -5,20 +5,20 @@ Family recipe box. This is the product. The marketing site in the parent folder 
 ## Run
 
 1. `cd kitchen`
-2. Copy `.env.example` to `.env` and set Supabase URLs (see [`supabase/AUTH.md`](supabase/AUTH.md))
+2. Copy `.env.example` to `.env` and set the Neon URLs plus `BETTER_AUTH_SECRET` (see [`../docs/CLOUDFLARE.md`](../docs/CLOUDFLARE.md))
 3. `npm install`
-4. `npm run db:deploy` — apply migrations
-5. `npm run db:seed:demo` — demo account + sample recipes (needs `SUPABASE_SERVICE_ROLE_KEY` and `DEMO_USER_PASSWORD`)
+4. `npm run db:migrate` — apply Drizzle migrations
+5. `npm run db:seed:demo` — demo account + sample recipes (needs `DEMO_USER_PASSWORD`)
 6. `npm run dev` — http://localhost:3000/kitchen
 7. `npm test`
 
 Sign in with email + password at `/kitchen/sign-in`, or visit `/kitchen/api/auth/demo` directly for local demo testing.
 
-## Database & auth
+## Database, auth, email, billing
 
-PostgreSQL on Supabase via Prisma. **Supabase Auth** for sign-in, sign-up, and password reset. Prisma `User` rows sync on login.
+PostgreSQL on **Neon** via **Drizzle**. **Better Auth** for sign-in, sign-up, magic links, and password reset; its `user` table is the app user. **Resend** sends email (magic links, resets, cookbook invites). **Stripe** Checkout + Customer Portal handle the Kitchen Plus subscription. Recipe photos live in **R2**.
 
-**Setup:** [`supabase/README.md`](supabase/README.md) and [`supabase/AUTH.md`](supabase/AUTH.md)
+**Setup and gotchas:** [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md), [`../docs/CLOUDFLARE.md`](../docs/CLOUDFLARE.md)
 
 **Demo:** `demo@lovethelaus.com` (configurable via `DEMO_USER_EMAIL`) — seed with `npm run db:seed:demo`
 

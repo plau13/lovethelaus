@@ -139,7 +139,7 @@ Astro's native CSP is intentionally **not** enabled in this version: it is incom
 
 After changes, run the relevant section in [`docs/TESTING.md`](docs/TESTING.md). **Auth/email changes require the full Auth & email matrix** — not just the flow you edited.
 
-Design changes should follow [`docs/BRAND.md`](docs/BRAND.md).
+Design changes should follow [`docs/BRAND.md`](docs/BRAND.md). Stack decisions and gotchas are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the phased plan is in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Default automated checks:
 

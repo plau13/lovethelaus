@@ -21,7 +21,6 @@
     "fix": "npm run fix:eslint && npm run fix:prettier",
     "fix:eslint": "eslint --fix .",
     "fix:prettier": "prettier -w .",
-    "deploy:pages": "npm run build:prod && npx wrangler pages deploy dist --project-name=lovethelaus-marketing",
     "deploy:router": "npm run build:prod && npx wrangler deploy --config workers/router/wrangler.jsonc",
     "deploy:all": "npm run build:prod && cd kitchen && npm run deploy && cd .. && npx wrangler deploy --config workers/router/wrangler.jsonc"
   },

@@ -12,15 +12,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 
-**Agent execution:** Run all terminal commands yourself (see root [`AGENTS.md`](../AGENTS.md#agent-execution)). **Commit and deploy after each task** unless the user opts out. Only ask when blocked (e.g. missing Supabase secrets in `.env`).
+**Agent execution:** Run all terminal commands yourself (see root [`AGENTS.md`](../AGENTS.md#agent-execution)). **Commit and deploy after each task** unless the user opts out. Only ask when blocked (e.g. missing Neon/Stripe secrets in `.env`).
 
-- PostgreSQL (Supabase) via Prisma (`prisma/schema.prisma`)
-- Supabase Auth in `src/lib/auth.ts`
+- PostgreSQL on **Neon** via **Drizzle** (`src/db/schema/*`, client in `src/db/client.ts`, migrations in `drizzle/`). No `db.transaction()` (neon-http).
+- **Better Auth** instance in `src/lib/better-auth.ts` (lazy `getAuth()`), facade in `src/lib/auth.ts` (`getCurrentUser`, `requireUser`, `requireOnboardedUser`). Call `refreshSessionCache()` after mutating the `user` row.
+- Paths: always build `/kitchen` URLs with `src/lib/paths.ts`; post-login redirects with `src/lib/post-auth.ts`.
+- Email via **Resend** (`src/lib/email.ts`); no API key locally = emails print to the console.
+- Billing via **Stripe** (`src/lib/stripe.ts`, `src/app/api/stripe/webhook/route.ts`); tier helpers in `src/lib/billing.ts`, `src/lib/subscription.ts`.
+- Photos in **R2** (`src/lib/recipe-photos.ts`); the DB stores keys, `photoUrl(key)` builds the URL.
 - Demo seed: `npm run db:seed:demo` (`demo@lovethelaus.com` + sample recipes)
 - Purge legacy seed users: `npm run db:purge-seed-users`
-- Tests: `npm test` (permissions, JSON-LD, social import)
+- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
 - Nav: Home, Recipes, Cookbooks + user menu (Settings)
 - Brand: [`docs/BRAND.md`](../docs/BRAND.md)
-- Testing: [`docs/TESTING.md`](../docs/TESTING.md) — run full Auth matrix when touching auth/email
-- Supabase: [`supabase/AUTH.md`](supabase/AUTH.md)
+- Architecture and gotchas: [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)
+- Testing: [`docs/TESTING.md`](../docs/TESTING.md) — run the full Auth matrix when touching auth/email; the Billing section when touching Stripe
+- Roadmap: [`docs/ROADMAP.md`](../docs/ROADMAP.md), ads: [`docs/ADS.md`](../docs/ADS.md), differentiation: [`docs/HERITAGE.md`](../docs/HERITAGE.md)
