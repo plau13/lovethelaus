@@ -20,13 +20,7 @@ const {
 {
   !(UI.theme && UI.theme.endsWith(':only')) && (
     <aw-theme-toggle>
-      <button
-        type="button"
-        class={className}
-        aria-label={label}
-        aria-pressed="false"
-        data-aw-toggle-color-scheme
-      >
+      <button type="button" class={className} aria-label={label} aria-pressed="false" data-aw-toggle-color-scheme>
         <Icon name="tabler:sun" class={iconClass} data-aw-icon-light />
         <Icon name="tabler:moon" class={iconClass} data-aw-icon-dark />
       </button>

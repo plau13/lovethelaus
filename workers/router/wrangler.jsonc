@@ -5,18 +5,18 @@
   "compatibility_date": "2026-09-02",
   "assets": {
     "directory": "../../dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "services": [
     {
       "binding": "KITCHEN",
-      "service": "kitchen"
-    }
+      "service": "kitchen",
+    },
   ],
   "routes": [
     {
       "pattern": "lovethelaus.com",
-      "custom_domain": true
-    }
-  ]
+      "custom_domain": true,
+    },
+  ],
 }

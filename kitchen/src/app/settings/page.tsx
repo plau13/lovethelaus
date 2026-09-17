@@ -1,8 +1,12 @@
+import { count, eq } from "drizzle-orm";
 import { logOut } from "@/app/actions/auth";
+import { openBillingPortal, refreshPlan, startCheckout } from "@/app/actions/billing";
 import { updateProfile } from "@/app/actions/settings";
+import { getDb, schema } from "@/db/client";
 import { requireOnboardedUser } from "@/lib/auth";
+import { subscriptionSummary } from "@/lib/billing";
 import { exportSummary, recipesForExport } from "@/lib/export-eligibility";
-import { getPrisma } from "@/lib/prisma";
+import { isBillingConfigured } from "@/lib/stripe";
 import {
   formatOnboardingAnswer,
   ONBOARDING_QUESTIONS,
@@ -18,14 +22,22 @@ function supportEmail(): string {
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; checkout?: string }>;
 }) {
-  const user = await requireOnboardedUser();
-  const { saved } = await searchParams;
-  const prisma = await getPrisma();
-  const exportable = await recipesForExport(user.id);
-  const ownedOnly = await prisma.recipe.count({ where: { ownerId: user.id } });
-  const onboardingAnswers = parseOnboardingAnswers(user.onboardingAnswers);
+  const { saved, checkout } = await searchParams;
+  // After Checkout the webhook may land a moment later; bypass the session cookie cache.
+  const user = await requireOnboardedUser({ fresh: checkout === "success" });
+  const db = getDb();
+  const [exportable, [{ total: ownedOnly }], profile] = await Promise.all([
+    recipesForExport(user.id),
+    db.select({ total: count() }).from(schema.recipe).where(eq(schema.recipe.ownerId, user.id)),
+    db.query.user.findFirst({ where: eq(schema.user.id, user.id), columns: { onboardingAnswers: true } }),
+  ]);
+  const onboardingAnswers = parseOnboardingAnswers(profile?.onboardingAnswers ?? "{}");
+  const plan = subscriptionSummary(user);
+  const subscribed = isSubscriber(user);
+  const billingReady = isBillingConfigured();
+  const activating = checkout === "success" && !subscribed;
 
   return (
     <main className="grid gap-8">
@@ -100,7 +112,7 @@ export default async function SettingsPage({
 
       <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
         <h2 className="text-xl font-semibold">Export recipes</h2>
-        <p className="text-muted">{exportSummary(user, exportable.length, ownedOnly)}</p>
+        <p className="text-muted">{exportSummary(user, exportable.length, Number(ownedOnly))}</p>
         <div className="flex flex-wrap gap-3">
           <a href="/api/export?format=json" className="rounded-xl bg-clay px-4 py-2 text-white no-underline">
             Download JSON
@@ -113,10 +125,42 @@ export default async function SettingsPage({
 
       <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
         <h2 className="text-xl font-semibold">Plan</h2>
-        <p className="text-muted">
-          Current plan: <strong>{isSubscriber(user) ? "Subscriber" : "Free"}</strong>
-          {isSubscriber(user) ? " — offline cook mode enabled." : " — subscribe to export shared recipes and cook offline."}
-        </p>
+        {activating ? (
+          <>
+            <meta httpEquiv="refresh" content="3" />
+            <p className="text-clay">Thanks! Activating Kitchen Plus…</p>
+            <form action={refreshPlan}>
+              <button type="submit" className="rounded-xl border border-line px-4 py-2">
+                Refresh
+              </button>
+            </form>
+          </>
+        ) : (
+          <p className="text-muted">
+            Current plan: <strong>{plan.planLabel}</strong> — {plan.statusLine}
+          </p>
+        )}
+        {!activating && billingReady ? (
+          subscribed ? (
+            <form action={openBillingPortal}>
+              <button type="submit" className="rounded-xl border border-line px-4 py-2">
+                Manage billing
+              </button>
+            </form>
+          ) : (
+            <form action={startCheckout} className="grid gap-2">
+              <ul className="list-disc pl-5 text-muted">
+                <li>Export shared recipes, not just your own</li>
+                <li>Offline cook mode</li>
+                <li>About 10 Instagram/TikTok imports a month</li>
+              </ul>
+              <button type="submit" className="btn w-fit rounded-xl bg-clay px-5 py-3 text-white hover:bg-clay-dark">
+                Upgrade to Kitchen Plus
+              </button>
+            </form>
+          )
+        ) : null}
+        {!billingReady ? <p className="text-sm text-muted">Billing is not set up in this environment yet.</p> : null}
       </section>
 
       <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">

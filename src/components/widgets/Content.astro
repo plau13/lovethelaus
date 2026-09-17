@@ -84,10 +84,7 @@ const headlineClasses = hasImage
                         )}
                         {description && (
                           <p
-                            class:list={[
-                              { 'mt-3': itemTitle },
-                              'text-muted ml-2 rtl:ml-0 rtl:mr-2',
-                            ]}
+                            class:list={[{ 'mt-3': itemTitle }, 'text-muted ml-2 rtl:ml-0 rtl:mr-2']}
                             set:html={description}
                           />
                         )}
@@ -121,7 +118,7 @@ const headlineClasses = hasImage
                   sizes="(max-width: 768px) 100vw, 432px"
                   layout="constrained"
                   format="webp"
-                  {...image}
+                  {...(image as Record<string, unknown>)}
                 />
               )}
             </div>
@@ -154,10 +151,7 @@ const headlineClasses = hasImage
                       )}
                       {description && (
                         <p
-                          class:list={[
-                            { 'mt-3': itemTitle },
-                            'text-muted ml-2 rtl:ml-0 rtl:mr-2',
-                          ]}
+                          class:list={[{ 'mt-3': itemTitle }, 'text-muted ml-2 rtl:ml-0 rtl:mr-2']}
                           set:html={description}
                         />
                       )}

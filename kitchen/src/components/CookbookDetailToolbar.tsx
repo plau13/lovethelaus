@@ -87,9 +87,13 @@ export function CookbookDetailToolbar({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Reset local favorite state when the server value changes (adjust-state-during-render pattern).
+  const favoriteKey = `${cookbookId}:${initialFavorited}`;
+  const [syncedFavoriteKey, setSyncedFavoriteKey] = useState(favoriteKey);
+  if (syncedFavoriteKey !== favoriteKey) {
+    setSyncedFavoriteKey(favoriteKey);
     setFavorited(initialFavorited);
-  }, [cookbookId, initialFavorited]);
+  }
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {

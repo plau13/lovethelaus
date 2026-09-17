@@ -1,37 +1,20 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { kitchenAppUrl, siteUrl } from "@/lib/request-url";
-import { createClient } from "@/utils/supabase/server";
-import { syncPrismaUserFromSupabase } from "@/lib/supabase-user-sync";
-import { getPrisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { postAuthPath } from "@/lib/post-auth";
+import { appPath, originUrl } from "@/lib/route-helpers";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * Single landing spot after any sign-in (form post, magic link, invite). Reads the fresh
+ * session and applies the onboarding / returnTo rule. Not signed in → sign-in page.
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  let next = url.searchParams.get("next") ?? "/recipes";
-
-  if (!code) {
-    return NextResponse.redirect(siteUrl(request, "/sign-in?error=auth"));
+  const returnTo = url.searchParams.get("returnTo");
+  const user = await getCurrentUser({ fresh: true });
+  if (!user) {
+    return NextResponse.redirect(originUrl(request, appPath("/sign-in?error=auth")));
   }
-
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-  if (error || !data.user) {
-    return NextResponse.redirect(siteUrl(request, "/sign-in?error=auth"));
-  }
-
-  await syncPrismaUserFromSupabase(data.user);
-
-  const prisma = await getPrisma();
-  const email = data.user.email?.trim().toLowerCase();
-  if (email) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (user && !user.onboardingCompletedAt && next === "/recipes") {
-      next = "/onboarding";
-    }
-  }
-
-  return NextResponse.redirect(kitchenAppUrl(request, next));
+  return NextResponse.redirect(originUrl(request, appPath(postAuthPath(user, returnTo))));
 }

@@ -16,11 +16,11 @@ Applies to the whole repo (root marketing site and `kitchen/`).
 2. **Commit** — stage relevant changes only; never commit `.env`, secrets, or `.wrangler/` state. Write a concise commit message focused on why.
 3. **Deploy** — push to production using the smallest scope that covers your changes:
 
-| What changed | Deploy command (from repo root) |
-|--------------|----------------------------------|
-| Marketing site only (`src/`, `dist/`, Astro) | `npm run deploy:router` |
-| Kitchen only (`kitchen/`) | `cd kitchen && npm run deploy` |
-| Both, or unsure | `npm run deploy:all` |
+| What changed                                 | Deploy command (from repo root) |
+| -------------------------------------------- | ------------------------------- |
+| Marketing site only (`src/`, `dist/`, Astro) | `npm run deploy:router`         |
+| Kitchen only (`kitchen/`)                    | `cd kitchen && npm run deploy`  |
+| Both, or unsure                              | `npm run deploy:all`            |
 
 Requires `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
 
@@ -139,7 +139,7 @@ Astro's native CSP is intentionally **not** enabled in this version: it is incom
 
 After changes, run the relevant section in [`docs/TESTING.md`](docs/TESTING.md). **Auth/email changes require the full Auth & email matrix** — not just the flow you edited.
 
-Design changes should follow [`docs/BRAND.md`](docs/BRAND.md).
+Design changes should follow [`docs/BRAND.md`](docs/BRAND.md). Stack decisions and gotchas are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the phased plan is in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Default automated checks:
 

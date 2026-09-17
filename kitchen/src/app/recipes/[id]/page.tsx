@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
 import { RecipeDetailClient } from "@/components/RecipeDetailClient";
@@ -6,6 +5,7 @@ import { requireOnboardedUser } from "@/lib/auth";
 import { exportAccessFromLoadedRecipe } from "@/lib/export-eligibility";
 import { canCommentOnRecipe, canEditRecipe, canInviteOnRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
+import { photoUrl } from "@/lib/paths";
 import { parseTags } from "@/lib/tags";
 import { difficultyLabel, formatCookMinutes, categoryLabel } from "@/lib/types";
 
@@ -88,7 +88,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         main={{
           ownerName: recipe.owner.name,
           coAuthorNames: coAuthors.map((entry) => entry.user.name),
-          photo: firstPhoto ? { path: firstPhoto.path, alt: firstPhoto.alt } : null,
+          photo: firstPhoto ? { path: photoUrl(firstPhoto.path), alt: firstPhoto.alt } : null,
           canEdit: editable,
           metaLine: (
             <>

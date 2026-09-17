@@ -1,20 +1,15 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
-import { getPrisma } from "@/lib/prisma";
+import { getDb, schema } from "@/db/client";
+import { refreshSessionCache, requireUser } from "@/lib/auth";
 import { importFromUrl } from "@/lib/import";
 import { createRecipe } from "@/lib/recipes";
-import {
-  canStartSocialImport,
-  isSocialSource,
-  socialImportIncrement,
-  socialImportRemaining,
-} from "@/lib/subscription";
+import { canStartSocialImport, isSocialSource, socialImportIncrement, socialImportRemaining } from "@/lib/subscription";
 
 export async function startImport(formData: FormData) {
-  const prisma = await getPrisma();
-  const user = await requireUser();
+  const user = await requireUser({ fresh: true });
   const url = String(formData.get("url") ?? "");
   const draft = await importFromUrl(url);
 
@@ -23,12 +18,14 @@ export async function startImport(formData: FormData) {
     throw new Error(
       remaining === 0
         ? "Social import limit reached. Free accounts get 3 lifetime imports; subscribers get about 10 per month."
-        : "Social import limit reached.",
+        : "Social import limit reached."
     );
   }
 
-  const saved = await prisma.importDraft.create({
-    data: {
+  const db = getDb();
+  const [saved] = await db
+    .insert(schema.importDraft)
+    .values({
       userId: user.id,
       sourceUrl: draft.sourceUrl,
       sourceType: draft.sourceType,
@@ -37,17 +34,17 @@ export async function startImport(formData: FormData) {
       ingredients: draft.ingredients,
       steps: draft.steps,
       attribution: draft.attribution,
-    },
-  });
+    })
+    .returning({ id: schema.importDraft.id });
   redirect(`/import/confirm/${saved.id}`);
 }
 
 export async function confirmImport(formData: FormData) {
-  const prisma = await getPrisma();
-  const user = await requireUser();
+  const user = await requireUser({ fresh: true });
   const draftId = String(formData.get("draftId") ?? "");
-  const draft = await prisma.importDraft.findFirst({
-    where: { id: draftId, userId: user.id },
+  const db = getDb();
+  const draft = await db.query.importDraft.findFirst({
+    where: and(eq(schema.importDraft.id, draftId), eq(schema.importDraft.userId, user.id)),
   });
   if (!draft) {
     throw new Error("Import draft not found.");
@@ -72,15 +69,10 @@ export async function confirmImport(formData: FormData) {
   });
 
   if (isSocialSource(draft.sourceType)) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: socialImportIncrement(user),
-    });
+    await db.update(schema.user).set(socialImportIncrement(user)).where(eq(schema.user.id, user.id));
+    await refreshSessionCache();
   }
 
-  await prisma.importDraft.update({
-    where: { id: draft.id },
-    data: { recipeId: recipe.id },
-  });
+  await db.update(schema.importDraft).set({ recipeId: recipe.id }).where(eq(schema.importDraft.id, draft.id));
   redirect(`/recipes/${recipe.id}`);
 }

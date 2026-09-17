@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { signInAction } from "@/app/actions/auth";
-import { AuthError, AuthField, AuthShell, authInputClass, authOutlineButtonClass } from "@/components/AuthShell";
+import { AuthError, AuthField, AuthNotice, AuthShell, authInputClass, authOutlineButtonClass } from "@/components/AuthShell";
+import { safeReturnTo } from "@/lib/post-auth";
 
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; reset?: string; returnTo?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, reset, returnTo: returnToRaw } = await searchParams;
+  const returnTo = safeReturnTo(returnToRaw);
 
   return (
     <AuthShell
@@ -25,7 +27,9 @@ export default async function SignInPage({
       }
     >
       <AuthError message={error} />
+      {reset === "1" ? <AuthNotice message="Password updated. Sign in with your new password." /> : null}
       <form action={signInAction} className="grid gap-4">
+        {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
         <AuthField label="Email">
           <input
             name="email"
@@ -48,7 +52,7 @@ export default async function SignInPage({
         <button type="submit" className="btn rounded-xl bg-clay px-5 py-3 text-lg text-white hover:bg-clay-dark">
           Sign in
         </button>
-        <Link href="/sign-in/one-time" className={authOutlineButtonClass}>
+        <Link href={returnTo ? `/sign-in/one-time?returnTo=${encodeURIComponent(returnTo)}` : "/sign-in/one-time"} className={authOutlineButtonClass}>
           Send one-time login
         </Link>
       </form>

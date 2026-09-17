@@ -1,30 +1,29 @@
-import { getPrisma } from "@/lib/prisma";
+import { and, eq } from "drizzle-orm";
+import { getDb, schema } from "@/db/client";
 import { canViewRecipe } from "@/lib/permissions";
 
 export async function isRecipeFavorited(userId: string, recipeId: string): Promise<boolean> {
-  const prisma = await getPrisma();
-  const favorite = await prisma.recipeFavorite.findUnique({
-    where: { userId_recipeId: { userId, recipeId } },
+  const db = getDb();
+  const favorite = await db.query.recipeFavorite.findFirst({
+    where: and(eq(schema.recipeFavorite.userId, userId), eq(schema.recipeFavorite.recipeId, recipeId)),
+    columns: { id: true },
   });
   return favorite != null;
 }
 
 export async function toggleRecipeFavorite(userId: string, recipeId: string): Promise<boolean> {
-  const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: recipeId },
-    select: {
-      id: true,
-      ownerId: true,
-      collaborators: { where: { userId }, select: { role: true } },
+  const db = getDb();
+  const recipe = await db.query.recipe.findFirst({
+    where: eq(schema.recipe.id, recipeId),
+    columns: { id: true, ownerId: true },
+    with: {
+      collaborators: { where: eq(schema.recipeCollaborator.userId, userId), columns: { role: true } },
       cookbookRecipes: {
-        select: {
+        columns: { id: true },
+        with: {
           cookbook: {
-            select: {
-              visibility: true,
-              ownerId: true,
-              members: { select: { userId: true } },
-            },
+            columns: { visibility: true, ownerId: true },
+            with: { members: { columns: { userId: true } } },
           },
         },
       },
@@ -48,17 +47,16 @@ export async function toggleRecipeFavorite(userId: string, recipeId: string): Pr
     throw new Error("Recipe not found.");
   }
 
-  const existing = await prisma.recipeFavorite.findUnique({
-    where: { userId_recipeId: { userId, recipeId } },
+  const existing = await db.query.recipeFavorite.findFirst({
+    where: and(eq(schema.recipeFavorite.userId, userId), eq(schema.recipeFavorite.recipeId, recipeId)),
+    columns: { id: true },
   });
 
   if (existing) {
-    await prisma.recipeFavorite.delete({ where: { id: existing.id } });
+    await db.delete(schema.recipeFavorite).where(eq(schema.recipeFavorite.id, existing.id));
     return false;
   }
 
-  await prisma.recipeFavorite.create({
-    data: { userId, recipeId },
-  });
+  await db.insert(schema.recipeFavorite).values({ userId, recipeId }).onConflictDoNothing();
   return true;
 }

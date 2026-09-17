@@ -1,17 +1,14 @@
+import { eq } from "drizzle-orm";
 import { saveInterview } from "@/app/actions/interview";
+import { getDb, schema } from "@/db/client";
 import { requireUser } from "@/lib/auth";
-import { getPrisma } from "@/lib/prisma";
 import { INTERVIEW_QUESTIONS } from "@/lib/types";
 
-export default async function InterviewPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ saved?: string }>;
-}) {
+export default async function InterviewPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const user = await requireUser();
-  const prisma = await getPrisma();
   const { saved } = await searchParams;
-  const existing = await prisma.interviewResponse.findUnique({ where: { userId: user.id } });
+  const db = getDb();
+  const existing = await db.query.interviewResponse.findFirst({ where: eq(schema.interviewResponse.userId, user.id) });
   const answers = existing ? (JSON.parse(existing.answers) as Record<string, string>) : {};
 
   return (

@@ -72,15 +72,15 @@ export function categoryLabel(category: string | null | undefined): string {
   }
 }
 
-export function cookTimeBucketFilter(bucketId: string): { cookMinutes: { gte: number; lte?: number } } | null {
+export type CookTimeRange = { min: number; max: number | null };
+
+/** Minute range for a cook-time bucket id, or null when the id is unknown. */
+export function cookTimeBucketFilter(bucketId: string): CookTimeRange | null {
   const bucket = COOK_TIME_BUCKETS.find((entry) => entry.id === bucketId);
   if (!bucket) {
     return null;
   }
-  if (bucket.max === null) {
-    return { cookMinutes: { gte: bucket.min } };
-  }
-  return { cookMinutes: { gte: bucket.min, lte: bucket.max } };
+  return { min: bucket.min, max: bucket.max };
 }
 
 export function formatCookMinutes(minutes: number | null | undefined): string {

@@ -14,10 +14,7 @@ import {
   updateCookbookSettings,
 } from "@/lib/cookbooks";
 import { parseEmailList } from "@/lib/parse-emails";
-
-function appUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000/kitchen";
-}
+import { appUrl } from "@/lib/paths";
 
 export async function saveCookbook(formData: FormData) {
   const user = await requireUser();
@@ -112,5 +109,5 @@ export async function revokeCookbookAccess(formData: FormData) {
 export async function createCookbookInviteLink(cookbookId: string, role: string): Promise<string> {
   const user = await requireUser();
   const invite = await createInvite(user.id, cookbookId, role);
-  return `${appUrl()}/invite/${invite.token}`;
+  return appUrl(`/invite/${invite.token}`);
 }

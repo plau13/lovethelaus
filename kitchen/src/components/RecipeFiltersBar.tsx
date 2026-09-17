@@ -34,9 +34,12 @@ export function RecipeFiltersBar({
   const [search, setSearch] = useState(q);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  // Keep the input in sync when the URL query changes (adjust-state-during-render pattern).
+  const [syncedQuery, setSyncedQuery] = useState(q);
+  if (syncedQuery !== q) {
+    setSyncedQuery(q);
     setSearch(q);
-  }, [q]);
+  }
 
   const navigate = useCallback(
     (next: Partial<RecipeFilterParams>) => {

@@ -1,28 +1,20 @@
-import { getPrisma } from "@/lib/prisma";
+import { asc, desc, eq } from "drizzle-orm";
+import { getDb, schema } from "@/db/client";
 
+/** Everything the user shares with other people (data layer for a future sharing hub). */
 export async function listOwnedSharing(userId: string) {
-  const prisma = await getPrisma();
+  const db = getDb();
 
   const [cookbooks, recipes] = await Promise.all([
-    prisma.cookbook.findMany({
-      where: { ownerId: userId },
-      include: {
-        members: {
-          include: { user: true },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-      orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
+    db.query.cookbook.findMany({
+      where: eq(schema.cookbook.ownerId, userId),
+      with: { members: { with: { user: true }, orderBy: [asc(schema.cookbookMember.createdAt)] } },
+      orderBy: [desc(schema.cookbook.isDefault), desc(schema.cookbook.updatedAt)],
     }),
-    prisma.recipe.findMany({
-      where: { ownerId: userId },
-      include: {
-        collaborators: {
-          include: { user: true },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
+    db.query.recipe.findMany({
+      where: eq(schema.recipe.ownerId, userId),
+      with: { collaborators: { with: { user: true }, orderBy: [asc(schema.recipeCollaborator.createdAt)] } },
+      orderBy: [desc(schema.recipe.updatedAt)],
     }),
   ]);
 
@@ -40,9 +32,5 @@ export async function listOwnedSharing(userId: string) {
     }
   }
 
-  return {
-    cookbooks,
-    recipes,
-    uniquePeopleCount: uniquePeople.size,
-  };
+  return { cookbooks, recipes, uniquePeopleCount: uniquePeople.size };
 }

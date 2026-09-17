@@ -1,7 +1,10 @@
-import { getPrisma } from "@/lib/prisma";
+import { and, eq, exists, ne, sql } from "drizzle-orm";
+import { getDb, schema } from "@/db/client";
 import { canViewRecipe } from "@/lib/permissions";
 import { isSubscriber } from "@/lib/subscription";
 import { buildExportPayload, type RecipeForExport } from "@/lib/export";
+
+const { recipe, recipeCollaborator, cookbookRecipe, cookbookMember, cookbook, user } = schema;
 
 export type ExportRecipeAccess = {
   allowed: boolean;
@@ -9,19 +12,19 @@ export type ExportRecipeAccess = {
 };
 
 export function exportAccessFromLoadedRecipe(
-  user: { id: string; subscriptionTier: string },
-  recipe: { ownerId: string }
+  current: { id: string; subscriptionTier: string },
+  target: { ownerId: string }
 ): ExportRecipeAccess {
-  if (recipe.ownerId === user.id) {
+  if (target.ownerId === current.id) {
     return { allowed: true, reason: "owner" };
   }
-  if (!isSubscriber(user)) {
+  if (!isSubscriber(current)) {
     return { allowed: false, reason: "denied" };
   }
   return { allowed: true, reason: "subscriber" };
 }
 
-function toRecipeForExport(recipe: {
+type LoadedRecipe = {
   id: string;
   title: string;
   ingredients: string;
@@ -33,64 +36,73 @@ function toRecipeForExport(recipe: {
   sourceAttribution: string | null;
   updatedAt: Date;
   notes: Array<{ body: string }>;
-}): RecipeForExport {
+};
+
+function toRecipeForExport(entry: LoadedRecipe): RecipeForExport {
   return {
-    id: recipe.id,
-    title: recipe.title,
-    ingredients: recipe.ingredients,
-    steps: recipe.steps,
-    servings: recipe.servings,
-    tags: recipe.tags,
-    sourceType: recipe.sourceType,
-    sourceUrl: recipe.sourceUrl,
-    sourceAttribution: recipe.sourceAttribution,
-    updatedAt: recipe.updatedAt,
-    notes: recipe.notes.map((note) => ({ body: note.body })),
+    id: entry.id,
+    title: entry.title,
+    ingredients: entry.ingredients,
+    steps: entry.steps,
+    servings: entry.servings,
+    tags: entry.tags,
+    sourceType: entry.sourceType,
+    sourceUrl: entry.sourceUrl,
+    sourceAttribution: entry.sourceAttribution,
+    updatedAt: entry.updatedAt,
+    notes: entry.notes.map((note) => ({ body: note.body })),
   };
 }
 
-export async function canExportRecipe(userId: string, recipeId: string): Promise<ExportRecipeAccess> {
-  const prisma = await getPrisma();
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return { allowed: false, reason: "denied" };
-  }
+const accessContext = {
+  cookbookRecipes: { with: { cookbook: { with: { members: { columns: { userId: true } } } } } },
+} as const;
 
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: recipeId },
-    include: {
-      notes: true,
-      collaborators: { where: { userId } },
-      cookbookRecipes: { include: { cookbook: { include: { members: true } } } },
-    },
-  });
-  if (!recipe) {
-    return { allowed: false, reason: "denied" };
-  }
+type AccessRow = {
+  ownerId: string;
+  collaborators?: { role: string }[];
+  cookbookRecipes: { cookbook: { visibility: string; ownerId: string; members: { userId: string }[] } }[];
+};
 
-  if (recipe.ownerId === userId) {
-    return { allowed: true, reason: "owner" };
-  }
-
-  if (!isSubscriber(user)) {
-    return { allowed: false, reason: "denied" };
-  }
-
-  const allowed = canViewRecipe({
+function viewAllowed(userId: string, row: AccessRow): boolean {
+  return canViewRecipe({
     userId,
-    recipeOwnerId: recipe.ownerId,
-    collaboratorRole: recipe.collaborators[0]?.role ?? null,
-    containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
+    recipeOwnerId: row.ownerId,
+    collaboratorRole: row.collaborators?.[0]?.role ?? null,
+    containingCookbooks: row.cookbookRecipes.map((entry) => ({
       visibility: entry.cookbook.visibility,
       ownerId: entry.cookbook.ownerId,
       memberUserIds: entry.cookbook.members.map((member) => member.userId),
     })),
   });
+}
 
-  if (!allowed) {
+export async function canExportRecipe(userId: string, recipeId: string): Promise<ExportRecipeAccess> {
+  const db = getDb();
+  const current = await db.query.user.findFirst({ where: eq(user.id, userId), columns: { subscriptionTier: true } });
+  if (!current) {
     return { allowed: false, reason: "denied" };
   }
 
+  const target = await db.query.recipe.findFirst({
+    where: eq(recipe.id, recipeId),
+    with: {
+      collaborators: { where: eq(recipeCollaborator.userId, userId), columns: { role: true } },
+      ...accessContext,
+    },
+  });
+  if (!target) {
+    return { allowed: false, reason: "denied" };
+  }
+  if (target.ownerId === userId) {
+    return { allowed: true, reason: "owner" };
+  }
+  if (!isSubscriber(current)) {
+    return { allowed: false, reason: "denied" };
+  }
+  if (!viewAllowed(userId, target)) {
+    return { allowed: false, reason: "denied" };
+  }
   return { allowed: true, reason: "subscriber" };
 }
 
@@ -99,30 +111,26 @@ export async function buildSingleRecipeExport(userId: string, recipeId: string) 
   if (!access.allowed) {
     throw new Error("You cannot export this recipe.");
   }
-
-  const prisma = await getPrisma();
-  const recipe = await prisma.recipe.findUnique({
-    where: { id: recipeId },
-    include: { notes: true },
-  });
-  if (!recipe) {
+  const db = getDb();
+  const target = await db.query.recipe.findFirst({ where: eq(recipe.id, recipeId), with: { notes: true } });
+  if (!target) {
     throw new Error("Recipe not found.");
   }
-
-  return buildExportPayload([toRecipeForExport(recipe)]);
+  return buildExportPayload([toRecipeForExport(target)]);
 }
 
 export async function canExportCookbook(userId: string, cookbookId: string): Promise<boolean> {
-  const prisma = await getPrisma();
-  const cookbook = await prisma.cookbook.findUnique({
-    where: { id: cookbookId },
-    include: { members: { where: { userId } } },
+  const db = getDb();
+  const target = await db.query.cookbook.findFirst({
+    where: eq(cookbook.id, cookbookId),
+    columns: { ownerId: true },
+    with: { members: { where: eq(cookbookMember.userId, userId), columns: { role: true } } },
   });
-  if (!cookbook) {
+  if (!target) {
     return false;
   }
-  const role = cookbook.members[0]?.role ?? null;
-  return cookbook.ownerId === userId || role === "editor" || role === "owner";
+  const role = target.members[0]?.role ?? null;
+  return target.ownerId === userId || role === "editor" || role === "owner";
 }
 
 export async function buildCookbookExport(userId: string, cookbookId: string) {
@@ -130,94 +138,74 @@ export async function buildCookbookExport(userId: string, cookbookId: string) {
   if (!allowed) {
     throw new Error("You cannot export this cookbook.");
   }
-
-  const prisma = await getPrisma();
-  const entries = await prisma.cookbookRecipe.findMany({
-    where: { cookbookId },
-    include: { recipe: { include: { notes: true } } },
-    orderBy: { position: "asc" },
+  const db = getDb();
+  const entries = await db.query.cookbookRecipe.findMany({
+    where: eq(cookbookRecipe.cookbookId, cookbookId),
+    with: { recipe: { with: { notes: true } } },
+    orderBy: (row, { asc }) => [asc(row.position)],
   });
-
   return buildExportPayload(entries.map((entry) => toRecipeForExport(entry.recipe)));
 }
 
 export async function recipesForExport(userId: string): Promise<RecipeForExport[]> {
-  const prisma = await getPrisma();
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
+  const db = getDb();
+  const current = await db.query.user.findFirst({ where: eq(user.id, userId), columns: { subscriptionTier: true } });
+  if (!current) {
     return [];
   }
 
-  const owned = await prisma.recipe.findMany({
-    where: { ownerId: userId },
-    include: { notes: true },
-    orderBy: { title: "asc" },
+  const owned = await db.query.recipe.findMany({
+    where: eq(recipe.ownerId, userId),
+    with: { notes: true },
+    orderBy: (row, { asc }) => [asc(row.title)],
   });
+  const ownedIds = new Set(owned.map((entry) => entry.id));
+  const exportable: RecipeForExport[] = owned.map(toRecipeForExport);
 
-  const ownedIds = new Set(owned.map((r) => r.id));
-  const exportable: RecipeForExport[] = owned.map((recipe) => toRecipeForExport(recipe));
-
-  if (!isSubscriber(user)) {
+  if (!isSubscriber(current)) {
     return exportable;
   }
 
-  const collabRecipes = await prisma.recipe.findMany({
-    where: {
-      collaborators: { some: { userId } },
-      ownerId: { not: userId },
-    },
-    include: {
+  const collabRecipes = await db.query.recipe.findMany({
+    where: and(
+      ne(recipe.ownerId, userId),
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(recipeCollaborator)
+          .where(and(eq(recipeCollaborator.recipeId, recipe.id), eq(recipeCollaborator.userId, userId)))
+      )
+    ),
+    with: {
       notes: true,
-      collaborators: { where: { userId } },
-      cookbookRecipes: { include: { cookbook: { include: { members: true } } } },
+      collaborators: { where: eq(recipeCollaborator.userId, userId), columns: { role: true } },
+      ...accessContext,
     },
   });
-
-  for (const recipe of collabRecipes) {
-    if (ownedIds.has(recipe.id)) continue;
-    const allowed = canViewRecipe({
-      userId,
-      recipeOwnerId: recipe.ownerId,
-      collaboratorRole: recipe.collaborators[0]?.role ?? null,
-      containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
-        visibility: entry.cookbook.visibility,
-        ownerId: entry.cookbook.ownerId,
-        memberUserIds: entry.cookbook.members.map((m) => m.userId),
-      })),
-    });
-    if (allowed) {
-      exportable.push(toRecipeForExport(recipe));
+  for (const entry of collabRecipes) {
+    if (ownedIds.has(entry.id)) continue;
+    if (viewAllowed(userId, entry)) {
+      exportable.push(toRecipeForExport(entry));
     }
   }
 
-  const sharedCookbookRecipes = await prisma.recipe.findMany({
-    where: {
-      ownerId: { not: userId },
-      cookbookRecipes: {
-        some: {
-          cookbook: { members: { some: { userId } } },
-        },
-      },
-    },
-    include: {
-      notes: true,
-      cookbookRecipes: { include: { cookbook: { include: { members: true } } } },
-    },
+  const sharedCookbookRecipes = await db.query.recipe.findMany({
+    where: and(
+      ne(recipe.ownerId, userId),
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(cookbookRecipe)
+          .innerJoin(cookbookMember, eq(cookbookMember.cookbookId, cookbookRecipe.cookbookId))
+          .where(and(eq(cookbookRecipe.recipeId, recipe.id), eq(cookbookMember.userId, userId)))
+      )
+    ),
+    with: { notes: true, ...accessContext },
   });
-
-  for (const recipe of sharedCookbookRecipes) {
-    if (ownedIds.has(recipe.id) || exportable.some((r) => r.id === recipe.id)) continue;
-    const allowed = canViewRecipe({
-      userId,
-      recipeOwnerId: recipe.ownerId,
-      containingCookbooks: recipe.cookbookRecipes.map((entry) => ({
-        visibility: entry.cookbook.visibility,
-        ownerId: entry.cookbook.ownerId,
-        memberUserIds: entry.cookbook.members.map((m) => m.userId),
-      })),
-    });
-    if (allowed) {
-      exportable.push(toRecipeForExport(recipe));
+  for (const entry of sharedCookbookRecipes) {
+    if (ownedIds.has(entry.id) || exportable.some((existing) => existing.id === entry.id)) continue;
+    if (viewAllowed(userId, entry)) {
+      exportable.push(toRecipeForExport(entry));
     }
   }
 
@@ -229,8 +217,8 @@ export async function buildUserExportPayload(userId: string) {
   return buildExportPayload(recipes);
 }
 
-export function exportSummary(user: { subscriptionTier: string }, recipeCount: number, ownedCount: number) {
-  if (isSubscriber(user)) {
+export function exportSummary(current: { subscriptionTier: string }, recipeCount: number, ownedCount: number) {
+  if (isSubscriber(current)) {
     return `Export ${recipeCount} recipe${recipeCount === 1 ? "" : "s"} (yours plus shared recipes you can access).`;
   }
   return `Export ${ownedCount} recipe${ownedCount === 1 ? "" : "s"} you own. Subscribe to export shared recipes too.`;

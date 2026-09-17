@@ -6,11 +6,8 @@ import { requireOnboardedUser } from "@/lib/auth";
 import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
 import { canExportCookbook } from "@/lib/export-eligibility";
 import { canEditCookbookContents, canManageCookbook } from "@/lib/permissions";
+import { appUrl } from "@/lib/paths";
 import { listVisibleRecipes } from "@/lib/recipes";
-
-function appUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000/kitchen";
-}
 
 export default async function CookbookPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireOnboardedUser();
@@ -25,7 +22,7 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
   const isOwner = cookbook.ownerId === user.id;
   const publicShareUrl =
     cookbook.visibility === "unlisted" || cookbook.visibility === "public"
-      ? `${appUrl()}/c/${cookbook.slug}`
+      ? appUrl(`/c/${cookbook.slug}`)
       : null;
 
   return (

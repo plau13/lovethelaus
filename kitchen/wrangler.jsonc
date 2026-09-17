@@ -31,6 +31,15 @@
 	],
 	"images": {
 		"binding": "IMAGES"
+	},
+	// Non-secret config. Secrets (DATABASE_URL, BETTER_AUTH_SECRET, RESEND_API_KEY,
+	// STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DEMO_USER_*) are set with `wrangler secret put`.
+	// See docs/CLOUDFLARE.md.
+	"vars": {
+		"APP_URL": "https://lovethelaus.com/kitchen",
+		"EMAIL_FROM": "Kitchen <kitchen@lovethelaus.com>",
+		"SUPPORT_EMAIL": "preston.lau13@gmail.com",
+		"STRIPE_PRICE_KITCHEN_PLUS": ""
 	}
 	// Kitchen is reached via the lovethelaus router Worker (service binding), not a public route.
 }

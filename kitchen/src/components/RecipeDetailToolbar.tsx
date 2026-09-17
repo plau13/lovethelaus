@@ -91,9 +91,13 @@ export function RecipeDetailToolbar({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Reset local favorite state when the server value changes (adjust-state-during-render pattern).
+  const favoriteKey = `${recipeId}:${initialFavorited}`;
+  const [syncedFavoriteKey, setSyncedFavoriteKey] = useState(favoriteKey);
+  if (syncedFavoriteKey !== favoriteKey) {
+    setSyncedFavoriteKey(favoriteKey);
     setFavorited(initialFavorited);
-  }, [recipeId, initialFavorited]);
+  }
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {

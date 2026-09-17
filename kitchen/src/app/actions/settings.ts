@@ -1,13 +1,13 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
-import { getPrisma } from "@/lib/prisma";
+import { getDb, schema } from "@/db/client";
+import { refreshSessionCache, requireUser } from "@/lib/auth";
 import { fullName } from "@/lib/user-name";
 import { PREFERRED_UNITS } from "@/lib/types";
 
 export async function updateProfile(formData: FormData) {
-  const prisma = await getPrisma();
   const user = await requireUser();
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
@@ -19,9 +19,8 @@ export async function updateProfile(formData: FormData) {
     throw new Error("Pick US or metric units.");
   }
   const name = fullName(firstName, lastName);
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { firstName, lastName, name, preferredUnits },
-  });
+  const db = getDb();
+  await db.update(schema.user).set({ firstName, lastName, name, preferredUnits }).where(eq(schema.user.id, user.id));
+  await refreshSessionCache();
   redirect("/settings?saved=1");
 }
