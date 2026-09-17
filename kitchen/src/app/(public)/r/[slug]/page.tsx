@@ -6,6 +6,8 @@ import { IngredientsCard, StepsCard } from "@/components/RecipeSections";
 import { PublicShell } from "@/components/PublicShell";
 import { photoUrl, publicCookbookPath, publicRecipeUrl } from "@/lib/paths";
 import { provenanceLine } from "@/lib/heritage";
+import { VoicePlayer } from "@/components/media/VoicePlayer";
+import { mediaUrl } from "@/lib/paths";
 import { getPublicRecipe } from "@/lib/public-recipes";
 import { recipeDescription, recipeImageUrl, recipeJsonLd } from "@/lib/public-seo";
 import { parseTags, splitLines } from "@/lib/tags";
@@ -62,6 +64,8 @@ export default async function PublicRecipePage({ params }: Params) {
   ].filter(Boolean);
   const photo = recipe.photos[0] ?? null;
   const jsonLd = recipeJsonLd(recipe);
+  const publicScan = recipe.media.find((entry) => entry.kind === "scan") ?? null;
+  const publicVoice = recipe.media.find((entry) => entry.kind === "voice") ?? null;
   const provenance = provenanceLine({ person: recipe.originPerson, firstMadeYear: recipe.firstMadeYear, occasion: recipe.occasion });
 
   return (
@@ -85,6 +89,19 @@ export default async function PublicRecipePage({ params }: Params) {
           <img src={photoUrl(photo.path)} alt={photo.alt || recipe.title} className="max-h-96 w-full rounded-2xl object-cover" />
         ) : null}
         {recipe.story ? <p className="text-lg leading-relaxed">{recipe.story}</p> : null}
+        {publicScan ? (
+          <figure className="grid gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={mediaUrl(publicScan.r2Key)}
+              alt={publicScan.caption || `The original card for ${recipe.title}`}
+              loading="lazy"
+              className="w-full rounded-2xl border border-line object-contain"
+            />
+            <figcaption className="text-sm text-muted">{publicScan.caption || "The original card"}</figcaption>
+          </figure>
+        ) : null}
+        {publicVoice ? <VoicePlayer voice={publicVoice} /> : null}
         {meta.length > 0 ? <p className="text-muted">{meta.join(" · ")}</p> : null}
         {recipe.sourceAttribution ? <p className="text-sm text-muted">{recipe.sourceAttribution}</p> : null}
 

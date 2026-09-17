@@ -72,6 +72,7 @@ export function CookbookDetailToolbar({
   members,
   publicShareUrl,
   exportHref,
+  bookHref,
 }: {
   cookbookId: string;
   favorited: boolean;
@@ -81,6 +82,7 @@ export function CookbookDetailToolbar({
   members: Member[];
   publicShareUrl: string | null;
   exportHref: string;
+  bookHref: string | null;
 }) {
   const [favorited, setFavorited] = useState(initialFavorited);
   const [shareOpen, setShareOpen] = useState(false);
@@ -161,19 +163,31 @@ export function CookbookDetailToolbar({
             >
               <MoreIcon />
             </IconButton>
-            {menuOpen && canManage ? (
+            {menuOpen && (canManage || bookHref) ? (
               <div
                 role="menu"
                 className="absolute right-0 z-20 mt-1 min-w-36 rounded-xl border border-line bg-white py-1 shadow-lg"
               >
-                <Link
-                  href={`/cookbooks/${cookbookId}/settings`}
-                  role="menuitem"
-                  className="block px-4 py-2 text-ink no-underline hover:bg-paper"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Edit cookbook settings
-                </Link>
+                {bookHref ? (
+                  <Link
+                    href={bookHref}
+                    role="menuitem"
+                    className="block px-4 py-2 text-ink no-underline hover:bg-paper"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Print this book
+                  </Link>
+                ) : null}
+                {canManage ? (
+                  <Link
+                    href={`/cookbooks/${cookbookId}/settings`}
+                    role="menuitem"
+                    className="block px-4 py-2 text-ink no-underline hover:bg-paper"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Edit cookbook settings
+                  </Link>
+                ) : null}
               </div>
             ) : null}
           </div>

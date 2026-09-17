@@ -90,6 +90,20 @@ Global fix in `kitchen/src/app/globals.css`: `a.bg-clay`, `a.btn-clay`, and `but
 - **Made this** (`MadeThisButton`): secondary (white, `border-line`) button with a ✓; expands into a date + note form. Never clay: it is a memory, not a primary action.
 - **Family timeline** (`/family`): people as cards (serif name, muted relationship · years · recipe count); timeline as a left-bordered list with clay dots.
 
+### Heritage media
+
+- **“The original card”** (`ScanPanel`): the scan sits beside the typed recipe in the standard white card, never cropped — a handwritten card has to stay legible. Caption in `text-sm text-muted` under the image.
+- **“In their own voice”** (`VoicePlayer`): a full-width native `<audio controls>` with the caption and duration beside it. In cook mode it pins above the ingredients under “Hear how they made it”.
+- **Recorder** (`VoiceRecorder`): secondary button to start, clay-free stop and an elapsed timer, then a preview before saving. A plain file input is always offered as a fallback.
+- **Upgrade nudge**: one muted line in place of the upload control (“Free accounts keep 1 card photo per recipe. Kitchen Plus adds as many as you like.”). Never a modal, never a banner.
+
+### The printed book (`/cookbooks/[id]/book`)
+
+- Cover is centered: family name in uppercase `text-xs`, book title in serif `text-5xl`, dedication in serif italic, recipe count and keeper in muted small type.
+- Contributors page reuses the family-card wording: name, relationship, years, recipe count.
+- One recipe per printed page, each opening with a small-caps running head of the book title; chapters are announced above the first recipe of the chapter rather than on their own page, so no blank leaves.
+- Print rules live in `book.css`: letter page, 0.75in margins, `break-after: page` on the cover, contributors and each recipe, `break-inside: avoid` on ingredients and steps.
+
 ### Auth screens
 
 - Kitchen: `AuthShell` component (`kitchen/src/components/AuthShell.tsx`)

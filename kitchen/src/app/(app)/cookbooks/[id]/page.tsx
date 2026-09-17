@@ -35,6 +35,7 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
       members={cookbook.members}
       publicShareUrl={publicShareUrl}
       exportHref={`/api/export?format=json&cookbookId=${cookbook.id}`}
+      bookHref={canEditCookbookContents(role) ? `/cookbooks/${cookbook.id}/book` : null}
     >
       <h1 className="font-serif text-4xl">{cookbook.title}</h1>
       <p className="text-muted">

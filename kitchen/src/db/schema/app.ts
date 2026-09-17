@@ -122,6 +122,9 @@ export const recipeMedia = pgTable(
     contentType: text("content_type"),
     caption: text("caption").notNull().default(""),
     durationSeconds: integer("duration_seconds"),
+    /** AI transcription of a scanned card (see docs/HERITAGE.md); read once, stored here. */
+    transcript: text("transcript").notNull().default(""),
+    transcribedAt: ts("transcribed_at"),
     position: integer("position").notNull().default(0),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
     createdAt: createdAt(),

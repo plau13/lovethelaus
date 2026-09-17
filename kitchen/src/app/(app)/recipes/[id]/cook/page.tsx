@@ -45,6 +45,7 @@ export default async function CookPage({
         ingredients={recipe.ingredients}
         steps={recipe.steps}
         bakingSteps={recipe.bakingSteps}
+        voice={recipe.media.find((entry) => entry.kind === "voice") ?? null}
       />
       <div className="no-print grid gap-2 border-t border-line pt-6">
         {made === "1" ? <p className="text-clay">Saved to the family timeline.</p> : null}

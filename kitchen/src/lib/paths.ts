@@ -36,6 +36,11 @@ export function photoUrl(key: string): string {
   return `${BASE_PATH}/api/recipe-photos/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
 
+/** URL of a heritage media object (scanned card or voice memo) from its R2 key. */
+export function mediaUrl(key: string): string {
+  return `${BASE_PATH}/api/recipe-media/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 /** App-relative path of a public recipe page (slug when set, id as a permanent fallback). */
 export function publicRecipePath(recipe: { id: string; slug: string | null }): string {
   return `/r/${recipe.slug ?? recipe.id}`;

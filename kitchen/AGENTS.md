@@ -22,11 +22,14 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 - Email via **Resend** (`src/lib/email.ts`); no API key locally = emails print to the console.
 - Billing via **Stripe** (`src/lib/stripe.ts`, `src/app/api/stripe/webhook/route.ts`); tier helpers in `src/lib/billing.ts`, `src/lib/subscription.ts`.
 - Photos in **R2** (`src/lib/recipe-photos.ts`); the DB stores keys, `photoUrl(key)` builds the URL.
+- Heritage media (scanned cards, voice memos) shares that bucket under a `media/` prefix: storage in `src/lib/media-storage.ts`, rows in `src/lib/media.ts`, free/Plus gate in `src/lib/media-limits.ts`, served by `src/app/api/recipe-media/[...key]/route.ts` (recipe visibility rules + HTTP Range for audio), URLs from `mediaUrl(key)`.
+- **One AI provider.** Claude via `@anthropic-ai/sdk` (`src/lib/anthropic.ts`, model `claude-opus-5`): card transcription in `src/lib/transcribe-scan.ts`, import structuring in `src/lib/import-ai.ts`. No `ANTHROPIC_API_KEY` = both degrade quietly. There is no OpenAI path.
+- Print-ready book at `/cookbooks/[id]/book` (Kitchen Plus): pure layout helpers in `src/lib/book.ts`, print rules in that route's `book.css`.
 - Demo seed: `npm run db:seed:demo` (`demo@lovethelaus.com` + sample recipes)
 - Purge legacy seed users: `npm run db:purge-seed-users`
-- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates)
+- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates, heritage, media limits and storage, book layout)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
-- Nav: Home, Recipes, Cookbooks + user menu (Settings)
+- Nav: Home, Recipes, Cookbooks, Family + user menu (Settings)
 - Brand: [`docs/BRAND.md`](../docs/BRAND.md)
 - Architecture and gotchas: [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)
 - Testing: [`docs/TESTING.md`](../docs/TESTING.md) — run the full Auth matrix when touching auth/email; the Billing section when touching Stripe

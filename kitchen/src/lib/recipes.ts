@@ -4,6 +4,7 @@ import { ensureDefaultCookbook } from "@/lib/default-cookbook";
 import { sendRecipeCollaboratorEmail } from "@/lib/email-templates";
 import { appUrl } from "@/lib/paths";
 import { canCommentOnRecipe, canEditRecipe, canViewRecipe } from "@/lib/permissions";
+import { deleteMedia } from "@/lib/media-storage";
 import { deleteRecipePhotos, uploadRecipePhoto } from "@/lib/recipe-photos";
 import { recipeSlugFor } from "@/lib/slug";
 import { parseTags, recipeMatchesQuery } from "@/lib/tags";
@@ -190,6 +191,7 @@ export async function getRecipeForUser(recipeId: string, userId: string | null) 
       adaptedFrom: { columns: { id: true, title: true, slug: true, ownerId: true }, with: { owner: { columns: { name: true } } } },
       adaptations: { columns: { id: true, title: true, ownerId: true }, with: { owner: { columns: { name: true } } } },
       memories: { with: { user: { columns: { id: true, name: true } } }, orderBy: [desc(schema.recipeMemory.madeOn)], limit: 20 },
+      media: { orderBy: [asc(schema.recipeMedia.position), asc(schema.recipeMedia.createdAt)] },
       ...accessContext,
       ...(userId ? { favorites: { where: eq(recipeFavorite.userId, userId), columns: { id: true }, limit: 1 } } : {}),
     },
@@ -352,12 +354,13 @@ export async function deleteRecipe(userId: string, recipeId: string): Promise<vo
   const existing = await db.query.recipe.findFirst({
     where: eq(recipe.id, recipeId),
     columns: { id: true, ownerId: true },
-    with: { photos: { columns: { path: true } } },
+    with: { photos: { columns: { path: true } }, media: { columns: { r2Key: true } } },
   });
   if (!existing || existing.ownerId !== userId) {
     throw new Error("Only the recipe owner can delete it.");
   }
   await deleteRecipePhotos(existing.photos.map((photo) => photo.path));
+  await deleteMedia(existing.media.map((entry) => entry.r2Key));
   await db.delete(recipe).where(eq(recipe.id, recipeId));
 }
 

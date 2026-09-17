@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { toggleRecipeFavorite } from "@/lib/favorites";
 import { parseYear } from "@/lib/heritage";
+import { getMedia } from "@/lib/media";
 import { addMemory, deleteMemory } from "@/lib/memories";
 import { addNote, copyRecipeToMyBook, createRecipe, updateRecipe, type HeritageArgs } from "@/lib/recipes";
 import { revalidatePublicRecipe } from "@/lib/revalidate-public";
@@ -154,6 +155,39 @@ export async function removeMemory(formData: FormData) {
   const user = await requireUser();
   const recipeId = String(formData.get("recipeId") ?? "");
   await deleteMemory(String(formData.get("memoryId") ?? ""), user.id);
+  redirect(`/recipes/${recipeId}`);
+}
+
+/** Copy a stored card transcript into an empty recipe. updateRecipe snapshots a revision, so it is undoable. */
+export async function applyTranscript(formData: FormData) {
+  const user = await requireUser();
+  const recipeId = String(formData.get("recipeId") ?? "");
+  const media = await getMedia(String(formData.get("mediaId") ?? ""));
+  if (!media || media.recipeId !== recipeId || !media.transcript.trim()) {
+    throw new Error("That card has not been read yet.");
+  }
+  const recipe = media.recipe;
+  if (recipe.ingredients.trim() !== "" || recipe.steps.trim() !== "") {
+    throw new Error("This recipe already has ingredients and steps. Edit it directly so nothing is lost.");
+  }
+
+  const [ingredients = "", steps = ""] = media.transcript
+    .split(/\n\s*\n/)
+    .slice(1)
+    .map((block) => block.trim());
+
+  await updateRecipe({
+    userId: user.id,
+    recipeId,
+    title: String(formData.get("title") ?? "") || media.transcript.split("\n")[0].trim(),
+    ingredients,
+    steps,
+    bakingSteps: "",
+    recipeType: "cooking",
+    tags: "",
+    servings: null,
+  });
+  await revalidatePublicRecipe(recipeId);
   redirect(`/recipes/${recipeId}`);
 }
 
