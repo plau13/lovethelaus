@@ -3,9 +3,10 @@
  *   npm run db:seed:demo   (needs DATABASE_URL, BETTER_AUTH_SECRET, DEMO_USER_PASSWORD; optional DEMO_USER_EMAIL/NAME)
  * Idempotent: re-running resets the demo password and leaves existing content in place.
  */
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { createDb, schema } from "../src/db/client";
 import { getAuth } from "../src/lib/better-auth";
+import { recipeSlugFor } from "../src/lib/slug";
 import { DEMO_RECIPES } from "./demo-recipes";
 
 const DEFAULT_DEMO_EMAIL = "demo@lovethelaus.com";
@@ -115,6 +116,10 @@ async function seedDemoContent(userId: string) {
           })
           .returning({ id: schema.recipe.id })
       )[0].id;
+    await db
+      .update(schema.recipe)
+      .set({ slug: recipeSlugFor(seed.title, recipeId) })
+      .where(and(eq(schema.recipe.id, recipeId), isNull(schema.recipe.slug)));
 
     const memberships = [myRecipes.id];
     if (index < 5) memberships.push(familyFavorites.id);

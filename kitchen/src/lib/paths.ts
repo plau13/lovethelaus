@@ -35,3 +35,21 @@ export function appOrigin(): string {
 export function photoUrl(key: string): string {
   return `${BASE_PATH}/api/recipe-photos/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
+
+/** App-relative path of a public recipe page (slug when set, id as a permanent fallback). */
+export function publicRecipePath(recipe: { id: string; slug: string | null }): string {
+  return `/r/${recipe.slug ?? recipe.id}`;
+}
+
+export function publicCookbookPath(cookbook: { slug: string }): string {
+  return `/c/${cookbook.slug}`;
+}
+
+/** Absolute canonical URL for a public recipe page. */
+export function publicRecipeUrl(recipe: { id: string; slug: string | null }): string {
+  return appUrl(publicRecipePath(recipe));
+}
+
+export function publicCookbookUrl(cookbook: { slug: string }): string {
+  return appUrl(publicCookbookPath(cookbook));
+}

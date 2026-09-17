@@ -10,16 +10,16 @@
 
 ## Phase 2 checklist
 
-- [ ] `(public)` route group and layout with the ad grid
-- [ ] `/r/[slug]` with `generateMetadata` + `Recipe` JSON-LD
-- [ ] `/c/[slug]` as card index with `ItemList` JSON-LD
-- [ ] `/explore` and `/explore/[category]` paginated
-- [ ] `sitemap.ts`, `robots.ts`, root `ads.txt`
-- [ ] `AdSlot`, `AdSenseScript`, `NEXT_PUBLIC_ADSENSE_CLIENT`
-- [ ] AdSense Privacy & messaging enabled
-- [ ] `privacy.md` advertising section, placeholders filled
-- [ ] `_headers` security headers
-- [ ] GA4 on public pages
+- [x] `(public)` route group and layout with the ad grid
+- [x] `/r/[slug]` with `generateMetadata` + `Recipe` JSON-LD
+- [x] `/c/[slug]` as card index with `ItemList` JSON-LD
+- [x] `/explore` and `/explore/[category]` paginated
+- [x] `sitemap.ts`, `robots.ts`, root `ads.txt` (pub id placeholder)
+- [x] `AdSlot`, `AdSenseScript`, `NEXT_PUBLIC_ADSENSE_CLIENT` (env-gated)
+- [ ] AdSense Privacy & messaging enabled (owner, in the AdSense console)
+- [x] `privacy.md` advertising section · [ ] `[Company Legal Name]` placeholders filled (owner)
+- [x] Security headers (`next.config.ts` `headers()`)
+- [x] GA4 on public pages (env-gated)
 
 ## Phase 3 checklist
 

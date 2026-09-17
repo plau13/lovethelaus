@@ -39,3 +39,14 @@ describe("photoUrl", () => {
     expect(photoUrl("a b/c.png")).toBe("/kitchen/api/recipe-photos/a%20b/c.png");
   });
 });
+
+describe("public paths", () => {
+  it("prefer the slug and fall back to the id", async () => {
+    const { publicRecipePath, publicRecipeUrl, publicCookbookPath } = await import("./paths");
+    process.env.APP_URL = "https://lovethelaus.com/kitchen";
+    expect(publicRecipePath({ id: "abc", slug: "pie-abc" })).toBe("/r/pie-abc");
+    expect(publicRecipePath({ id: "abc", slug: null })).toBe("/r/abc");
+    expect(publicRecipeUrl({ id: "abc", slug: "pie-abc" })).toBe("https://lovethelaus.com/kitchen/r/pie-abc");
+    expect(publicCookbookPath({ slug: "holiday-baking-1a2b" })).toBe("/c/holiday-baking-1a2b");
+  });
+});

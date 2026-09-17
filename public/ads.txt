@@ -1,0 +1,3 @@
+# Authorized digital sellers for lovethelaus.com (IAB ads.txt).
+# Replace the pub id with the one from AdSense > Account > Settings > Account information, then remove the leading "#":
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

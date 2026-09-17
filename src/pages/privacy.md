@@ -71,6 +71,14 @@ We use trusted providers to run Kitchen:
 
 These providers process data on our behalf under their own privacy terms. We configure them so your recipe content is not used to train public models beyond what is required to provide the import feature.
 
+## Cookies, analytics, and advertising
+
+**Signed-in app.** Kitchen sets a session cookie so you stay signed in. It contains no tracking identifiers and is not shared with advertisers. There are no ads and no third-party analytics inside the app, in cook mode, or on any page that requires an account.
+
+**Public pages.** Recipes and cookbooks that a family has chosen to make public (for example `/kitchen/explore` and public cookbook links) may show advertising served by Google AdSense and may be measured with Google Analytics. Google and its partners may use cookies or similar technologies to show ads based on your visits to this and other sites, and to measure how ads perform. Where required by law you will see a consent choice before any advertising cookies are set, and you can change it at any time from the consent link on those pages.
+
+You can opt out of personalised advertising at [adssettings.google.com](https://adssettings.google.com), and learn more or opt out of other vendors at [aboutads.info/choices](https://www.aboutads.info/choices/) and [youronlinechoices.eu](https://www.youronlinechoices.eu/). Google's use of data is described at [policies.google.com/technologies/partner-sites](https://policies.google.com/technologies/partner-sites).
+
 ## Sharing and collaboration
 
 When you share a cookbook or grant recipe access (view, comment, or edit), other Kitchen users you invite can see the content you share according to the permissions you set. You control sharing in the app.

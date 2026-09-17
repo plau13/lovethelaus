@@ -31,6 +31,23 @@ The app shell is a single `max-w-3xl` column. Public pages get their own route g
 - Security headers for the public shell in `kitchen/public/_headers` (HSTS, `X-Content-Type-Options`, `Referrer-Policy`). CSP deferred: AdSense and Stripe need a permissive one.
 - Cache: public pages use `revalidate = 3600` and on-demand `revalidateTag` from recipe/cookbook save actions; the OpenNext R2 incremental cache already exists.
 
+## Configuration (build time)
+
+These are `NEXT_PUBLIC_*` variables, so they are compiled into the client bundle when `opennextjs-cloudflare build` runs. Put them in `kitchen/.env` before `npm run deploy`; they are not Worker secrets.
+
+| Variable                             | Where to find it                                                  |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| `NEXT_PUBLIC_ADSENSE_CLIENT`         | AdSense → Account → Settings → Account information (`ca-pub-…`)   |
+| `NEXT_PUBLIC_ADSENSE_SLOT_RAIL`      | AdSense → Ads → By ad unit → Display ad, fixed 300×600            |
+| `NEXT_PUBLIC_ADSENSE_SLOT_RECT`      | Display ad, fixed 300×250 (optional; falls back to the rail slot) |
+| `NEXT_PUBLIC_ADSENSE_SLOT_INCONTENT` | Display ad, responsive (in-content)                               |
+| `NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR`    | Display ad, responsive (anchor)                                   |
+| `NEXT_PUBLIC_GA_ID`                  | Google Analytics → Admin → Data streams (`G-…`)                   |
+
+With `NEXT_PUBLIC_ADSENSE_CLIENT` unset every ad component renders nothing, so the pages are safe to ship before approval. `ads.txt` lives at `public/ads.txt` on the marketing site; uncomment the line with the pub id once AdSense issues it. Enable AdSense "Privacy & messaging" (GDPR + US state messages) in the console; no consent code lives in this repo.
+
+Implementation: `kitchen/src/app/(public)/` (layout never reads the session), `components/PublicShell.tsx` (content column + desktop rail), `components/ads/AdSlot.tsx`, `components/ads/AdSenseScript.tsx`, `components/analytics/GoogleAnalytics.tsx`, `lib/public-recipes.ts`, `lib/public-seo.ts` (JSON-LD, robots decisions), `app/sitemap.ts`, `app/robots.ts`. Unlisted cookbooks and their recipes render with `noindex` and without ad units.
+
 ## Measurement
 
 `NEXT_PUBLIC_GA_ID` gates a GA4 `next/script` in the public layout only (same public-only rule). Track sessions/month and pageviews/month to know when to apply to Mediavine or Raptive.

@@ -130,7 +130,26 @@ Changes to `kitchen/src/lib/stripe.ts`, `billing.ts`, `src/app/actions/billing.t
 
 ---
 
-## 5. Deploy verification
+## 5. Public pages, SEO, and ads
+
+### When to run
+
+Changes under `kitchen/src/app/(public)/`, `components/PublicShell.tsx`, `components/ads/*`, `components/analytics/*`, `lib/public-recipes.ts`, `lib/public-seo.ts`, `app/sitemap.ts`, `app/robots.ts`, `next.config.ts` headers, root `public/ads.txt` / `robots.txt`, or `src/pages/privacy.md`.
+
+### Manual (signed out, private window)
+
+- [ ] `/kitchen/explore` renders with the public header (Kitchen · Explore · Open Kitchen), category pills, cards with photo or placeholder, pagination when > 24 recipes
+- [ ] `/kitchen/c/<public slug>` shows the card grid; `/kitchen/r/<slug>` shows the recipe with Ingredients / Instructions cards and the “Keep this one in your own Kitchen” CTA
+- [ ] `view-source` on `/kitchen/r/<slug>`: `<script type="application/ld+json">` with `"@type":"Recipe"`, `og:title`, `og:image` (when a photo exists), `<link rel="canonical">`; paste the URL into Google's Rich Results Test
+- [ ] A recipe only in an **unlisted** cookbook: page renders, `<meta name="robots" content="noindex">`, no ad frames, not in `/kitchen/sitemap.xml`
+- [ ] `/kitchen/sitemap.xml` lists explore, categories, public cookbooks, public recipes only; `/kitchen/robots.txt` allows `/kitchen/explore`, `/kitchen/c/`, `/kitchen/r/` and disallows the rest; `https://lovethelaus.com/robots.txt` has the `Sitemap:` line; `https://lovethelaus.com/ads.txt` serves
+- [ ] With `NEXT_PUBLIC_ADSENSE_CLIENT` set at build: `<ins class="adsbygoogle">` in the desktop rail (≥ 1024 px) and in-content/anchor on mobile; without it, no ad markup at all
+- [ ] Response headers on any Kitchen page include `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`
+- [ ] Signed in, the app pages (`/kitchen/recipes` …) are unchanged and carry no ad markup
+
+---
+
+## 6. Deploy verification
 
 | What changed       | Deploy (from repo root)        |
 | ------------------ | ------------------------------ |

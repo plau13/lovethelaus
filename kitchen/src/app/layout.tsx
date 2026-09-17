@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
-import { getCurrentUser } from "@/lib/auth";
-import { AppHeader } from "@/components/AppHeader";
-import { BASE_PATH } from "@/lib/paths";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { BASE_PATH } from "@/lib/paths";
 import "./globals.css";
 
 const sans = Source_Sans_3({
@@ -38,14 +36,17 @@ export const viewport: Viewport = {
   themeColor: "#faf6f0",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const user = await getCurrentUser();
+/**
+ * Root shell only: fonts, global styles, service worker. The signed-in app lives under the
+ * `(app)` route group (header + narrow column, reads the session) and the crawlable pages under
+ * `(public)` (wide layout with ad rail, never reads the session).
+ */
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable}`}>
       <body className="min-h-dvh antialiased">
         <ServiceWorkerRegister />
-        <AppHeader userName={user?.name ?? null} />
-        <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6">{children}</div>
+        {children}
       </body>
     </html>
   );

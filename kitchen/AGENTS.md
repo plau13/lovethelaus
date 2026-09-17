@@ -16,6 +16,7 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 
 - PostgreSQL on **Neon** via **Drizzle** (`src/db/schema/*`, client in `src/db/client.ts`, migrations in `drizzle/`). No `db.transaction()` (neon-http).
 - **Better Auth** instance in `src/lib/better-auth.ts` (lazy `getAuth()`), facade in `src/lib/auth.ts` (`getCurrentUser`, `requireUser`, `requireOnboardedUser`). Call `refreshSessionCache()` after mutating the `user` row.
+- Route groups: `src/app/(app)/` is the signed-in app (header + narrow column, reads the session); `src/app/(public)/` holds crawlable pages (`/explore`, `/c/[slug]`, `/r/[slug]`) that never read the session and carry the ad rail. Public data lives in `src/lib/public-recipes.ts`; JSON-LD/robots helpers in `src/lib/public-seo.ts`. Ads only on `(public)`, only when `NEXT_PUBLIC_ADSENSE_CLIENT` is set (see `docs/ADS.md`).
 - Paths: always build `/kitchen` URLs with `src/lib/paths.ts`; post-login redirects with `src/lib/post-auth.ts`.
 - Email via **Resend** (`src/lib/email.ts`); no API key locally = emails print to the console.
 - Billing via **Stripe** (`src/lib/stripe.ts`, `src/app/api/stripe/webhook/route.ts`); tier helpers in `src/lib/billing.ts`, `src/lib/subscription.ts`.
