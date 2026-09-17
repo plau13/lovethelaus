@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { isIndexable, isPubliclyViewable, isoDuration, itemListJsonLd, paginate, recipeDescription, recipeJsonLd } from "./public-seo";
+import { isIndexable, isPubliclyViewable, isoDuration, itemListJsonLd, recipeDescription, recipeJsonLd } from "./public-seo";
 
 const original = process.env.APP_URL;
 afterEach(() => {
@@ -71,16 +71,9 @@ describe("recipeJsonLd", () => {
   });
 });
 
-describe("itemListJsonLd / paginate", () => {
+describe("itemListJsonLd", () => {
   it("numbers list items", () => {
     const ld = itemListJsonLd("Pies", ["https://x/1", "https://x/2"]) as { itemListElement: { position: number }[] };
     expect(ld.itemListElement.map((entry) => entry.position)).toEqual([1, 2]);
-  });
-
-  it("clamps page numbers", () => {
-    expect(paginate("3", 10, 25)).toMatchObject({ page: 3, totalPages: 3, offset: 20 });
-    expect(paginate("99", 10, 25).page).toBe(3);
-    expect(paginate("0", 10, 25).page).toBe(1);
-    expect(paginate("nope", 10, 0)).toMatchObject({ page: 1, totalPages: 1, offset: 0 });
   });
 });

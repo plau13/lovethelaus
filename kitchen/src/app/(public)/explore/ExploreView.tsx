@@ -5,7 +5,8 @@ import { PublicRecipeCard } from "@/components/PublicRecipeCard";
 import { PublicShell } from "@/components/PublicShell";
 import { appUrl, publicCookbookPath, publicRecipeUrl } from "@/lib/paths";
 import { EXPLORE_PAGE_SIZE, listPublicCookbooks, listPublicRecipes } from "@/lib/public-recipes";
-import { itemListJsonLd, paginate } from "@/lib/public-seo";
+import { paginate } from "@/lib/pagination";
+import { itemListJsonLd } from "@/lib/public-seo";
 import { RECIPE_CATEGORIES, categoryLabel, type RecipeCategory } from "@/lib/types";
 
 export function exploreBasePath(category?: RecipeCategory): string {

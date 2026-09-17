@@ -25,9 +25,10 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 - Heritage media (scanned cards, voice memos) shares that bucket under a `media/` prefix: storage in `src/lib/media-storage.ts`, rows in `src/lib/media.ts`, free/Plus gate in `src/lib/media-limits.ts`, served by `src/app/api/recipe-media/[...key]/route.ts` (recipe visibility rules + HTTP Range for audio), URLs from `mediaUrl(key)`.
 - **One AI provider.** Claude via `@anthropic-ai/sdk` (`src/lib/anthropic.ts`, model `claude-opus-5`): card transcription in `src/lib/transcribe-scan.ts`, import structuring in `src/lib/import-ai.ts`. No `ANTHROPIC_API_KEY` = both degrade quietly. There is no OpenAI path.
 - Print-ready book at `/cookbooks/[id]/book` (Kitchen Plus): pure layout helpers in `src/lib/book.ts`, print rules in that route's `book.css`.
+- **Search and lists run in Postgres, never in JavaScript.** `recipe.search_vector` is a generated weighted `tsvector` with a GIN index; `listVisibleRecipes` matches it with `websearch_to_tsquery` and ranks with `ts_rank`, and takes `limit`/`offset`. Pair it with `countVisibleRecipes` to fix the page first. Page arithmetic is `src/lib/pagination.ts`, query and tag normalization is `src/lib/search-terms.ts`. Use `listRecipeTitleOptions` for pickers that genuinely need every title. Never load a whole list to filter it in memory.
 - Demo seed: `npm run db:seed:demo` (`demo@lovethelaus.com` + sample recipes)
 - Purge legacy seed users: `npm run db:purge-seed-users`
-- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates, heritage, media limits and storage, book layout)
+- Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates, heritage, media limits and storage, book layout, pagination, search terms, recipe filters)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
 - Nav: Home, Recipes, Cookbooks, Family + user menu (Settings)
 - Brand: [`docs/BRAND.md`](../docs/BRAND.md)

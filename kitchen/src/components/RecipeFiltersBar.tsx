@@ -28,6 +28,8 @@ export function RecipeFiltersBar({
   time = "",
   cookbook = "",
   difficulty = "",
+  tag = "",
+  favorites = false,
   cookbooks,
 }: RecipeFiltersBarProps) {
   const router = useRouter();
@@ -50,11 +52,13 @@ export function RecipeFiltersBar({
           time,
           cookbook,
           difficulty,
+          tag,
+          favorites,
           ...next,
         })
       );
     },
-    [router, q, category, time, cookbook, difficulty]
+    [router, q, category, time, cookbook, difficulty, tag, favorites]
   );
 
   useEffect(() => {
@@ -138,8 +142,31 @@ export function RecipeFiltersBar({
         </select>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate({ favorites: !favorites })}
+          aria-pressed={favorites}
+          className={`btn rounded-xl border px-4 py-2 ${
+            favorites ? "border-clay text-clay" : "border-line bg-white"
+          }`}
+        >
+          Favorites
+        </button>
+        {tag ? (
+          <button
+            type="button"
+            onClick={() => navigate({ tag: "" })}
+            className="btn rounded-xl border border-clay px-4 py-2 text-clay"
+            aria-label={`Clear the ${tag} tag filter`}
+          >
+            #{tag} ✕
+          </button>
+        ) : null}
+      </div>
+
       <label className="grid gap-1">
-        <span className="text-muted">Search (title, ingredients, tags)</span>
+        <span className="text-muted">Search (title, ingredients, story, tags)</span>
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}

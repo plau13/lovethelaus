@@ -1,6 +1,19 @@
-import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, customType, index, integer, pgTable, text, timestamp, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 import { user } from "./auth";
+
+/** Postgres full-text search vector. Drizzle has no built-in tsvector type. */
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType: () => "tsvector",
+});
+
+/**
+ * Weighted search document for a recipe. The title matters most, then tags, then
+ * the story and ingredients, then the steps. `to_tsvector(regconfig, text)` is
+ * immutable with a literal config, which is what a generated column requires.
+ */
+const RECIPE_SEARCH_DOCUMENT = sql`setweight(to_tsvector('english', "title"), 'A') || setweight(to_tsvector('english', "tags"), 'B') || setweight(to_tsvector('english', "story"), 'C') || setweight(to_tsvector('english', "ingredients"), 'C') || setweight(to_tsvector('english', "steps"), 'D')`;
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
 const id = () =>
@@ -63,10 +76,12 @@ export const recipe = pgTable(
     }),
     firstMadeYear: integer("first_made_year"),
     occasion: text("occasion"),
+    searchVector: tsvector("search_vector").generatedAlwaysAs(RECIPE_SEARCH_DOCUMENT),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
+    index("recipe_search_idx").using("gin", t.searchVector),
     index("recipe_owner_idx").on(t.ownerId),
     index("recipe_title_idx").on(t.title),
     index("recipe_type_idx").on(t.recipeType),

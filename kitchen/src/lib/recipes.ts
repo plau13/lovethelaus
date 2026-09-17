@@ -1,4 +1,4 @@
-import { and, desc, asc, eq, exists, gte, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, gte, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { ensureDefaultCookbook } from "@/lib/default-cookbook";
 import { sendRecipeCollaboratorEmail } from "@/lib/email-templates";
@@ -7,7 +7,8 @@ import { canCommentOnRecipe, canEditRecipe, canViewRecipe } from "@/lib/permissi
 import { deleteMedia } from "@/lib/media-storage";
 import { deleteRecipePhotos, uploadRecipePhoto } from "@/lib/recipe-photos";
 import { recipeSlugFor } from "@/lib/slug";
-import { parseTags, recipeMatchesQuery } from "@/lib/tags";
+import { normalizeTag, searchTerms } from "@/lib/search-terms";
+import { parseTags } from "@/lib/tags";
 import {
   collabRoleLabel,
   cookTimeBucketFilter,
@@ -26,7 +27,13 @@ export type ListRecipesOptions = {
   category?: RecipeCategory;
   timeBucket?: string;
   difficulty?: RecipeDifficulty;
+  tag?: string;
+  favoritesOnly?: boolean;
+  limit?: number;
+  offset?: number;
 };
+
+export const RECIPES_PER_PAGE = 20;
 
 function recipeSnapshot(entry: {
   title: string;
@@ -126,12 +133,17 @@ function visibleToUser(userId: string): SQL {
   return or(mine, collaborates, viaCookbook)!;
 }
 
-export async function listVisibleRecipes(userId: string, options: ListRecipesOptions = {}) {
+/** Build every WHERE condition for a recipe list, including the full-text match. */
+function recipeListConditions(userId: string, options: ListRecipesOptions): SQL[] {
   const db = getDb();
-  const { q = "", cookbookId, category, timeBucket, difficulty } = options;
+  const { cookbookId, category, timeBucket, difficulty, tag, favoritesOnly } = options;
+  const query = searchTerms(options.q);
   const timeRange = timeBucket ? cookTimeBucketFilter(timeBucket) : null;
 
-  const conditions: (SQL | undefined)[] = [visibleToUser(userId)];
+  const conditions: SQL[] = [visibleToUser(userId)];
+  if (query) {
+    conditions.push(sql`${recipe.searchVector} @@ websearch_to_tsquery('english', ${query})`);
+  }
   if (cookbookId) {
     conditions.push(
       exists(
@@ -141,6 +153,20 @@ export async function listVisibleRecipes(userId: string, options: ListRecipesOpt
           .where(and(eq(cookbookRecipe.recipeId, recipe.id), eq(cookbookRecipe.cookbookId, cookbookId)))
       )
     );
+  }
+  if (favoritesOnly) {
+    conditions.push(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(recipeFavorite)
+          .where(and(eq(recipeFavorite.recipeId, recipe.id), eq(recipeFavorite.userId, userId)))
+      )
+    );
+  }
+  if (tag) {
+    // serializeTags writes lowercase tags joined by ", ", so containment is an exact tag match.
+    conditions.push(sql`string_to_array(${recipe.tags}, ', ') @> ARRAY[${normalizeTag(tag)}]::text[]`);
   }
   if (category) {
     conditions.push(eq(recipe.category, category));
@@ -154,13 +180,52 @@ export async function listVisibleRecipes(userId: string, options: ListRecipesOpt
       conditions.push(lte(recipe.cookMinutes, timeRange.max));
     }
   }
+  return conditions;
+}
 
-  const rows = await db.query.recipe.findMany({
-    where: and(...conditions),
+/** How many recipes match, without loading any of them. Used to fix the page number. */
+export async function countVisibleRecipes(userId: string, options: ListRecipesOptions = {}): Promise<number> {
+  const db = getDb();
+  const [row] = await db
+    .select({ total: count() })
+    .from(recipe)
+    .where(and(...recipeListConditions(userId, options)));
+  return Number(row?.total ?? 0);
+}
+
+/**
+ * One page of the recipes a user can see. Filtering, ranking and paging all
+ * happen in Postgres — the full library is never loaded into memory.
+ */
+export async function listVisibleRecipes(userId: string, options: ListRecipesOptions = {}) {
+  const db = getDb();
+  const query = searchTerms(options.q);
+  const where = and(...recipeListConditions(userId, options));
+
+  return db.query.recipe.findMany({
+    where,
     with: { photos: true, cookbookRecipes: { with: { cookbook: true } } },
-    orderBy: [desc(recipe.updatedAt)],
+    // Best match first when searching, most recently touched otherwise.
+    orderBy: query
+      ? [desc(sql`ts_rank(${recipe.searchVector}, websearch_to_tsquery('english', ${query}))`), desc(recipe.updatedAt)]
+      : [desc(recipe.updatedAt)],
+    ...(options.limit === undefined ? {} : { limit: options.limit }),
+    ...(options.offset ? { offset: options.offset } : {}),
   });
-  return rows.filter((entry) => recipeMatchesQuery(entry, q));
+}
+
+/**
+ * Titles only, for the pickers that need every option in one select ("adapted
+ * from", "add one of your recipes"). Deliberately not paginated, and it loads
+ * no photos or cookbooks.
+ */
+export async function listRecipeTitleOptions(userId: string, options: { ownedOnly?: boolean } = {}) {
+  const db = getDb();
+  return db.query.recipe.findMany({
+    where: options.ownedOnly ? eq(recipe.ownerId, userId) : visibleToUser(userId),
+    columns: { id: true, title: true, ownerId: true },
+    orderBy: [asc(recipe.title)],
+  });
 }
 
 export async function listRecentRecipes(userId: string, limit = 5) {

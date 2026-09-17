@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listFavoriteCookbookIds } from "@/lib/cookbook-favorites";
-import { listCookbooksForUser } from "@/lib/cookbooks";
+import { PUBLIC_COOKBOOKS_PER_PAGE, countPublicCookbooks, listCookbooksForUser } from "@/lib/cookbooks";
+import { Pager } from "@/components/Pager";
+import { paginate } from "@/lib/pagination";
 import { CookbookListItem } from "@/components/CookbookListItem";
 import { COOKBOOK_LIST_FILTERS, type CookbookListFilter } from "@/lib/types";
 
@@ -51,18 +53,42 @@ function CookbookSection({
   );
 }
 
+function cookbooksUrl(q: string, filter: CookbookListFilter, page: number): string {
+  const params = new URLSearchParams();
+  if (q) {
+    params.set("q", q);
+  }
+  if (filter !== "all") {
+    params.set("filter", filter);
+  }
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+  return params.size ? `/cookbooks?${params}` : "/cookbooks";
+}
+
 export default async function CookbooksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; filter?: string }>;
+  searchParams: Promise<{ q?: string; filter?: string; page?: string }>;
 }) {
   const user = await requireOnboardedUser();
-  const { q = "", filter: filterRaw = "all" } = await searchParams;
+  const { q = "", filter: filterRaw = "all", page: pageRaw } = await searchParams;
   const filter = COOKBOOK_LIST_FILTERS.includes(filterRaw as CookbookListFilter)
     ? (filterRaw as CookbookListFilter)
     : "all";
+  // Public cookbooks are unbounded, so that section pages; the user's own and
+  // shared books are bounded by their memberships and come back whole.
+  const showsPublic = filter === "all" || filter === "public";
+  const publicTotal = showsPublic ? await countPublicCookbooks(user.id, q) : 0;
+  const pagination = paginate(pageRaw, PUBLIC_COOKBOOKS_PER_PAGE, publicTotal);
   const [grouped, favoriteIds] = await Promise.all([
-    listCookbooksForUser(user.id, { q, filter }),
+    listCookbooksForUser(user.id, {
+      q,
+      filter,
+      limit: pagination.perPage,
+      offset: pagination.offset,
+    }),
     listFavoriteCookbookIds(user.id),
   ]);
 
@@ -99,18 +125,11 @@ export default async function CookbooksPage({
 
       <div className="flex flex-wrap gap-2">
         {COOKBOOK_LIST_FILTERS.map((item) => {
-          const params = new URLSearchParams();
-          if (q) {
-            params.set("q", q);
-          }
-          if (item !== "all") {
-            params.set("filter", item);
-          }
-          const href = params.size ? `/cookbooks?${params}` : "/cookbooks";
+          // Changing the filter starts over at page one.
           return (
             <Link
               key={item}
-              href={href}
+              href={cookbooksUrl(q, item, 1)}
               className={`rounded-full px-4 py-2 no-underline ${filter === item ? "bg-clay text-white" : "border border-line bg-white text-ink"}`}
             >
               {filterLabel(item)}
@@ -132,7 +151,15 @@ export default async function CookbooksPage({
       ) : null}
 
       {grouped.public.length > 0 ? (
-        <CookbookSection title={`Public cookbooks (${grouped.public.length})`} cookbooks={grouped.public} />
+        <>
+          <CookbookSection title={`Public cookbooks (${publicTotal})`} cookbooks={grouped.public} />
+          <Pager
+            pagination={pagination}
+            noun="public cookbook"
+            hrefForPage={(page) => cookbooksUrl(q, filter, page)}
+            label="Public cookbook pages"
+          />
+        </>
       ) : null}
 
       {grouped.own.length + grouped.shared.length + grouped.public.length === 0 ? (

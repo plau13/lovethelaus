@@ -15,6 +15,13 @@
       "when": 1789657411215,
       "tag": "0001_media_transcript",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789664364337,
+      "tag": "0002_recipe_search",
+      "breakpoints": true
     }
   ]
 }

@@ -90,13 +90,4 @@ export function itemListJsonLd(name: string, urls: string[]): Record<string, unk
   };
 }
 
-export type Pagination = { page: number; perPage: number; total: number; totalPages: number; offset: number };
-
-export function paginate(pageRaw: string | number | undefined, perPage: number, total: number): Pagination {
-  const parsed = typeof pageRaw === "number" ? pageRaw : Number.parseInt(String(pageRaw ?? "1"), 10);
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const page = Math.min(Math.max(Number.isFinite(parsed) ? parsed : 1, 1), totalPages);
-  return { page, perPage, total, totalPages, offset: (page - 1) * perPage };
-}
-
 export const COOK_TIME_LABEL = formatCookMinutes;
