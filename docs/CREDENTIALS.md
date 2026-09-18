@@ -10,26 +10,27 @@ cd kitchen && grep -rho "process\.env\.[A-Z_][A-Z0-9_]*" src scripts | sed 's/pr
 
 ## At a glance
 
-| Value                        | Needed for            | Secret? | Lives in                             |
-| ---------------------------- | --------------------- | ------- | ------------------------------------ |
-| `DATABASE_URL`               | **Everything**        | Yes     | Worker secret + `kitchen/.env`       |
-| `DATABASE_URL_UNPOOLED`      | Migrations only       | Yes     | `kitchen/.env` only — never a secret |
-| `BETTER_AUTH_SECRET`         | **Everything**        | Yes     | Worker secret + `kitchen/.env`       |
-| `RESEND_API_KEY`             | Email                 | Yes     | Worker secret + `kitchen/.env`       |
-| `DEMO_USER_PASSWORD`         | Demo account          | Yes     | Worker secret + `kitchen/.env`       |
-| `DEMO_USER_EMAIL`            | Demo account          | No      | Worker secret + `kitchen/.env`       |
-| `DEMO_USER_NAME`             | Seed script           | No      | `kitchen/.env` only                  |
-| `STRIPE_SECRET_KEY`          | Kitchen Plus          | Yes     | Worker secret + `kitchen/.env`       |
-| `STRIPE_WEBHOOK_SECRET`      | Kitchen Plus          | Yes     | Worker secret + `kitchen/.env`       |
-| `STRIPE_PRICE_KITCHEN_PLUS`  | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
-| `ANTHROPIC_API_KEY`          | Card reading, imports | Yes     | Worker secret + `kitchen/.env`       |
-| `APP_URL`                    | Auth callbacks, links | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `EMAIL_FROM`                 | Email sender          | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `SUPPORT_EMAIL`              | Settings, reply-to    | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `NEXT_PUBLIC_ADSENSE_CLIENT` | Ads                   | No      | `kitchen/.env` at **build** time     |
-| `NEXT_PUBLIC_ADSENSE_SLOT_*` | Ads                   | No      | `kitchen/.env` at **build** time     |
-| `NEXT_PUBLIC_GA_ID`          | Analytics             | No      | `kitchen/.env` at **build** time     |
-| `PUBLIC_KITCHEN_URL`         | Marketing site links  | No      | Set by `npm run build:prod`          |
+| Value                               | Needed for            | Secret? | Lives in                             |
+| ----------------------------------- | --------------------- | ------- | ------------------------------------ |
+| `DATABASE_URL`                      | **Everything**        | Yes     | Worker secret + `kitchen/.env`       |
+| `DATABASE_URL_UNPOOLED`             | Migrations only       | Yes     | `kitchen/.env` only — never a secret |
+| `BETTER_AUTH_SECRET`                | **Everything**        | Yes     | Worker secret + `kitchen/.env`       |
+| `RESEND_API_KEY`                    | Email                 | Yes     | Worker secret + `kitchen/.env`       |
+| `DEMO_USER_PASSWORD`                | Demo account          | Yes     | Worker secret + `kitchen/.env`       |
+| `DEMO_USER_EMAIL`                   | Demo account          | No      | Worker secret + `kitchen/.env`       |
+| `DEMO_USER_NAME`                    | Seed script           | No      | `kitchen/.env` only                  |
+| `STRIPE_SECRET_KEY`                 | Kitchen Plus          | Yes     | Worker secret + `kitchen/.env`       |
+| `STRIPE_WEBHOOK_SECRET`             | Kitchen Plus          | Yes     | Worker secret + `kitchen/.env`       |
+| `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
+| `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`  | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
+| `ANTHROPIC_API_KEY`                 | Card reading, imports | Yes     | Worker secret + `kitchen/.env`       |
+| `APP_URL`                           | Auth callbacks, links | No      | `wrangler.jsonc` `vars` + `.env`     |
+| `EMAIL_FROM`                        | Email sender          | No      | `wrangler.jsonc` `vars` + `.env`     |
+| `SUPPORT_EMAIL`                     | Settings, reply-to    | No      | `wrangler.jsonc` `vars` + `.env`     |
+| `NEXT_PUBLIC_ADSENSE_CLIENT`        | Ads                   | No      | `kitchen/.env` at **build** time     |
+| `NEXT_PUBLIC_ADSENSE_SLOT_*`        | Ads                   | No      | `kitchen/.env` at **build** time     |
+| `NEXT_PUBLIC_GA_ID`                 | Analytics             | No      | `kitchen/.env` at **build** time     |
+| `PUBLIC_KITCHEN_URL`                | Marketing site links  | No      | Set by `npm run build:prod`          |
 
 Three different places, and the difference matters:
 
@@ -84,13 +85,17 @@ Do this in **test mode** first. The toggle is in the Stripe dashboard header.
 **`STRIPE_SECRET_KEY`**
 **Developers → API keys → Secret key**. Starts `sk_test_` in test mode, `sk_live_` in production. Reveal and copy.
 
-**`STRIPE_PRICE_KITCHEN_PLUS`**
+**`STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` and `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`**
+
+Already created on the live account: one `Kitchen Plus` product with a $5 monthly price and a $50 annual price, both recorded in `kitchen/wrangler.jsonc` under `vars`.
+
+To change them, or to recreate them in a test sandbox:
 
 1. **Product catalogue → Add product**, name it `Kitchen Plus`.
-2. Add one **recurring** price and pick the interval.
-3. Save, then copy the **price** id. It starts `price_`, not `prod_`. A product id here will fail at checkout.
+2. Add two **recurring** prices, one monthly and one yearly.
+3. Copy each **price** id. They start `price_`, not `prod_`. A product id here fails at checkout.
 
-This one is not a secret, so it goes in `kitchen/wrangler.jsonc` under `vars`, where it is currently an empty string.
+Neither is a secret. Settings shows a button per price, and dropping one variable simply hides that option rather than breaking checkout.
 
 **`STRIPE_WEBHOOK_SECRET`**
 

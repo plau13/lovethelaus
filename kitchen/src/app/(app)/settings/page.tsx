@@ -6,7 +6,7 @@ import { getDb, schema } from "@/db/client";
 import { requireOnboardedUser } from "@/lib/auth";
 import { subscriptionSummary } from "@/lib/billing";
 import { exportSummary, recipesForExport } from "@/lib/export-eligibility";
-import { isBillingConfigured } from "@/lib/stripe";
+import { availableIntervals, isBillingConfigured } from "@/lib/stripe";
 import {
   formatOnboardingAnswer,
   ONBOARDING_QUESTIONS,
@@ -37,6 +37,7 @@ export default async function SettingsPage({
   const plan = subscriptionSummary(user);
   const subscribed = isSubscriber(user);
   const billingReady = isBillingConfigured();
+  const intervals = availableIntervals();
   const activating = checkout === "success" && !subscribed;
 
   return (
@@ -148,16 +149,36 @@ export default async function SettingsPage({
               </button>
             </form>
           ) : (
-            <form action={startCheckout} className="grid gap-2">
+            <div className="grid gap-3">
               <ul className="list-disc pl-5 text-muted">
+                <li>Unlimited card photos and voice memos on every recipe</li>
+                <li>Claude reads a handwritten card into the recipe</li>
+                <li>The print-ready family cookbook</li>
                 <li>Export shared recipes, not just your own</li>
                 <li>Offline cook mode</li>
                 <li>About 10 Instagram/TikTok imports a month</li>
               </ul>
-              <button type="submit" className="btn w-fit rounded-xl bg-clay px-5 py-3 text-white hover:bg-clay-dark">
-                Upgrade to Kitchen Plus
-              </button>
-            </form>
+              <div className="flex flex-wrap gap-3">
+                {intervals.map((interval) => (
+                  <form action={startCheckout} key={interval}>
+                    <input type="hidden" name="interval" value={interval} />
+                    <button
+                      type="submit"
+                      className={
+                        interval === "yearly"
+                          ? "btn rounded-xl bg-clay px-5 py-3 text-white hover:bg-clay-dark"
+                          : "btn rounded-xl border border-line bg-white px-5 py-3"
+                      }
+                    >
+                      {interval === "yearly" ? "$50 a year" : "$5 a month"}
+                    </button>
+                  </form>
+                ))}
+              </div>
+              {intervals.length > 1 ? (
+                <p className="text-sm text-muted">A year costs the same as ten months.</p>
+              ) : null}
+            </div>
           )
         ) : null}
         {!billingReady ? <p className="text-sm text-muted">Billing is not set up in this environment yet.</p> : null}

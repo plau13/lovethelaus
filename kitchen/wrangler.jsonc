@@ -39,7 +39,8 @@
 		"APP_URL": "https://lovethelaus.com/kitchen",
 		"EMAIL_FROM": "Kitchen <kitchen@lovethelaus.com>",
 		"SUPPORT_EMAIL": "preston.lau13@gmail.com",
-		"STRIPE_PRICE_KITCHEN_PLUS": ""
+		"STRIPE_PRICE_KITCHEN_PLUS_MONTHLY": "price_1UGtRwAyx1E2Saa5IqXhnYrA",
+		"STRIPE_PRICE_KITCHEN_PLUS_YEARLY": "price_1UGtS1Ayx1E2Saa5scWPNx9e"
 	}
 	// Kitchen is reached via the lovethelaus router Worker (service binding), not a public route.
 }
