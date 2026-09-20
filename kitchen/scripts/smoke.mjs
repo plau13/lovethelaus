@@ -12,7 +12,8 @@
 
 const DEFAULT_BASE = "https://lovethelaus.com/kitchen";
 
-const base = (process.argv[2] ?? process.env.SMOKE_BASE_URL ?? DEFAULT_BASE).replace(/\/+$/, "");
+// Blank is absent: a cleared workflow input arrives as "", and `??` would take it.
+const base = (process.argv[2]?.trim() || process.env.SMOKE_BASE_URL?.trim() || DEFAULT_BASE).replace(/\/+$/, "");
 const { origin, pathname } = new URL(base);
 /** "/kitchen" — the prefix the manifest, icons and sitemap are expected to carry. */
 const basePath = pathname.replace(/\/+$/, "");

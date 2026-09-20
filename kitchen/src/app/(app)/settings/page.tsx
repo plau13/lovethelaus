@@ -16,7 +16,7 @@ import {
 import { isSubscriber } from "@/lib/subscription";
 
 function supportEmail(): string {
-  return process.env.SUPPORT_EMAIL ?? "preston.lau13@gmail.com";
+  return process.env.SUPPORT_EMAIL?.trim() || "preston.lau13@gmail.com";
 }
 
 export default async function SettingsPage({

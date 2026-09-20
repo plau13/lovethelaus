@@ -161,6 +161,10 @@ You invent these; there is no provider.
 
 Set the password **before** running `npm run db:seed:demo`; the seed creates the account with whatever is set at that moment. It backs the "Try demo" button, so anyone can sign in with it. Never reuse a personal password.
 
+`DEMO_USER_EMAIL` and `DEMO_USER_NAME` are genuinely optional on both sides: leave them unset and the account is `demo@lovethelaus.com` / `Demo Kitchen` everywhere, because the seed and the sign-in route resolve it through the same helper. `DEMO_USER_PASSWORD` is the only one the Worker needs as a secret for the button to work.
+
+One trap worth knowing, since it cost a failed seed: **an unset GitHub Actions secret arrives as the empty string**, not as undefined. Anything reading an optional variable has to fall back on blank (`||`), not merely on undefined (`??`), or the empty value wins and the failure surfaces somewhere far from the cause.
+
 ---
 
 ## Putting the values in place
