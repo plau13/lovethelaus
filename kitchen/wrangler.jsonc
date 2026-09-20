@@ -32,6 +32,25 @@
 	"images": {
 		"binding": "IMAGES"
 	},
+	// Workers Logs. Sampling is 1 (keep everything) because traffic is a family's,
+	// not a platform's, and the failures worth catching here are rare: a Stripe
+	// webhook that fails signature checks, or an R2 read that 404s.
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"redact_query_string": false,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+			"persist": true
+		},
+		"traces": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true
+		}
+	},
 	// Non-secret config. Secrets (DATABASE_URL, BETTER_AUTH_SECRET, RESEND_API_KEY,
 	// STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DEMO_USER_*) are set with `wrangler secret put`.
 	// See docs/CLOUDFLARE.md.
