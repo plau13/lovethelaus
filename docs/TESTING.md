@@ -237,13 +237,15 @@ Changes to `kitchen/src/lib/{photos,cover-photo,recipe-photos}.ts`, `src/compone
 
 ## 10. Deploy verification
 
-Kitchen deploys itself: merging to `main` triggers Workers Builds, which reports as the `Workers Builds: kitchen` check. The marketing site and the router still deploy from a checkout.
+Both Workers deploy themselves: merging to `main` triggers a Workers Builds project for each, reporting as the `Workers Builds: kitchen` and `Workers Builds: lovethelaus` checks. Merging is the deploy, whichever half changed.
 
-| What changed       | Deploy                                          |
-| ------------------ | ----------------------------------------------- |
-| Kitchen only       | merge to `main`; watch the Workers Builds check |
-| Marketing / router | `npm run deploy:router` from the repo root      |
-| Both               | merge, then `npm run deploy:router`             |
+| What changed       | Deploy                                           |
+| ------------------ | ------------------------------------------------ |
+| Kitchen only       | merge to `main`; watch the Workers Builds checks |
+| Marketing / router | same                                             |
+| Both               | same                                             |
+
+`npm run deploy:all` from a checkout is the fallback if an integration is disconnected.
 
 Then run the automated smoke test, which needs no credentials and no checkout:
 
@@ -252,7 +254,7 @@ cd kitchen && npm run smoke                 # production
 npm run smoke -- https://example.com/kitchen  # anywhere else
 ```
 
-Actions → **Smoke** → Run workflow does the same thing from a phone. It covers the public pages, the manifest's `start_url`, the PWA icons, and `/kitchen/sitemap.xml` — which renders only if the database is reachable and migrated.
+Actions → **Smoke** → Run workflow does the same thing from a phone. It covers the marketing pages, the app's public pages, the manifest's `start_url`, the PWA icons, and `/kitchen/sitemap.xml` — which renders only if the database is reachable and migrated. Page checks follow redirects on purpose: Cloudflare serves a folder index like `dist/privacy/index.html` at `/privacy/` and redirects `/privacy` to it, so a strict 200 check on the unslashed path calls a healthy page broken.
 
 What it cannot see, check by hand: every section you changed, on production. Auth changes require the full **Section 1** matrix there.
 

@@ -142,23 +142,28 @@ Only `.env.example` and `.dev.vars.example` (placeholders) belong in git.
 
 Both of the first two matter, and the defaults get both wrong. With root directory `/`, `npm run build` is the Astro site's build — it succeeds, and then `wrangler` looks for a Worker at the repository root, where there is no `wrangler.jsonc`, and fails with _Missing entry-point to Worker script or to assets directory_. With root directory `kitchen` but the default build command, `next build` runs but never writes `.open-next/worker.js`, which is what `wrangler.jsonc` points `main` at — so the deploy fails the same way. `npm run build:cf` is `opennextjs-cloudflare build`, named in `package.json` so the dashboard and the repo cannot drift apart.
 
-**The marketing site and the router do not.** From a checkout, at the repo root:
+**So does the marketing site**, through a second Workers Builds project on the **`lovethelaus`** router Worker. It serves the Astro build as its static assets, so deploying the router is what publishes the marketing site — the two are one step. Under **Workers → lovethelaus → Settings → Build**:
+
+| Field                                     | Value                                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| Root directory                            | `/`                                                                   |
+| Build command                             | `npm run build:prod`                                                  |
+| Deploy command                            | `npx wrangler deploy --config workers/router/wrangler.jsonc`          |
+| Version command (non-production branches) | `npx wrangler versions upload --config workers/router/wrangler.jsonc` |
+| Production branch                         | `main`                                                                |
+
+`npm run build:prod` sets `PUBLIC_KITCHEN_URL`, and `workers/router/wrangler.jsonc` points `assets.directory` at `../../dist`, so a merge to `main` rebuilds and republishes both. The router attaches `lovethelaus.com` as a custom domain on deploy.
+
+This project exists because the router went **two weeks without a deploy** while Kitchen shipped daily: `ads.txt`, the robots.txt pointing at the Kitchen sitemap, and the privacy policy's advertising section were all committed and none were live. Nothing warned anyone. A site that deploys only when someone remembers to deploy it is a site that silently stops matching its own repository.
+
+The manual path still works from a checkout, and is the fallback if the integration is ever disconnected:
 
 ```bash
-PUBLIC_KITCHEN_URL=https://lovethelaus.com/kitchen npm run deploy:all
+npm run deploy:all      # Astro site + kitchen + router
+npm run deploy:router   # the router and the marketing assets alone
 ```
 
-Or step by step:
-
-```bash
-PUBLIC_KITCHEN_URL=https://lovethelaus.com/kitchen npm run build
-cd kitchen && npm run deploy && cd ..   # only when bypassing Workers Builds
-wrangler deploy --config workers/router/wrangler.jsonc
-```
-
-The router Worker attaches `lovethelaus.com` as a custom domain on deploy.
-
-Afterwards, `npm run smoke` from `kitchen/`, or the **Smoke** workflow in Actions, checks the live site without needing a checkout.
+Afterwards, `npm run smoke` from `kitchen/`, or the **Smoke** workflow in Actions, checks the live site without needing a checkout. It follows redirects, because Cloudflare's default `html_handling` (`auto-trailing-slash`) serves a folder index like `dist/privacy/index.html` at `/privacy/` and redirects `/privacy` to it — a bare 200 check on the unslashed path sees the 308 and reports a healthy page as broken.
 
 ## Local dev
 

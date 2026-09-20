@@ -73,6 +73,6 @@ Never on the Worker: `DATABASE_URL_UNPOOLED`, which `drizzle-kit migrate` uses f
 
 ## Deployment
 
-The `kitchen` Worker is built and deployed by **Workers Builds** on every push to `main`; a pull-request branch uploads a preview version instead. The marketing site and the router Worker are outside that integration and deploy from a checkout with `npm run deploy:all` or `npm run deploy:router`. Migrations are never part of a deploy — they run from the **Database** workflow, by hand.
+Both Workers are built and deployed by **Workers Builds** on every push to `main`, from one project each: `kitchen` from the `kitchen/` directory, and `lovethelaus` from the repository root, which publishes the Astro build as the router's static assets. A pull-request branch uploads preview versions instead. `npm run deploy:all` from a checkout remains the fallback. Migrations are never part of a deploy — they run from the **Database** workflow, by hand.
 
 See [`CLOUDFLARE.md`](CLOUDFLARE.md) for the runbook.
