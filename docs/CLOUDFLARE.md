@@ -71,7 +71,7 @@ After changing bindings run `npm run cf-typegen` locally to regenerate `cloudfla
 
 ### Build-time public config (ads, analytics)
 
-`NEXT_PUBLIC_ADSENSE_*` and `NEXT_PUBLIC_GA_ID` are compiled into the client bundle. Set them in `kitchen/.env` on the machine that runs `npm run deploy`; they are not Worker secrets and changing them requires a rebuild. See [`ADS.md`](ADS.md).
+`NEXT_PUBLIC_ADSENSE_*` and `NEXT_PUBLIC_GA_ID` are compiled into the client bundle, so they belong in **Settings → Build → Build variables**, which is what the Workers Build that bakes them in can read. They are not Worker secrets — one set under Variables and Secrets has no effect — and changing them requires a rebuild. Locally they come from `kitchen/.env`. See [`ADS.md`](ADS.md).
 
 ## Secrets & environment variables
 
@@ -128,9 +128,11 @@ Only `.env.example` and `.dev.vars.example` (placeholders) belong in git.
 - **Production:** use Wrangler secrets only; do not upload `.env` to Cloudflare.
 - **Migrations:** run locally/CI with `DATABASE_URL_UNPOOLED` — never from the Worker.
 
-## Deploy everything
+## Deploy
 
-From repo root:
+**Kitchen deploys itself.** A Workers Builds Git integration watches this repository, so merging to `main` builds and deploys the `kitchen` Worker; a pull-request branch uploads a preview version instead and reports as the `Workers Builds: kitchen` check. Its build settings live in **Workers → kitchen → Settings → Build** and must match the monorepo layout: root directory `kitchen`, build command `npx opennextjs-cloudflare build`, deploy command `npx wrangler deploy`, production branch `main`. The defaults build the Astro site at the repository root and then find no Worker.
+
+**The marketing site and the router do not.** From a checkout, at the repo root:
 
 ```bash
 PUBLIC_KITCHEN_URL=https://lovethelaus.com/kitchen npm run deploy:all
@@ -140,11 +142,13 @@ Or step by step:
 
 ```bash
 PUBLIC_KITCHEN_URL=https://lovethelaus.com/kitchen npm run build
-cd kitchen && npm run deploy && cd ..
+cd kitchen && npm run deploy && cd ..   # only when bypassing Workers Builds
 wrangler deploy --config workers/router/wrangler.jsonc
 ```
 
 The router Worker attaches `lovethelaus.com` as a custom domain on deploy.
+
+Afterwards, `npm run smoke` from `kitchen/`, or the **Smoke** workflow in Actions, checks the live site without needing a checkout.
 
 ## Local dev
 

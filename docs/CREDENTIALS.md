@@ -27,16 +27,16 @@ cd kitchen && grep -rho "process\.env\.[A-Z_][A-Z0-9_]*" src scripts | sed 's/pr
 | `APP_URL`                           | Auth callbacks, links | No      | `wrangler.jsonc` `vars` + `.env`     |
 | `EMAIL_FROM`                        | Email sender          | No      | `wrangler.jsonc` `vars` + `.env`     |
 | `SUPPORT_EMAIL`                     | Settings, reply-to    | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `NEXT_PUBLIC_ADSENSE_CLIENT`        | Ads                   | No      | `kitchen/.env` at **build** time     |
-| `NEXT_PUBLIC_ADSENSE_SLOT_*`        | Ads                   | No      | `kitchen/.env` at **build** time     |
-| `NEXT_PUBLIC_GA_ID`                 | Analytics             | No      | `kitchen/.env` at **build** time     |
+| `NEXT_PUBLIC_ADSENSE_CLIENT`        | Ads                   | No      | Cloudflare **build** variables       |
+| `NEXT_PUBLIC_ADSENSE_SLOT_*`        | Ads                   | No      | Cloudflare **build** variables       |
+| `NEXT_PUBLIC_GA_ID`                 | Analytics             | No      | Cloudflare **build** variables       |
 | `PUBLIC_KITCHEN_URL`                | Marketing site links  | No      | Set by `npm run build:prod`          |
 
 Three different places, and the difference matters:
 
 - **Worker secrets** (`wrangler secret put`) are encrypted by Cloudflare and read at runtime. Changing one takes effect immediately, no rebuild.
 - **`wrangler.jsonc` `vars`** are plain text committed to the repo. Non-sensitive config only. Changing one needs a commit and a deploy.
-- **`NEXT_PUBLIC_*`** are compiled into the browser bundle at build time, from `kitchen/.env` on whichever machine runs `npm run deploy`. They are **not** Worker secrets, and changing one needs a rebuild.
+- **`NEXT_PUBLIC_*`** are compiled into the browser bundle at build time, so they are set under **Workers → kitchen → Settings → Build → Build variables**, where the build that bakes them in can see them. They are **not** Worker secrets — a runtime secret of that name does nothing — and changing one needs a rebuild, not just a save. Locally they come from `kitchen/.env`.
 
 Never commit `.env`, `.env.local`, or `.dev.vars`. Only the `.example` files belong in git.
 
@@ -187,28 +187,53 @@ npx wrangler secret put ANTHROPIC_API_KEY     # optional
 
 `DATABASE_URL_UNPOOLED` is deliberately absent: migrations never run on the Worker.
 
-Edit `kitchen/wrangler.jsonc` `vars` for `STRIPE_PRICE_KITCHEN_PLUS`, and commit it.
+With no checkout to hand, the same secrets can be typed into **Workers → kitchen → Settings → Variables and Secrets** as type _Secret_. Add nothing there that `wrangler.jsonc` already sets as a `var` — `APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL` and the two `STRIPE_PRICE_*` ids — because a secret of the same name shadows the var and then quietly outlives every later deploy.
+
+The price ids live in `kitchen/wrangler.jsonc` `vars`, one per interval: `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` and `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`. Edit and commit them.
+
+## How Kitchen deploys
+
+The `kitchen` Worker is wired to this repository through **Workers Builds**, so a push to `main` builds and deploys it — there is no deploy step to remember and no laptop involved. Its settings, under **Workers → kitchen → Settings → Build**, have to match the monorepo layout, because the repository root is the Astro marketing site and the Worker is one directory down:
+
+| Field                                | Value                             |
+| ------------------------------------ | --------------------------------- |
+| Root directory                       | `kitchen`                         |
+| Build command                        | `npx opennextjs-cloudflare build` |
+| Deploy command                       | `npx wrangler deploy`             |
+| Non-production branch deploy command | `npx wrangler versions upload`    |
+| Production branch                    | `main`                            |
+
+A pull-request branch therefore uploads a _version_ and never touches production; only `main` deploys. The build reports back as the `Workers Builds: kitchen` check on the pull request.
+
+The marketing site and the `lovethelaus` router Worker are **not** in that integration. They still deploy from a checkout:
+
+```bash
+npm run deploy:all      # Astro site + kitchen + router
+npm run deploy:router   # the router alone
+```
 
 ## Order of operations
 
-R2 buckets and migrations come before the first deploy. The app queries columns that only exist after the migrations run.
+Migrations come before the first deploy. The app queries columns that only exist after they run. Both R2 buckets already exist; `wrangler r2 bucket create kitchen-opennext-cache` and `kitchen-recipe-photos` are the commands if they ever need recreating.
 
-```bash
-cd kitchen
-npx wrangler r2 bucket create kitchen-opennext-cache
-npx wrangler r2 bucket create kitchen-recipe-photos
-npm run db:migrate          # uses DATABASE_URL_UNPOOLED from kitchen/.env
-npm run db:seed:demo        # optional
-cd .. && npm run deploy:all
-```
+1. Put the secrets in place (above).
+2. Add the database secrets to **GitHub → Settings → Secrets and variables → Actions**: `DATABASE_URL_UNPOOLED`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, `DEMO_USER_PASSWORD`, and optionally `DEMO_USER_EMAIL` and `DEMO_USER_NAME`.
+3. Run the **Database** workflow (Actions → Database → Run workflow), ticking _Also seed the demo account_ the first time. It runs `npm run db:migrate` — and the seed — against Neon from CI, which keeps Drizzle's `__drizzle_migrations` bookkeeping honest so the next migration applies cleanly. Running the SQL by hand in Neon's editor does not.
+4. Merge to `main` and let Workers Builds deploy.
+5. Run the **Smoke** workflow against `https://lovethelaus.com/kitchen`.
+
+From a checkout the same two steps are `cd kitchen && npm run db:migrate && npm run db:seed:demo`.
 
 ## Checking your work
 
 ```bash
 cd kitchen && npx wrangler secret list   # names only, never values
+npm run smoke                            # or the Smoke workflow, from a phone
 ```
 
-Then, on the deployed site:
+`npm run smoke` asks the live site the questions a broken deploy answers wrongly — every public page returns 200, the manifest's `start_url` points inside `/kitchen`, the PWA icons are served, and `/kitchen/sitemap.xml` renders, which it can only do if the database is reachable and migrated. It needs no credentials. Point it elsewhere with `npm run smoke -- https://example.com/kitchen`.
+
+Then, by hand on the deployed site:
 
 | Works                               | Means                                             |
 | ----------------------------------- | ------------------------------------------------- |
@@ -227,5 +252,7 @@ The webhook is the one that fails quietly: checkout succeeds, money moves, and t
 Outside the repo, and no amount of code changes them:
 
 - Verify `lovethelaus.com` in Resend, by adding DNS records at the registrar.
+- Enable the Stripe **Customer portal**, or "Manage plan" in Settings has nowhere to send people.
 - Get AdSense approval, and enable Privacy & messaging for consent.
 - Fill the `[Company Legal Name]` placeholders in `src/pages/privacy.md` and `src/pages/terms.md`.
+- Roll any secret that has been pasted somewhere it should not live — a chat, a screenshot, a terminal log someone else can read. Rolling `STRIPE_WEBHOOK_SECRET` means creating a new signing secret on the endpoint in Stripe and re-running `npx wrangler secret put STRIPE_WEBHOOK_SECRET`; until both match, payments succeed and accounts stay free.

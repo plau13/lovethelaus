@@ -30,6 +30,7 @@ Family recipe product. Lives in `/kitchen`, not the Astro marketing site.
 - Demo seed: `npm run db:seed:demo` (`demo@lovethelaus.com` + sample recipes)
 - Purge legacy seed users: `npm run db:purge-seed-users`
 - PWA icons: `npm run icons` regenerates the committed PNGs from `src/app/icon.svg`; re-run it whenever that SVG changes.
+- Smoke test: `npm run smoke [url]` (`scripts/smoke.mjs`, standard library only) checks the deployed site — public pages, manifest `start_url`, icons, and `/kitchen/sitemap.xml` as the proof the database is reachable and migrated. Also runs as the **Smoke** workflow. `kitchen` deploys on merge to `main` via Workers Builds; migrations run from the **Database** workflow, never from a deploy.
 - Tests: `npm test` (pure helpers: permissions, JSON-LD, social import, post-auth, billing, paths, email templates, heritage, media limits and storage, book layout, pagination, search terms, recipe filters, cover photo, photo validation)
 - Cook mode: `/recipes/[id]/cook` (wake lock + large type)
 - Nav: Home, Recipes, Cookbooks, Family + user menu (Settings)

@@ -66,8 +66,13 @@ No Worker fetches itself, so `global_fetch_strictly_public` stays on.
 
 ## Environment
 
-Worker `vars` (non-secret): `APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS`.
+Worker `vars` (non-secret): `APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY`, `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`.
 Worker secrets: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`, optional `ANTHROPIC_API_KEY`.
-Local only: `DATABASE_URL_UNPOOLED` for `drizzle-kit migrate`.
+Cloudflare build variables (baked into the browser bundle, not readable at runtime): `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GA_ID`.
+Never on the Worker: `DATABASE_URL_UNPOOLED`, which `drizzle-kit migrate` uses from a checkout or from the **Database** workflow.
+
+## Deployment
+
+The `kitchen` Worker is built and deployed by **Workers Builds** on every push to `main`; a pull-request branch uploads a preview version instead. The marketing site and the router Worker are outside that integration and deploy from a checkout with `npm run deploy:all` or `npm run deploy:router`. Migrations are never part of a deploy — they run from the **Database** workflow, by hand.
 
 See [`CLOUDFLARE.md`](CLOUDFLARE.md) for the runbook.

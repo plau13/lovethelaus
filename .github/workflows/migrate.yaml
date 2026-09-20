@@ -1,0 +1,65 @@
+name: Database
+
+# Run by hand only. There is deliberately no push trigger: a migration that
+# rewrites the recipe table (0002 adds the generated search_vector) should never
+# fire because someone merged a pull request.
+on:
+  workflow_dispatch:
+    inputs:
+      seed_demo:
+        description: 'Also seed the demo account ("Try the demo" on the sign-in page)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migrate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kitchen
+
+    env:
+      # Drizzle wants the direct Neon connection, not the pooler; drizzle.config.ts
+      # prefers DATABASE_URL_UNPOOLED and falls back to DATABASE_URL.
+      DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      DEMO_USER_EMAIL: ${{ secrets.DEMO_USER_EMAIL }}
+      DEMO_USER_NAME: ${{ secrets.DEMO_USER_NAME }}
+      DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: kitchen/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the connection string is present
+        run: |
+          if [ -z "$DATABASE_URL_UNPOOLED" ] && [ -z "$DATABASE_URL" ]; then
+            echo "Set DATABASE_URL_UNPOOLED (preferred) or DATABASE_URL under Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+
+      - name: Apply migrations
+        run: npm run db:migrate
+
+      - name: Seed the demo account
+        if: ${{ inputs.seed_demo }}
+        run: npm run db:seed:demo
