@@ -30,21 +30,30 @@ function fail(name, detail) {
   return null;
 }
 
-/** GET without following redirects, so a redirect is an answer rather than a detour. */
-function get(url) {
-  return fetch(url, { redirect: "manual", headers: { "user-agent": "kitchen-smoke" } });
+/**
+ * GET a URL. `redirect` is explicit because the two kinds of check want
+ * opposite things: a page check should resolve redirects the way a browser
+ * does — Cloudflare serves a folder index like `privacy/index.html` at
+ * `/privacy/` and redirects `/privacy` to it — while an assertion *about* a
+ * redirect has to see the 3xx itself.
+ */
+function get(url, redirect) {
+  return fetch(url, { redirect, headers: { "user-agent": "kitchen-smoke" } });
 }
 
 /** The response when the URL returns 200 of the expected type; null, and a recorded failure, otherwise. */
 async function okResponse(name, url, contentType) {
   let response;
   try {
-    response = await get(url);
+    response = await get(url, "follow");
   } catch (error) {
     return fail(name, `${url} — ${error.message}`);
   }
   if (response.status !== 200) {
-    return fail(name, `${url} — expected 200, got ${response.status}`);
+    // response.url is where it ended up, which is the useful half of the story
+    // when a redirect chain lands somewhere unexpected.
+    const landed = response.url && response.url !== url ? ` (landed on ${response.url})` : "";
+    return fail(name, `${url} — expected 200, got ${response.status}${landed}`);
   }
   const actual = response.headers.get("content-type") ?? "";
   if (contentType && !actual.includes(contentType)) {
@@ -75,7 +84,7 @@ async function expectBodyToContain(name, url, needle) {
 async function expectRedirectTo(name, url, needle) {
   let response;
   try {
-    response = await get(url);
+    response = await get(url, "manual");
   } catch (error) {
     fail(name, `${url} — ${error.message}`);
     return;
@@ -135,9 +144,14 @@ async function checkManifest() {
 async function main() {
   console.log(`Smoke testing ${base}\n`);
 
-  // The marketing site, and with it the router Worker that fronts both.
+  // The marketing site, and with it the router Worker that fronts both. These
+  // deploy separately from Kitchen, so they are the half most likely to go
+  // stale. ads.txt is checked for existence only: it ships commented out until
+  // there is an AdSense pub id to put in it, and that is a valid state.
   await expectOk("marketing site responds", `${origin}/`);
   await expectOk("privacy policy is published", `${origin}/privacy`);
+  await expectOk("terms are published", `${origin}/terms`);
+  await expectOk("ads.txt is served", `${origin}/ads.txt`);
 
   // The app itself, signed out.
   await expectBodyToContain("signed-out landing page renders", base, "recipe box");

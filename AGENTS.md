@@ -14,17 +14,11 @@ Applies to the whole repo (root marketing site and `kitchen/`).
 
 1. **Verify** — run the checklist below (`build`, `check` where applicable).
 2. **Commit** — stage relevant changes only; never commit `.env`, secrets, or `.wrangler/` state. Write a concise commit message focused on why.
-3. **Deploy** — the `kitchen` Worker deploys itself: Workers Builds builds and deploys it on every push to `main`, so a merge is the deploy. Everything else still goes out from a checkout:
-
-| What changed                        | Deploy                                          |
-| ----------------------------------- | ----------------------------------------------- |
-| Kitchen only (`kitchen/`)           | merge to `main`; watch the Workers Builds check |
-| Marketing site only (`src/`, Astro) | `npm run deploy:router` from the repo root      |
-| Both, or unsure                     | merge, then `npm run deploy:router`             |
+3. **Deploy** — both Workers deploy themselves. Workers Builds has a project for each (`kitchen` from `kitchen/`; `lovethelaus` from the repo root, which publishes the Astro build as the router's static assets), so **a merge to `main` is the deploy**, whichever half you changed. Watch the two `Workers Builds:` checks on the pull request.
 
 Then `cd kitchen && npm run smoke`, or the **Smoke** workflow in Actions, to confirm the live site came back up.
 
-Deploying the marketing site or router requires `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
+`npm run deploy:all` from a checkout is the fallback if an integration is disconnected; it needs `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
 
 Database migrations are never part of a deploy: run Actions → **Database** → Run workflow, or `npm run db:migrate` from a checkout, before the deploy that needs them.
 
