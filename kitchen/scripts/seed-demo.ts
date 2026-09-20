@@ -7,21 +7,20 @@ import { and, eq, isNull, ne } from "drizzle-orm";
 import { createDb, schema } from "../src/db/client";
 import { getAuth } from "../src/lib/better-auth";
 import { recipeSlugFor } from "../src/lib/slug";
+import { demoEmail, demoName, demoPassword, looksLikeEmail } from "../src/lib/demo-account";
 import { DEMO_RECIPES } from "./demo-recipes";
 
-const DEFAULT_DEMO_EMAIL = "demo@lovethelaus.com";
-const DEFAULT_DEMO_NAME = "Demo Kitchen";
-
-function demoEmail(): string {
-  return (process.env.DEMO_USER_EMAIL ?? DEFAULT_DEMO_EMAIL).trim().toLowerCase();
+/** The address to seed. Blank is absent, so an unset CI secret gets the default. */
+function seedEmail(): string {
+  const email = demoEmail(process.env);
+  if (!looksLikeEmail(email)) {
+    throw new Error(`DEMO_USER_EMAIL is not an email address: ${JSON.stringify(email)}`);
+  }
+  return email;
 }
 
-function demoName(): string {
-  return process.env.DEMO_USER_NAME?.trim() || DEFAULT_DEMO_NAME;
-}
-
-function demoPassword(): string {
-  const password = process.env.DEMO_USER_PASSWORD?.trim();
+function seedPassword(): string {
+  const password = demoPassword(process.env);
   if (!password) {
     throw new Error("Set DEMO_USER_PASSWORD before seeding the demo account.");
   }
@@ -192,15 +191,15 @@ async function seedHeritage(userId: string) {
 }
 
 async function main() {
-  const email = demoEmail();
-  const name = demoName();
-  const password = demoPassword();
+  const email = seedEmail();
+  const name = demoName(process.env);
+  const password = seedPassword();
 
   const userId = await ensureDemoUser(email, name, password);
   await seedDemoContent(userId);
   await seedHeritage(userId);
 
-  const appUrl = process.env.APP_URL ?? "https://lovethelaus.com/kitchen";
+  const appUrl = process.env.APP_URL?.trim() || "https://lovethelaus.com/kitchen";
   console.log(`Demo seed complete for ${email} (${name})`);
   console.log(`${DEMO_RECIPES.length} recipes across 3 cookbooks (My recipes, Family Favorites, Holiday Baking).`);
   console.log(`Sign in: ${appUrl}/sign-in  (email: ${email})`);

@@ -1,15 +1,21 @@
 import type { NextRequest } from "next/server";
 import { authErrorMessage, signIn } from "@/lib/auth";
+import { demoEmail, demoPassword } from "@/lib/demo-account";
 import { appPath, errorRedirect, redirectWithCookies } from "@/lib/route-helpers";
 
 export const dynamic = "force-dynamic";
 
-/** "Try the demo": signs in with the seeded demo account (DEMO_USER_EMAIL / DEMO_USER_PASSWORD). */
+/**
+ * "Try the demo": signs in with the account `npm run db:seed:demo` created.
+ * Both read the address through `demo-account`, so the default works without
+ * DEMO_USER_EMAIL being set in two places; only the password has to be a
+ * secret here, and without it the button honestly says it is unavailable.
+ */
 export async function GET(request: NextRequest) {
-  const email = process.env.DEMO_USER_EMAIL?.trim().toLowerCase();
-  const password = process.env.DEMO_USER_PASSWORD?.trim();
+  const email = demoEmail(process.env);
+  const password = demoPassword(process.env);
 
-  if (!email || !password) {
+  if (!password) {
     return errorRedirect(request, appPath("/sign-in"), "demo-unavailable");
   }
 
