@@ -5,7 +5,6 @@ import Features from '~/components/widgets/Features.astro';
 import Steps from '~/components/widgets/Steps.astro';
 import Content from '~/components/widgets/Content.astro';
 import FAQs from '~/components/widgets/FAQs.astro';
-import SurveyEmbed from '~/components/widgets/SurveyEmbed.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 import { getSignInUrl } from '~/utils/kitchen-url';
 
@@ -174,13 +173,6 @@ const metadata = {
         icon: 'tabler:mail',
       },
     ]}
-  />
-
-  <SurveyEmbed
-    id="survey"
-    tagline="Feedback"
-    title="Tell us what you think"
-    subtitle="Help shape Kitchen — this short survey takes a few minutes."
   />
 
   <CallToAction
