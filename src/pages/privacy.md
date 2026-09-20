@@ -5,14 +5,14 @@ layout: '~/layouts/MarkdownLayout.astro'
 
 _Last updated_: September 2, 2026
 
-This Privacy Policy describes how **[Company Legal Name]** ("**Kitchen**," "**we**," "**us**," or "**our**") collects, uses, and shares information when you use the Kitchen website, web app, and any related mobile applications (collectively, the "**Service**").
+This Privacy Policy describes how **PAL CAPITAL, LLC** ("**Kitchen**," "**we**," "**us**," or "**our**") collects, uses, and shares information when you use the Kitchen website, web app, and any related mobile applications (collectively, the "**Service**").
 
 By using the Service, you agree to this Privacy Policy. See also our [Terms of Service](/terms).
 
 ## Who we are
 
-**Operator:** [Company Legal Name]  
-**Contact:** [privacy@example.com]  
+**Operator:** PAL CAPITAL, LLC  
+**Contact:** privacy@lovethelaus.com  
 **Website:** https://lovethelaus.com/kitchen
 
 ## Information we collect
@@ -98,7 +98,7 @@ Depending on where you live, you may have the right to:
 - Object to or restrict certain processing
 - Lodge a complaint with a supervisory authority
 
-Contact **[privacy@example.com]** to exercise these rights.
+Contact **privacy@lovethelaus.com** to exercise these rights.
 
 ## Children
 
@@ -114,5 +114,5 @@ We may update this Privacy Policy. We will post the new date at the top. Continu
 
 ## Contact
 
-**[Company Legal Name]**  
-Email: [privacy@example.com]
+**PAL CAPITAL, LLC**  
+Email: privacy@lovethelaus.com

@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { getCurrentUser } from "@/lib/auth";
+import { logError } from "@/lib/log";
 import { canViewRecipe } from "@/lib/permissions";
 import { readRecipePhoto } from "@/lib/recipe-photos";
 
@@ -41,6 +42,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
   const object = await readRecipePhoto(key);
   if (!object) {
+    // The row says this photo exists and the bucket disagrees. The visitor gets
+    // the same 404 as a bad URL, but for us it means an object went missing
+    // from R2 while the database still points at it.
+    logError("photo.object_missing", { recipeId: photo.recipeId });
     return new Response("Not found", { status: 404 });
   }
 
