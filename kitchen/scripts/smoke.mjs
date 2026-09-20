@@ -149,7 +149,16 @@ async function main() {
   // stale. ads.txt is checked for existence only: it ships commented out until
   // there is an AdSense pub id to put in it, and that is a valid state.
   await expectOk("marketing site responds", `${origin}/`);
-  await expectOk("privacy policy is published", `${origin}/privacy`);
+  // Not just "is it served" but "is it current". The marketing site sat 17 days
+  // behind its own repository without anything noticing, because a stale page
+  // returns 200 exactly like a fresh one. This heading was added the same day
+  // as ads.txt, so it is the cheapest available proof the router has deployed
+  // since. Update the needle if that section is ever renamed.
+  await expectBodyToContain(
+    "privacy policy is published, and current",
+    `${origin}/privacy`,
+    "Cookies, analytics, and advertising"
+  );
   await expectOk("terms are published", `${origin}/terms`);
   await expectOk("ads.txt is served", `${origin}/ads.txt`);
 
