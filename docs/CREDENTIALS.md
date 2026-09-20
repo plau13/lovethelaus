@@ -195,15 +195,15 @@ The price ids live in `kitchen/wrangler.jsonc` `vars`, one per interval: `STRIPE
 
 The `kitchen` Worker is wired to this repository through **Workers Builds**, so a push to `main` builds and deploys it — there is no deploy step to remember and no laptop involved. Its settings, under **Workers → kitchen → Settings → Build**, have to match the monorepo layout, because the repository root is the Astro marketing site and the Worker is one directory down:
 
-| Field                                | Value                             |
-| ------------------------------------ | --------------------------------- |
-| Root directory                       | `kitchen`                         |
-| Build command                        | `npx opennextjs-cloudflare build` |
-| Deploy command                       | `npx wrangler deploy`             |
-| Non-production branch deploy command | `npx wrangler versions upload`    |
-| Production branch                    | `main`                            |
+| Field                                | Value                          |
+| ------------------------------------ | ------------------------------ |
+| Root directory                       | `kitchen`                      |
+| Build command                        | `npm run build:cf`             |
+| Deploy command                       | `npx wrangler deploy`          |
+| Non-production branch deploy command | `npx wrangler versions upload` |
+| Production branch                    | `main`                         |
 
-A pull-request branch therefore uploads a _version_ and never touches production; only `main` deploys. The build reports back as the `Workers Builds: kitchen` check on the pull request.
+`npm run build:cf` is `opennextjs-cloudflare build`; a plain `next build` never writes the `.open-next/worker.js` that `wrangler.jsonc` points `main` at, and the deploy then fails with _Missing entry-point to Worker script_. A pull-request branch uploads a _version_ and never touches production; only `main` deploys. The build reports back as the `Workers Builds: kitchen` check on the pull request.
 
 The marketing site and the `lovethelaus` router Worker are **not** in that integration. They still deploy from a checkout:
 

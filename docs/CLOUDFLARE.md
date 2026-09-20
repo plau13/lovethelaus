@@ -130,7 +130,17 @@ Only `.env.example` and `.dev.vars.example` (placeholders) belong in git.
 
 ## Deploy
 
-**Kitchen deploys itself.** A Workers Builds Git integration watches this repository, so merging to `main` builds and deploys the `kitchen` Worker; a pull-request branch uploads a preview version instead and reports as the `Workers Builds: kitchen` check. Its build settings live in **Workers → kitchen → Settings → Build** and must match the monorepo layout: root directory `kitchen`, build command `npx opennextjs-cloudflare build`, deploy command `npx wrangler deploy`, production branch `main`. The defaults build the Astro site at the repository root and then find no Worker.
+**Kitchen deploys itself.** A Workers Builds Git integration watches this repository, so merging to `main` builds and deploys the `kitchen` Worker; a pull-request branch uploads a preview version instead and reports as the `Workers Builds: kitchen` check. Its build settings live in **Workers → kitchen → Settings → Build** and must match the monorepo layout:
+
+| Field                                     | Value                          |
+| ----------------------------------------- | ------------------------------ |
+| Root directory                            | `kitchen`                      |
+| Build command                             | `npm run build:cf`             |
+| Deploy command                            | `npx wrangler deploy`          |
+| Version command (non-production branches) | `npx wrangler versions upload` |
+| Production branch                         | `main`                         |
+
+Both of the first two matter, and the defaults get both wrong. With root directory `/`, `npm run build` is the Astro site's build — it succeeds, and then `wrangler` looks for a Worker at the repository root, where there is no `wrangler.jsonc`, and fails with _Missing entry-point to Worker script or to assets directory_. With root directory `kitchen` but the default build command, `next build` runs but never writes `.open-next/worker.js`, which is what `wrangler.jsonc` points `main` at — so the deploy fails the same way. `npm run build:cf` is `opennextjs-cloudflare build`, named in `package.json` so the dashboard and the repo cannot drift apart.
 
 **The marketing site and the router do not.** From a checkout, at the repo root:
 
