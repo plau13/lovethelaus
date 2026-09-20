@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const password = demoPassword(process.env);
 
   if (!password) {
-    return errorRedirect(request, appPath("/sign-in"), "demo-unavailable");
+    return errorRedirect(request, appPath("/sign-in"), "The demo account is not set up right now.");
   }
 
   try {
