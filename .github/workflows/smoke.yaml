@@ -1,0 +1,35 @@
+name: Smoke
+
+# Ask the live site whether the last deploy actually worked. Run by hand after a
+# deploy, or against a preview version's URL before promoting it.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Kitchen base URL, including /kitchen"
+        type: string
+        default: https://lovethelaus.com/kitchen
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kitchen
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # No install: the script uses nothing but the Node standard library.
+      - name: Smoke test
+        run: npm run smoke -- "${{ inputs.base_url }}"

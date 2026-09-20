@@ -237,13 +237,26 @@ Changes to `kitchen/src/lib/{photos,cover-photo,recipe-photos}.ts`, `src/compone
 
 ## 10. Deploy verification
 
-| What changed       | Deploy (from repo root)        |
-| ------------------ | ------------------------------ |
-| Marketing / router | `npm run deploy:router`        |
-| Kitchen only       | `cd kitchen && npm run deploy` |
-| Both               | `npm run deploy:all`           |
+Kitchen deploys itself: merging to `main` triggers Workers Builds, which reports as the `Workers Builds: kitchen` check. The marketing site and the router still deploy from a checkout.
 
-After deploy, smoke-test production URLs for every section you changed. Auth changes require the full **Section 1** matrix on production.
+| What changed       | Deploy                                          |
+| ------------------ | ----------------------------------------------- |
+| Kitchen only       | merge to `main`; watch the Workers Builds check |
+| Marketing / router | `npm run deploy:router` from the repo root      |
+| Both               | merge, then `npm run deploy:router`             |
+
+Then run the automated smoke test, which needs no credentials and no checkout:
+
+```bash
+cd kitchen && npm run smoke                 # production
+npm run smoke -- https://example.com/kitchen  # anywhere else
+```
+
+Actions → **Smoke** → Run workflow does the same thing from a phone. It covers the public pages, the manifest's `start_url`, the PWA icons, and `/kitchen/sitemap.xml` — which renders only if the database is reachable and migrated.
+
+What it cannot see, check by hand: every section you changed, on production. Auth changes require the full **Section 1** matrix there.
+
+Migrations do not run as part of a deploy. Apply them first, from Actions → **Database** → Run workflow, or `npm run db:migrate` from a checkout.
 
 ---
 

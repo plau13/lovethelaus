@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db/client";
 import { refreshSessionCache, requireUser } from "@/lib/auth";
 import { appUrl } from "@/lib/paths";
-import { getStripe, kitchenPlusPriceId } from "@/lib/stripe";
+import { getStripe, isBillingInterval, kitchenPlusPriceId } from "@/lib/stripe";
 
 async function ensureStripeCustomer(userId: string): Promise<string> {
   const db = getDb();
@@ -28,14 +28,16 @@ async function ensureStripeCustomer(userId: string): Promise<string> {
   return customer.id;
 }
 
-/** Settings → "Upgrade to Kitchen Plus". */
-export async function startCheckout() {
+/** Settings → "Upgrade to Kitchen Plus", monthly or annual. */
+export async function startCheckout(formData: FormData) {
   const user = await requireUser({ fresh: true });
+  const raw = String(formData.get("interval") ?? "monthly");
+  const interval = isBillingInterval(raw) ? raw : "monthly";
   const customer = await ensureStripeCustomer(user.id);
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer,
-    line_items: [{ price: kitchenPlusPriceId(), quantity: 1 }],
+    line_items: [{ price: kitchenPlusPriceId(interval), quantity: 1 }],
     client_reference_id: user.id,
     subscription_data: { metadata: { userId: user.id } },
     allow_promotion_codes: true,

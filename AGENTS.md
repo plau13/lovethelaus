@@ -14,15 +14,19 @@ Applies to the whole repo (root marketing site and `kitchen/`).
 
 1. **Verify** — run the checklist below (`build`, `check` where applicable).
 2. **Commit** — stage relevant changes only; never commit `.env`, secrets, or `.wrangler/` state. Write a concise commit message focused on why.
-3. **Deploy** — push to production using the smallest scope that covers your changes:
+3. **Deploy** — the `kitchen` Worker deploys itself: Workers Builds builds and deploys it on every push to `main`, so a merge is the deploy. Everything else still goes out from a checkout:
 
-| What changed                                 | Deploy command (from repo root) |
-| -------------------------------------------- | ------------------------------- |
-| Marketing site only (`src/`, `dist/`, Astro) | `npm run deploy:router`         |
-| Kitchen only (`kitchen/`)                    | `cd kitchen && npm run deploy`  |
-| Both, or unsure                              | `npm run deploy:all`            |
+| What changed                        | Deploy                                          |
+| ----------------------------------- | ----------------------------------------------- |
+| Kitchen only (`kitchen/`)           | merge to `main`; watch the Workers Builds check |
+| Marketing site only (`src/`, Astro) | `npm run deploy:router` from the repo root      |
+| Both, or unsure                     | merge, then `npm run deploy:router`             |
 
-Requires `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
+Then `cd kitchen && npm run smoke`, or the **Smoke** workflow in Actions, to confirm the live site came back up.
+
+Deploying the marketing site or router requires `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
+
+Database migrations are never part of a deploy: run Actions → **Database** → Run workflow, or `npm run db:migrate` from a checkout, before the deploy that needs them.
 
 If deploy is blocked (missing credentials, failed build), commit anyway when possible and report what blocked deploy.
 
