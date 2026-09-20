@@ -9,7 +9,7 @@ Please read these Terms of Service ("**Terms**") before using Kitchen. See also 
 
 ## Agreement
 
-These Terms are between you and **[Company Legal Name]** ("**Kitchen**," "**we**," "**us**," or "**our**"). By accessing https://lovethelaus.com/kitchen or related apps, you agree to these Terms. If you do not agree, do not use the Service.
+These Terms are between you and **PAL CAPITAL, LLC** ("**Kitchen**," "**we**," "**us**," or "**our**"). By accessing https://lovethelaus.com/kitchen or related apps, you agree to these Terms. If you do not agree, do not use the Service.
 
 ## The Service
 
@@ -102,5 +102,5 @@ We may update these Terms. We will post the revised date at the top. Material ch
 
 ## Contact
 
-**[Company Legal Name]**  
-Email: [privacy@example.com]
+**PAL CAPITAL, LLC**  
+Email: privacy@lovethelaus.com

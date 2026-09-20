@@ -165,6 +165,21 @@ npm run deploy:router   # the router and the marketing assets alone
 
 Afterwards, `npm run smoke` from `kitchen/`, or the **Smoke** workflow in Actions, checks the live site without needing a checkout. It follows redirects, because Cloudflare's default `html_handling` (`auto-trailing-slash`) serves a folder index like `dist/privacy/index.html` at `/privacy/` and redirects `/privacy` to it — a bare 200 check on the unslashed path sees the 308 and reports a healthy page as broken.
 
+## Knowing when something breaks
+
+Workers Logs keeps everything this Worker writes (`observability` in `kitchen/wrangler.jsonc`, sampling 1). Collection was never the gap — the gap was that several failure paths returned a status code and said nothing. Those now emit one JSON line each, through `kitchen/src/lib/log.ts`:
+
+| Event                           | Means                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `stripe.webhook.bad_signature`  | Signature verification failed. Usually the signing secret was rotated on one side only — payment succeeds, the account stays free. |
+| `stripe.webhook.not_configured` | `STRIPE_WEBHOOK_SECRET` is unset on the Worker.                                                                                    |
+| `photo.object_missing`          | A `recipe_photo` row points at an R2 object that is not there.                                                                     |
+| `import.ai_unavailable`         | Claude could not be reached during an import; the user still got their draft.                                                      |
+
+Filter on `event` in **Workers → kitchen → Logs**. Never log a payload, a signature or a key: `safeFields` redacts values under credential-shaped names as a backstop, but it is a safety net for mistakes, not a reason to pass raw objects.
+
+To be told rather than have to look, add a notification: **Cloudflare dashboard → Notifications → Add → Workers → Script Errors**, scoped to `kitchen`, delivered to email. That covers the errors the runtime itself sees. Nothing yet alerts on a specific `event`, so the webhook rows are worth a glance after any Stripe change.
+
 ## Local dev
 
 ```bash

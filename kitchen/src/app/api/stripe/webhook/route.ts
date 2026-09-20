@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { periodEndFromSeconds, tierFromSubscriptionStatus } from "@/lib/billing";
+import { errorMessage, logError } from "@/lib/log";
 import { getStripe, webhookCryptoProvider } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ function customerIdOf(value: string | Stripe.Customer | Stripe.DeletedCustomer |
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secret) {
+    logError("stripe.webhook.not_configured");
     return new Response("Webhook not configured", { status: 500 });
   }
   const payload = await request.text();
@@ -38,7 +40,15 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
   try {
     event = await getStripe().webhooks.constructEventAsync(payload, signature, secret, undefined, webhookCryptoProvider);
-  } catch {
+  } catch (error) {
+    // Indistinguishable from a forged request at the status code, and the
+    // likeliest cause is far more mundane: the signing secret was rotated on
+    // one side only. Without this line the symptom is a payment that succeeds
+    // while the account stays on the free tier, and nothing to read.
+    logError("stripe.webhook.bad_signature", {
+      hasSignature: signature.length > 0,
+      detail: errorMessage(error),
+    });
     return new Response("Bad signature", { status: 400 });
   }
 

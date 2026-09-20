@@ -1,6 +1,7 @@
 import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
 import { AI_MODEL, getAnthropic, hasAnthropicKey } from "@/lib/anthropic";
 import type { ImportDraftShape } from "@/lib/types";
+import { errorMessage, logWarn } from "@/lib/log";
 
 const SYSTEM_PROMPT = [
   "Extract a home-cook recipe from the supplied text.",
@@ -46,8 +47,12 @@ export async function structureWithOptionalAi(draft: ImportDraftShape): Promise<
         steps: parsed.steps.trim() || draft.steps,
       });
     }
-  } catch {
-    // The confirm screen still works on the raw draft; never fail an import because AI was unavailable.
+  } catch (error) {
+    // The confirm screen still works on the raw draft; never fail an import
+    // because AI was unavailable. Degrading quietly for the user is right;
+    // degrading quietly for us was not, since a broken key looks from the
+    // outside exactly like a recipe the model had nothing to add to.
+    logWarn("import.ai_unavailable", { sourceType: draft.sourceType, detail: errorMessage(error) });
   }
   return enrichWithVideoAnalysis(draft);
 }
