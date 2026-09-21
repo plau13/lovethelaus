@@ -14,20 +14,6 @@ function dsnConfigured(): boolean {
 }
 
 let initPromise: Promise<void> | null = null;
-let processHooksRegistered = false;
-
-function registerProcessHooks(): void {
-  if (processHooksRegistered || typeof process === "undefined") {
-    return;
-  }
-  processHooksRegistered = true;
-  process.on?.("uncaughtException", (error) => {
-    captureException(error, { event: "worker.uncaught_exception" });
-  });
-  process.on?.("unhandledRejection", (reason) => {
-    captureException(reason, { event: "worker.unhandled_rejection" });
-  });
-}
 
 async function ensureSentry(): Promise<void> {
   if (!dsnConfigured()) {
@@ -37,7 +23,6 @@ async function ensureSentry(): Promise<void> {
     initPromise = (async () => {
       const Sentry = await import("@sentry/nextjs");
       Sentry.init(baseSentryInitOptions(process.env.SENTRY_DSN!.trim()));
-      registerProcessHooks();
     })().catch(() => {
       initPromise = null;
     });
