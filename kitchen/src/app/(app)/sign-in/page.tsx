@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { signInAction } from "@/app/actions/auth";
 import { AuthError, AuthField, AuthNotice, AuthShell, authInputClass, authOutlineButtonClass } from "@/components/AuthShell";
+import { getCurrentUser } from "@/lib/auth";
 import { demoPassword } from "@/lib/demo-account";
 import { appPath } from "@/lib/paths";
-import { safeReturnTo } from "@/lib/post-auth";
+import { postAuthPath, safeReturnTo } from "@/lib/post-auth";
 
 export default async function SignInPage({
   searchParams,
@@ -12,6 +14,10 @@ export default async function SignInPage({
 }) {
   const { error, reset, returnTo: returnToRaw } = await searchParams;
   const returnTo = safeReturnTo(returnToRaw);
+  const user = await getCurrentUser();
+  if (user) {
+    redirect(postAuthPath(user, returnTo));
+  }
   // Same helper the route uses, so the button cannot appear when pressing it
   // would only redirect back here with an error.
   const demoAvailable = demoPassword(process.env).length > 0;

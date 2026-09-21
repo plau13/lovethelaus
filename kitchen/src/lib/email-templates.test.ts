@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { cookbookInviteEmail, escapeHtml, magicLinkEmail, passwordResetEmail, recipeCollaboratorEmail } from "./email-templates";
 
-const url = "https://lovethelaus.com/kitchen/api/auth/magic-link/verify?token=abc&callbackURL=%2Fkitchen%2Fauth%2Fcallback";
+const magicLinkUrl =
+  "https://lovethelaus.com/kitchen/api/auth/magic-link/verify?token=abc&callbackURL=%2Fkitchen%2Fauth%2Fcallback";
+const resetUrl = "https://lovethelaus.com/kitchen/reset-password?token=abc";
 
 describe("email templates", () => {
   it("include the link in both html and text", () => {
-    for (const message of [magicLinkEmail("a@b.co", url), passwordResetEmail("a@b.co", url)]) {
+    for (const [message, url] of [
+      [magicLinkEmail("a@b.co", magicLinkUrl), magicLinkUrl],
+      [passwordResetEmail("a@b.co", resetUrl), resetUrl],
+    ] as const) {
       expect(message.to).toBe("a@b.co");
       expect(message.html).toContain(escapeHtml(url));
       expect(message.text).toContain(url);

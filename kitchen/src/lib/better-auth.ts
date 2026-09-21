@@ -7,7 +7,8 @@ import { createDb, schema } from "@/db/client";
 import { ensureDefaultCookbook } from "@/lib/default-cookbook";
 import { acceptPendingInvitesForEmail } from "@/lib/cookbooks";
 import { sendMagicLinkEmail, sendPasswordResetEmail } from "@/lib/email-templates";
-import { appOrigin } from "@/lib/paths";
+import { appOrigin, appUrl } from "@/lib/paths";
+import { withQuery } from "@/lib/post-auth";
 import { splitDisplayName } from "@/lib/user-name";
 
 /** Better Auth routes are mounted here (site-relative, includes the Next basePath). */
@@ -34,8 +35,12 @@ function build() {
       minPasswordLength: 8,
       autoSignIn: true,
       resetPasswordTokenExpiresIn: 60 * 60,
-      sendResetPassword: async ({ user, url }) => {
-        await sendPasswordResetEmail(user.email, url);
+      sendResetPassword: async ({ user, token }) => {
+        // Link straight to the reset form. Better Auth's default URL hits GET
+        // /api/auth/reset-password/:token, which OpenNext does not always route
+        // through the catch-all; a dedicated route handles old emails.
+        const resetUrl = appUrl(withQuery("/reset-password", "token", token));
+        await sendPasswordResetEmail(user.email, resetUrl);
       },
     },
     plugins: [

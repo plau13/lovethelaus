@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { signUpAction } from "@/app/actions/auth";
 import { AuthError, AuthField, AuthShell, authInputClass } from "@/components/AuthShell";
-import { safeReturnTo } from "@/lib/post-auth";
+import { getCurrentUser } from "@/lib/auth";
+import { postAuthPath, safeReturnTo } from "@/lib/post-auth";
 
 export default async function SignUpPage({
   searchParams,
@@ -10,6 +12,10 @@ export default async function SignUpPage({
 }) {
   const { error, email, returnTo: returnToRaw } = await searchParams;
   const returnTo = safeReturnTo(returnToRaw);
+  const user = await getCurrentUser();
+  if (user) {
+    redirect(postAuthPath(user, returnTo));
+  }
 
   return (
     <AuthShell
