@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "default_cookbook_visibility" text DEFAULT 'private' NOT NULL;

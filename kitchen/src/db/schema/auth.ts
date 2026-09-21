@@ -31,6 +31,8 @@ export const user = pgTable(
     lastName: text("last_name").notNull().default(""),
     defaultServings: integer("default_servings").notNull().default(4),
     preferredUnits: text("preferred_units").notNull().default("us"),
+    /** Visibility a new cookbook starts with; set at onboarding, editable in Settings. */
+    defaultCookbookVisibility: text("default_cookbook_visibility").notNull().default("private"),
     onboardingCompletedAt: ts("onboarding_completed_at"),
     onboardingAnswers: text("onboarding_answers").notNull().default("{}"),
 

@@ -1,11 +1,11 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db/client";
 import { refreshSessionCache, requireUser } from "@/lib/auth";
+import { readKitchenPrefs } from "@/lib/kitchen-prefs";
 import { fullName } from "@/lib/user-name";
-import { PREFERRED_UNITS } from "@/lib/types";
 
 export async function updateProfile(formData: FormData) {
   const user = await requireUser();
@@ -14,13 +14,25 @@ export async function updateProfile(formData: FormData) {
   if (!firstName || !lastName) {
     throw new Error("Enter your first and last name.");
   }
-  const preferredUnits = String(formData.get("preferredUnits") ?? "us");
-  if (!PREFERRED_UNITS.includes(preferredUnits as (typeof PREFERRED_UNITS)[number])) {
-    throw new Error("Pick US or metric units.");
-  }
+  // Same validator onboarding uses, so the two forms cannot drift apart.
+  const prefs = readKitchenPrefs(formData);
   const name = fullName(firstName, lastName);
   const db = getDb();
-  await db.update(schema.user).set({ firstName, lastName, name, preferredUnits }).where(eq(schema.user.id, user.id));
+  await db
+    .update(schema.user)
+    .set({
+      firstName,
+      lastName,
+      name,
+      defaultServings: prefs.defaultServings,
+      preferredUnits: prefs.preferredUnits,
+      defaultCookbookVisibility: prefs.defaultCookbookVisibility,
+    })
+    .where(eq(schema.user.id, user.id));
+  await db
+    .update(schema.cookbook)
+    .set({ title: prefs.recipeBoxName })
+    .where(and(eq(schema.cookbook.ownerId, user.id), eq(schema.cookbook.isDefault, true)));
   await refreshSessionCache();
   redirect("/settings?saved=1");
 }

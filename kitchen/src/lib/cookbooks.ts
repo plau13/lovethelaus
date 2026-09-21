@@ -7,8 +7,9 @@ import { canEditCookbookContents, canManageCookbook, canViewCookbook } from "@/l
 import { ensureRecipeSlugs } from "@/lib/recipes";
 import { searchTerms } from "@/lib/search-terms";
 import { slugify } from "@/lib/slug";
+import { isVisibility } from "@/lib/kitchen-prefs";
 import type { CookbookListFilter, CookbookRole, Visibility } from "@/lib/types";
-import { COOKBOOK_ROLES, VISIBILITIES } from "@/lib/types";
+import { COOKBOOK_ROLES } from "@/lib/types";
 
 const { cookbook, cookbookMember, cookbookRecipe, cookbookInvite, cookbookFavorite, recipe, user } = schema;
 
@@ -23,11 +24,10 @@ function parseRole(value: string): CookbookRole {
 }
 
 function parseVisibility(value: string): Visibility {
-  const match = VISIBILITIES.find((item) => item === value);
-  if (!match) {
+  if (!isVisibility(value)) {
     throw new Error("Visibility must be private, unlisted, or public.");
   }
-  return match;
+  return value;
 }
 
 export async function memberRole(cookbookId: string, userId: string | null) {
@@ -238,7 +238,7 @@ export async function getPublicCookbook(slug: string) {
   return found;
 }
 
-export async function createCookbook(userId: string, title: string, description: string) {
+export async function createCookbook(userId: string, title: string, description: string, visibility: Visibility) {
   const db = getDb();
   const trimmed = title.trim();
   if (!trimmed) {
@@ -247,7 +247,7 @@ export async function createCookbook(userId: string, title: string, description:
   const slug = `${slugify(trimmed)}-${randomBytes(3).toString("hex")}`;
   const [created] = await db
     .insert(cookbook)
-    .values({ ownerId: userId, title: trimmed, description: description.trim(), visibility: "private", slug })
+    .values({ ownerId: userId, title: trimmed, description: description.trim(), visibility, slug })
     .returning();
   await db.insert(cookbookMember).values({ cookbookId: created.id, userId, role: "owner" }).onConflictDoNothing();
   return created;

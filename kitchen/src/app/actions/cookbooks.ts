@@ -13,16 +13,25 @@ import {
   removeCookbookMember,
   updateCookbookSettings,
 } from "@/lib/cookbooks";
+import { isVisibility } from "@/lib/kitchen-prefs";
 import { parseEmailList } from "@/lib/parse-emails";
 import { appUrl } from "@/lib/paths";
 import { revalidatePublicCookbook } from "@/lib/revalidate-public";
 
 export async function saveCookbook(formData: FormData) {
   const user = await requireUser();
+  // The form carries the user's default as its selected option; falling back to
+  // it here means the preference still applies if the field is ever absent.
+  // Both sides go through the guard: the column is `text`, so the stored
+  // preference is only a string until something checks it.
+  const submitted = String(formData.get("visibility") ?? "").trim();
+  const preferred = isVisibility(user.defaultCookbookVisibility) ? user.defaultCookbookVisibility : "private";
+  const visibility = isVisibility(submitted) ? submitted : preferred;
   const cookbook = await createCookbook(
     user.id,
     String(formData.get("title") ?? ""),
     String(formData.get("description") ?? ""),
+    visibility,
   );
   redirect(`/cookbooks/${cookbook.id}`);
 }

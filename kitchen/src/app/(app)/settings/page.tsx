@@ -1,4 +1,4 @@
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { logOut } from "@/app/actions/auth";
 import { openBillingPortal, refreshPlan, startCheckout } from "@/app/actions/billing";
 import { updateProfile } from "@/app/actions/settings";
@@ -8,11 +8,13 @@ import { subscriptionSummary } from "@/lib/billing";
 import { exportSummary, recipesForExport } from "@/lib/export-eligibility";
 import { availableIntervals, isBillingConfigured } from "@/lib/stripe";
 import {
-  formatOnboardingAnswer,
-  ONBOARDING_QUESTIONS,
-  parseOnboardingAnswers,
-  PREFERRED_UNITS,
-} from "@/lib/types";
+  DEFAULT_RECIPE_BOX_NAME,
+  MAX_SERVINGS,
+  MIN_SERVINGS,
+  UNITS_LABELS,
+  VISIBILITY_LABELS,
+} from "@/lib/kitchen-prefs";
+import { PREFERRED_UNITS, VISIBILITIES } from "@/lib/types";
 import { isSubscriber } from "@/lib/subscription";
 
 function supportEmail(): string {
@@ -28,12 +30,14 @@ export default async function SettingsPage({
   // After Checkout the webhook may land a moment later; bypass the session cookie cache.
   const user = await requireOnboardedUser({ fresh: checkout === "success" });
   const db = getDb();
-  const [exportable, [{ total: ownedOnly }], profile] = await Promise.all([
+  const [exportable, [{ total: ownedOnly }], defaultCookbook] = await Promise.all([
     recipesForExport(user.id),
     db.select({ total: count() }).from(schema.recipe).where(eq(schema.recipe.ownerId, user.id)),
-    db.query.user.findFirst({ where: eq(schema.user.id, user.id), columns: { onboardingAnswers: true } }),
+    db.query.cookbook.findFirst({
+      where: and(eq(schema.cookbook.ownerId, user.id), eq(schema.cookbook.isDefault, true)),
+      columns: { title: true },
+    }),
   ]);
-  const onboardingAnswers = parseOnboardingAnswers(profile?.onboardingAnswers ?? "{}");
   const plan = subscriptionSummary(user);
   const subscribed = isSubscriber(user);
   const billingReady = isBillingConfigured();
@@ -85,7 +89,44 @@ export default async function SettingsPage({
             >
               {PREFERRED_UNITS.map((units) => (
                 <option key={units} value={units}>
-                  {units === "us" ? "US (cups, °F)" : "Metric (g, ml, °C)"}
+                  {UNITS_LABELS[units]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1">
+            <span className="font-medium">Recipe box name</span>
+            <span className="text-sm text-muted">The cookbook new recipes go into by default.</span>
+            <input
+              name="recipeBoxName"
+              maxLength={60}
+              defaultValue={defaultCookbook?.title ?? DEFAULT_RECIPE_BOX_NAME}
+              className="rounded-xl border border-line bg-white px-3 py-3"
+            />
+          </label>
+          <label className="grid gap-1">
+            <span className="font-medium">Default servings</span>
+            <span className="text-sm text-muted">What a new recipe starts at.</span>
+            <input
+              name="defaultServings"
+              type="number"
+              inputMode="numeric"
+              min={MIN_SERVINGS}
+              max={MAX_SERVINGS}
+              defaultValue={user.defaultServings}
+              className="w-28 rounded-xl border border-line bg-white px-3 py-3"
+            />
+          </label>
+          <label className="grid gap-1">
+            <span className="font-medium">New cookbooks are visible to</span>
+            <select
+              name="defaultCookbookVisibility"
+              defaultValue={user.defaultCookbookVisibility}
+              className="rounded-xl border border-line bg-white px-3 py-3"
+            >
+              {VISIBILITIES.map((visibility) => (
+                <option key={visibility} value={visibility}>
+                  {VISIBILITY_LABELS[visibility]}
                 </option>
               ))}
             </select>
@@ -95,21 +136,6 @@ export default async function SettingsPage({
           </button>
         </form>
       </section>
-
-      {user.onboardingCompletedAt ? (
-        <section className="grid gap-4 rounded-2xl border border-line bg-white p-5">
-          <h2 className="text-xl font-semibold">Onboarding</h2>
-          <p className="text-muted text-sm">Your answers from setup. Contact us if anything needs updating.</p>
-          <dl className="grid gap-3">
-            {ONBOARDING_QUESTIONS.map((question) => (
-              <div key={question.id} className="grid gap-1">
-                <dt className="text-sm font-medium">{question.prompt}</dt>
-                <dd className="text-muted">{formatOnboardingAnswer(onboardingAnswers[question.id])}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      ) : null}
 
       <section className="grid gap-3 rounded-2xl border border-line bg-white p-5">
         <h2 className="text-xl font-semibold">Export recipes</h2>
