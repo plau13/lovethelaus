@@ -21,6 +21,9 @@ jobs:
       DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
       BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
       DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
+      # Optional: add STRIPE_SECRET_KEY to GitHub Actions secrets to verify live vs test mode in CI
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
     steps:
       - name: Checkout repository
