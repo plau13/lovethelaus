@@ -110,4 +110,6 @@ Test matrix: [`TESTING.md`](TESTING.md) §1 — run **all** of it when touching 
 
 The `dash()` plugin in `kitchen/src/lib/better-auth.ts` connects Kitchen to [dash.better-auth.com](https://dash.better-auth.com) for user analytics and audit logs. Set `BETTER_AUTH_API_KEY` as a Kitchen Worker secret (`wrangler secret put BETTER_AUTH_API_KEY`). Auth works without it; the dashboard does not.
 
-When connecting an existing project, use **Base URL** `https://lovethelaus.com` and **Base Path** `/kitchen/api/auth` (not the default `/api/auth`). After deploy, `GET /kitchen/api/auth/dash/validate` should return **401** (route exists) rather than **404**.
+When connecting an existing project, use **Base URL** `https://lovethelaus.com` and **Base Path** `/kitchen/api/auth` (not the default `/api/auth`). Do not typo the domain (`lovethelaus.com`, not `lovethelauds.com`).
+
+OpenNext does not reliably route `[...all]` catch-alls on Cloudflare, so dash endpoints are forwarded from `kitchen/src/app/api/auth/dash/[[...path]]/route.ts`. After deploy, `GET /kitchen/api/auth/dash/validate` should return **401** (route exists) rather than **404**.
