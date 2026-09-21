@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { redirectActionError } from "@/lib/action-result";
 import {
+  applyAuthCookies,
   getCurrentUser,
   requestPasswordReset,
   resetPassword,
@@ -21,11 +22,12 @@ async function afterAuth(returnTo?: string | null): Promise<never> {
 export async function signUpAction(formData: FormData) {
   const returnTo = safeReturnTo(String(formData.get("returnTo") ?? ""));
   try {
-    await signUp(
+    const { setCookies } = await signUp(
       String(formData.get("name") ?? ""),
       String(formData.get("email") ?? ""),
       String(formData.get("password") ?? ""),
     );
+    await applyAuthCookies(setCookies);
   } catch (error) {
     redirectActionError("/sign-up", error, "auth.sign_up_failed", undefined, { report: false });
   }
@@ -36,7 +38,8 @@ export async function signInAction(formData: FormData) {
   const returnTo = safeReturnTo(String(formData.get("returnTo") ?? ""));
   const errorPath = returnTo ? withQuery("/sign-in", "returnTo", returnTo) : "/sign-in";
   try {
-    await signIn(String(formData.get("email") ?? ""), String(formData.get("password") ?? ""));
+    const { setCookies } = await signIn(String(formData.get("email") ?? ""), String(formData.get("password") ?? ""));
+    await applyAuthCookies(setCookies);
   } catch (error) {
     redirectActionError(errorPath, error, "auth.sign_in_failed", undefined, { report: false });
   }

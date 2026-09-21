@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import type { schema } from "@/db/client";
@@ -112,6 +112,52 @@ export async function refreshSessionCache(): Promise<void> {
 }
 
 export type AuthResult = { setCookies: string[] };
+
+/** Apply Set-Cookie headers from Better Auth to the server-action response. */
+export async function applyAuthCookies(setCookies: string[]): Promise<void> {
+  if (setCookies.length === 0) {
+    return;
+  }
+  const jar = await cookies();
+  for (const header of setCookies) {
+    const segments = header.split(/;\s*/);
+    const namePart = segments[0];
+    const eqIdx = namePart.indexOf("=");
+    if (eqIdx === -1) {
+      continue;
+    }
+    const name = namePart.slice(0, eqIdx);
+    const value = namePart.slice(eqIdx + 1);
+    const options: {
+      path?: string;
+      maxAge?: number;
+      expires?: Date;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: "lax" | "strict" | "none";
+    } = { path: "/" };
+    for (const attr of segments.slice(1)) {
+      const lower = attr.toLowerCase();
+      if (lower === "httponly") {
+        options.httpOnly = true;
+      } else if (lower === "secure") {
+        options.secure = true;
+      } else if (lower.startsWith("max-age=")) {
+        options.maxAge = Number(attr.split("=")[1]);
+      } else if (lower.startsWith("expires=")) {
+        options.expires = new Date(attr.slice("expires=".length));
+      } else if (lower.startsWith("samesite=")) {
+        const site = attr.split("=")[1]?.toLowerCase();
+        if (site === "lax" || site === "strict" || site === "none") {
+          options.sameSite = site;
+        }
+      } else if (lower.startsWith("path=")) {
+        options.path = attr.slice("path=".length);
+      }
+    }
+    jar.set(name, value, options);
+  }
+}
 
 function validEmail(emailRaw: string): string {
   const email = emailRaw.trim().toLowerCase();
