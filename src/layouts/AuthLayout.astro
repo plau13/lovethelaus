@@ -167,6 +167,69 @@ const { metadata, title, description } = Astro.props;
     gap: 1rem;
   }
 
+  .auth-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    text-align: center;
+  }
+
+  .auth-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 9999px;
+    background: rgb(209 250 229);
+    color: rgb(5 150 105);
+  }
+
+  .auth-success-icon svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .auth-success-message {
+    margin: 0;
+    color: var(--aw-color-text-muted, rgb(107 93 82));
+    line-height: 1.5;
+  }
+
+  .auth-btn-with-spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .auth-btn-pending {
+    cursor: wait;
+    opacity: 0.92;
+  }
+
+  .auth-spinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    animation: auth-spin 0.8s linear infinite;
+  }
+
+  .auth-spinner-track {
+    opacity: 0.25;
+  }
+
+  .auth-spinner-head {
+    opacity: 0.85;
+  }
+
+  @keyframes auth-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   .auth-error {
     border: 1px solid var(--aw-color-line, rgb(230 216 204));
     border-radius: 0.75rem;
