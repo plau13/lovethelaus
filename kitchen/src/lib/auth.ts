@@ -4,6 +4,7 @@ import { cache } from "react";
 import { APIError } from "better-auth/api";
 import type { schema } from "@/db/client";
 import { getAuth, type SessionUser } from "@/lib/better-auth";
+import { logWarn } from "@/lib/log";
 import { appPath } from "@/lib/paths";
 
 /**
@@ -45,6 +46,7 @@ function normalizeUser(user: SessionUser): CurrentUser {
     lastName: user.lastName ?? "",
     defaultServings: user.defaultServings ?? 4,
     preferredUnits: user.preferredUnits ?? "us",
+    defaultCookbookVisibility: user.defaultCookbookVisibility ?? "private",
     onboardingCompletedAt: asDate(user.onboardingCompletedAt),
     subscriptionTier: user.subscriptionTier ?? "free",
     socialImportCount: user.socialImportCount ?? 0,
@@ -83,10 +85,23 @@ export async function requireUser(options?: GetUserOptions) {
 
 export async function requireOnboardedUser(options?: GetUserOptions) {
   const user = await requireUser(options);
-  if (!user.onboardingCompletedAt) {
-    redirect("/onboarding");
+  if (user.onboardingCompletedAt) {
+    return user;
   }
-  return user;
+
+  // Never send someone back to onboarding on the strength of a cached session
+  // alone. Finishing setup writes the timestamp and redirects here; if the
+  // cookie cache has not caught up, believing it bounces the browser
+  // /recipes → /onboarding → the same form, which looks exactly like a
+  // "Finish setup" button that does nothing. One extra read on this path is
+  // cheaper than that, and only ever happens when onboarding looks incomplete.
+  const fresh = await getCurrentUser({ fresh: true });
+  if (fresh?.onboardingCompletedAt) {
+    logWarn("onboarding.stale_session", { userId: fresh.id });
+    return fresh;
+  }
+
+  redirect("/onboarding");
 }
 
 /** Re-read the session from the database and rewrite the cookie cache (call after mutating `user`). */

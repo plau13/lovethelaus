@@ -54,6 +54,7 @@ function build() {
         lastName: { type: "string", required: false, defaultValue: "", input: false },
         defaultServings: { type: "number", required: false, defaultValue: 4, input: false },
         preferredUnits: { type: "string", required: false, defaultValue: "us", input: false },
+        defaultCookbookVisibility: { type: "string", required: false, defaultValue: "private", input: false },
         onboardingCompletedAt: optionalDate,
         onboardingAnswers: { type: "string", required: false, defaultValue: "{}", input: false, returned: false },
         subscriptionTier: { type: "string", required: false, defaultValue: "free", input: false },

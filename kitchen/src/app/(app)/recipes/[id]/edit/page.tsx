@@ -32,7 +32,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
         saveAction={saveRecipeEdits}
         importAction={startImport}
         submitLabel="Save changes"
-        defaultServings={4}
+        defaultServings={user.defaultServings}
         hiddenFields={{ recipeId: recipe.id }}
         people={people.map((entry) => ({ id: entry.id, name: entry.name, relationship: entry.relationship }))}
         adaptableRecipes={visible.filter((entry) => entry.id !== recipe.id).map((entry) => ({ id: entry.id, title: entry.title }))}

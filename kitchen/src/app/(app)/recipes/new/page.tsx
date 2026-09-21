@@ -15,7 +15,7 @@ export default async function NewRecipePage() {
         saveAction={saveNewRecipe}
         importAction={startImport}
         submitLabel="Save recipe"
-        defaultServings={4}
+        defaultServings={user.defaultServings}
         people={people.map((entry) => ({ id: entry.id, name: entry.name, relationship: entry.relationship }))}
         adaptableRecipes={visible.map((entry) => ({ id: entry.id, title: entry.title }))}
       />

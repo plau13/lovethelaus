@@ -22,7 +22,7 @@ export default async function ConfirmImportPage({ params }: { params: Promise<{ 
       <RecipeEditor
         saveAction={confirmImport}
         submitLabel="Save to my box"
-        defaultServings={4}
+        defaultServings={user.defaultServings}
         hiddenFields={{ draftId: draft.id }}
         defaults={{
           title: draft.title,
