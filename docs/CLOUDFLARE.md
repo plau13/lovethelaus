@@ -106,6 +106,7 @@ Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 | ----------------------- | ------------------ | ----------------------------------------------------- |
 | `DATABASE_URL`          | **Yes**            | Neon pooled connection string; never in repo          |
 | `BETTER_AUTH_SECRET`    | **Yes**            | Signs session cookies; rotating it signs everyone out |
+| `BETTER_AUTH_API_KEY`   | **Yes** (optional) | Better Auth Infrastructure dashboard (`dash()` plugin); auth works without it |
 | `RESEND_API_KEY`        | **Yes**            | Transactional email                                   |
 | `STRIPE_SECRET_KEY`     | **Yes**            | Server-side Stripe API                                |
 | `STRIPE_WEBHOOK_SECRET` | **Yes**            | Verifies webhook signatures                           |

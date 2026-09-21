@@ -27,6 +27,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
     "@better-auth/drizzle-adapter": "^1.7.5",
+    "@better-auth/infra": "^0.4.10",
     "@neondatabase/serverless": "^1.1.0",
     "@opennextjs/cloudflare": "^1.20.5",
     "@paralleldrive/cuid2": "^3.3.0",

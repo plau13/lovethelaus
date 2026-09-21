@@ -1,3 +1,4 @@
+import { dash } from "@better-auth/infra";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { nextCookies } from "better-auth/next-js";
@@ -50,6 +51,7 @@ function build() {
           await sendMagicLinkEmail(email, url);
         },
       }),
+      dash({ apiKey: process.env.BETTER_AUTH_API_KEY }),
       // Must stay last: lets auth.api.* set cookies from server actions and route handlers.
       nextCookies(),
     ],

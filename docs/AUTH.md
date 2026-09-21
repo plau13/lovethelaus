@@ -105,3 +105,9 @@ That second outcome is expected more often than it looks. The Neon database was 
 | Email delivery            | `kitchen/src/lib/email.ts`, `kitchen/src/lib/email-templates.ts`                                                               |
 
 Test matrix: [`TESTING.md`](TESTING.md) §1 — run **all** of it when touching auth or email, not just the flow you edited.
+
+## Better Auth Infrastructure dashboard
+
+The `dash()` plugin in `kitchen/src/lib/better-auth.ts` connects Kitchen to [dash.better-auth.com](https://dash.better-auth.com) for user analytics and audit logs. Set `BETTER_AUTH_API_KEY` as a Kitchen Worker secret (`wrangler secret put BETTER_AUTH_API_KEY`). Auth works without it; the dashboard does not.
+
+When connecting an existing project, use **Base URL** `https://lovethelaus.com` and **Base Path** `/kitchen/api/auth` (not the default `/api/auth`). After deploy, `GET /kitchen/api/auth/dash/validate` should return **401** (route exists) rather than **404**.
