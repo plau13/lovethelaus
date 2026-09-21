@@ -2,6 +2,7 @@ import { and, count, eq } from "drizzle-orm";
 import { logOut } from "@/app/actions/auth";
 import { openBillingPortal, refreshPlan, startCheckout } from "@/app/actions/billing";
 import { updateProfile } from "@/app/actions/settings";
+import { QueryFlash } from "@/components/QueryFlash";
 import { getDb, schema } from "@/db/client";
 import { requireOnboardedUser } from "@/lib/auth";
 import { subscriptionSummary } from "@/lib/billing";
@@ -24,9 +25,9 @@ function supportEmail(): string {
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; checkout?: string }>;
+  searchParams: Promise<{ saved?: string; checkout?: string; error?: string }>;
 }) {
-  const { saved, checkout } = await searchParams;
+  const { saved, checkout, error } = await searchParams;
   // After Checkout the webhook may land a moment later; bypass the session cookie cache.
   const user = await requireOnboardedUser({ fresh: checkout === "success" });
   const db = getDb();
@@ -48,7 +49,7 @@ export default async function SettingsPage({
     <main className="grid gap-8">
       <div className="grid gap-1">
         <h1 className="font-serif text-4xl">Settings</h1>
-        {saved ? <p className="text-clay">Saved.</p> : null}
+        <QueryFlash error={error} saved={saved} checkout={checkout} />
       </div>
 
       <section className="grid gap-4 rounded-2xl border border-line bg-white p-5">

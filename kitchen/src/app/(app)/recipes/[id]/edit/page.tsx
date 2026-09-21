@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { saveRecipeEdits } from "@/app/actions/recipes";
 import { startImport } from "@/app/actions/import";
+import { QueryFlash } from "@/components/QueryFlash";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import { requireOnboardedUser } from "@/lib/auth";
 import { photoUrl } from "@/lib/paths";
@@ -10,9 +11,15 @@ import { canEditRecipe } from "@/lib/permissions";
 import { getRecipeForUser } from "@/lib/recipes";
 import type { RecipeCategory, RecipeDifficulty, RecipeType } from "@/lib/types";
 
-export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditRecipePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await requireOnboardedUser();
-  const { id } = await params;
+  const [{ id }, { error }] = await Promise.all([params, searchParams]);
   const recipe = await getRecipeForUser(id, user.id);
   if (
     !recipe ||
@@ -28,6 +35,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">Edit recipe</h1>
+      <QueryFlash error={error} />
       <RecipeEditor
         saveAction={saveRecipeEdits}
         importAction={startImport}

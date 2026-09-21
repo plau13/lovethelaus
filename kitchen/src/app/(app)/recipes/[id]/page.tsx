@@ -1,6 +1,7 @@
 import { coverPhoto } from "@/lib/cover-photo";
 import { notFound } from "next/navigation";
 import { copyToMyBook, saveNote } from "@/app/actions/recipes";
+import { QueryFlash } from "@/components/QueryFlash";
 import { MediaSection } from "@/components/media/MediaSection";
 import { PhotoGallery } from "@/components/photos/PhotoGallery";
 import { MemoriesSection } from "@/components/MemoriesSection";
@@ -42,10 +43,10 @@ export default async function RecipePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ made?: string }>;
+  searchParams: Promise<{ made?: string; error?: string }>;
 }) {
   const user = await requireOnboardedUser();
-  const [{ id }, { made }] = await Promise.all([params, searchParams]);
+  const [{ id }, { made, error }] = await Promise.all([params, searchParams]);
   const recipe = await getRecipeForUser(id, user.id);
   if (!recipe) {
     notFound();
@@ -93,6 +94,7 @@ export default async function RecipePage({
 
   return (
     <main className="grid gap-6">
+      <QueryFlash error={error} made={made} />
       <RecipeDetailClient
         recipeId={recipe.id}
         title={recipe.title}

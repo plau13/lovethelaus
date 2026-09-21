@@ -95,5 +95,27 @@ if (webhook) {
   failures += check("STRIPE_WEBHOOK_SECRET format", webhook.startsWith("whsec_"), webhook.slice(0, 10) + "…");
 }
 
+const sentryDsn = process.env.SENTRY_DSN?.trim() || "";
+if (sentryDsn) {
+  failures += check(
+    "SENTRY_DSN host",
+    sentryDsn.includes("sentry.io") || sentryDsn.includes("ingest."),
+    "present (server error reporting enabled)",
+  );
+} else {
+  console.log("warn SENTRY_DSN unset — reportError will log to Cloudflare only, not Sentry");
+}
+
+const publicSentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() || "";
+if (publicSentryDsn) {
+  failures += check(
+    "NEXT_PUBLIC_SENTRY_DSN host",
+    publicSentryDsn.includes("sentry.io") || publicSentryDsn.includes("ingest."),
+    "present (client error reporting enabled at build time)",
+  );
+} else if (process.env.WORKERS_CI === "1" || process.env.CI === "true") {
+  console.log("warn NEXT_PUBLIC_SENTRY_DSN unset — browser errors will not reach Sentry until build variable is set");
+}
+
 console.log(`\n${failures === 0 ? "All checks passed" : `${failures} check(s) failed`}`);
 process.exit(failures === 0 ? 0 : 1);

@@ -14,7 +14,9 @@ export async function GET(request: Request) {
   const returnTo = url.searchParams.get("returnTo");
   const user = await getCurrentUser({ fresh: true });
   if (!user) {
-    return NextResponse.redirect(originUrl(request, appPath("/sign-in?error=auth")));
+    return NextResponse.redirect(
+      originUrl(request, appPath("/sign-in?error=Sign-in%20did%20not%20complete.%20Try%20again.")),
+    );
   }
   return NextResponse.redirect(originUrl(request, appPath(postAuthPath(user, returnTo))));
 }

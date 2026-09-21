@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { reportError } from "@/lib/log";
 
 export type EmailMessage = {
   to: string;
@@ -29,6 +30,8 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
     ...(replyTo ? { replyTo } : {}),
   });
   if (error) {
-    throw new Error(`Email failed: ${error.message}`);
+    const failure = new Error(`Email failed: ${error.message}`);
+    reportError("auth.email_failed", failure, { to: message.to.replace(/(.{2}).+(@.+)/, "$1…$2") });
+    throw failure;
   }
 }

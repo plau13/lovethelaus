@@ -21,7 +21,8 @@
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "icons": "node scripts/generate-icons.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "postinstall": "node scripts/patch-opennext-otel.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
@@ -29,6 +30,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@opennextjs/cloudflare": "^1.20.5",
     "@paralleldrive/cuid2": "^3.3.0",
+    "@sentry/nextjs": "^10.75.0",
     "better-auth": "^1.7.5",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.4",

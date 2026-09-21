@@ -55,6 +55,7 @@
 	// STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DEMO_USER_*) are set with `wrangler secret put`.
 	// See docs/CLOUDFLARE.md.
 	"vars": {
+		"SENTRY_ENVIRONMENT": "production",
 		"APP_URL": "https://lovethelaus.com/kitchen",
 		"EMAIL_FROM": "Kitchen <kitchen@lovethelaus.com>",
 		"SUPPORT_EMAIL": "preston.lau13@gmail.com",

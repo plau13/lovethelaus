@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { QueryFlash } from "@/components/QueryFlash";
 import { requireOnboardedUser } from "@/lib/auth";
 import { formatMadeOn, lifespan } from "@/lib/heritage";
 import { familyTimeline } from "@/lib/memories";
 import { peopleWithRecipeCounts } from "@/lib/people";
 
-export default async function FamilyPage() {
+export default async function FamilyPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   const user = await requireOnboardedUser();
   const [people, timeline] = await Promise.all([peopleWithRecipeCounts(user.id), familyTimeline(user.id)]);
 
@@ -13,6 +15,7 @@ export default async function FamilyPage() {
       <div className="grid gap-2">
         <h1 className="font-serif text-4xl">Family</h1>
         <p className="text-muted">The people behind the recipes, and every time someone made one.</p>
+        <QueryFlash error={error} />
       </div>
 
       <section className="grid gap-3">

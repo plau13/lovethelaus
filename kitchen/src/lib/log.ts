@@ -61,3 +61,16 @@ export function logError(event: string, fields: LogFields = {}): void {
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
+
+/** Log a failure to Cloudflare and Sentry. Use for errors worth triage, not routine warns. */
+export function reportError(event: string, error: unknown, fields: LogFields = {}): void {
+  const detail = errorMessage(error);
+  logError(event, { ...fields, detail });
+  void import("@/lib/sentry").then(({ captureException }) => {
+    captureException(error, {
+      event,
+      userId: typeof fields.userId === "string" ? fields.userId : undefined,
+      fields: safeFields(fields),
+    });
+  });
+}

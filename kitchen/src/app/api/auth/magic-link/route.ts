@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { authErrorMessage, signInWithMagicLink } from "@/lib/auth";
+import { signInWithMagicLink } from "@/lib/auth";
 import { errorRedirect, formReturnTo, originUrl, withQuery } from "@/lib/route-helpers";
 import { safeReturnTo } from "@/lib/post-auth";
 
@@ -19,6 +19,6 @@ export async function POST(request: NextRequest) {
     await signInWithMagicLink(String(formData.get("email") ?? ""), next, request.headers);
     return NextResponse.redirect(originUrl(request, withQuery(returnTo, "sent", "magic-link")), 303);
   } catch (error) {
-    return errorRedirect(request, returnTo, authErrorMessage(error));
+    return errorRedirect(request, returnTo, error, "auth.magic_link_failed", { report: false });
   }
 }

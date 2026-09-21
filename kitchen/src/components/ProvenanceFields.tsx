@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createPersonInline, type InlinePersonState } from "@/app/actions/people";
+import { FormAlert } from "@/components/FormAlert";
 import { COMMON_OCCASIONS } from "@/lib/heritage";
 
 export type PersonOption = { id: string; name: string; relationship: string | null };
@@ -98,7 +99,9 @@ export function ProvenanceFields({
               Cancel
             </button>
           </div>
-          {state.error ? <p className="text-sm text-clay sm:col-span-3">{state.error}</p> : null}
+          <div className="sm:col-span-3">
+            <FormAlert message={state.error} />
+          </div>
         </form>
       ) : null}
 

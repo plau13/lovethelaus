@@ -38,7 +38,7 @@ npx wrangler r2 bucket create kitchen-recipe-photos
 
 ## Kitchen secrets
 
-Non-secret config lives in `kitchen/wrangler.jsonc` under `vars` (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS`). Secrets are set from `kitchen/`:
+Non-secret config lives in `kitchen/wrangler.jsonc` under `vars` (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY`, `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`, `SENTRY_ENVIRONMENT`). Secrets are set from `kitchen/`:
 
 ```bash
 npx wrangler secret put DATABASE_URL          # Neon pooled connection string
@@ -50,6 +50,7 @@ npx wrangler secret put DEMO_USER_EMAIL       # demo@lovethelaus.com
 npx wrangler secret put DEMO_USER_PASSWORD    # same value used for db:seed:demo
 # optional
 npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put SENTRY_DSN          # optional; see docs/CREDENTIALS.md
 ```
 
 Remove the retired Supabase secrets once the cutover is verified:
@@ -63,15 +64,27 @@ After changing bindings run `npm run cf-typegen` locally to regenerate `cloudfla
 
 ### One-time provider setup
 
-| Provider   | Steps                                                                                                                                                                                                                                                                                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Neon**   | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only).                                                                                                                                                                                               |
-| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner.                                                                                                                                                                                 |
-| **Stripe** | Product "Kitchen Plus" with one recurring price → `STRIPE_PRICE_KITCHEN_PLUS`. Webhook endpoint `https://lovethelaus.com/kitchen/api/stripe/webhook` with events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` → `STRIPE_WEBHOOK_SECRET`. Enable the Customer Portal. |
+| Provider   | Steps                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Neon**   | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only).                                                                                                                                                                                                                                                                                  |
+| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner.                                                                                                                                                                                                                                                                    |
+| **Stripe** | Product "Kitchen Plus" with monthly and annual recurring prices → `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` and `STRIPE_PRICE_KITCHEN_PLUS_YEARLY` in `wrangler.jsonc`. Webhook endpoint `https://lovethelaus.com/kitchen/api/stripe/webhook` with events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` → `STRIPE_WEBHOOK_SECRET`. Enable the Customer Portal. |
 
-### Build-time public config (ads, analytics)
+### Build-time public config (ads, analytics, Sentry client)
 
-`NEXT_PUBLIC_ADSENSE_*` and `NEXT_PUBLIC_GA_ID` are compiled into the client bundle, so they belong in **Settings → Build → Build variables**, which is what the Workers Build that bakes them in can read. They are not Worker secrets — one set under Variables and Secrets has no effect — and changing them requires a rebuild. Locally they come from `kitchen/.env`. See [`ADS.md`](ADS.md).
+`NEXT_PUBLIC_*` values are compiled into the client bundle, so they belong in **Workers → kitchen → Settings → Build → Build variables** (what Workers Builds reads during `npm run build:cf`). They are not Worker secrets — a runtime secret of that name does nothing — and changing one requires a rebuild.
+
+| Variable                                     | Purpose                                                                                       |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SENTRY_DSN`                     | Browser error reporting (same DSN as `SENTRY_DSN`; see [`CREDENTIALS.md`](CREDENTIALS.md) §6) |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT`             | Optional; browser Sentry environment tag (defaults to `NODE_ENV`)                             |
+| `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GA_ID` | Ads and analytics — see [`ADS.md`](ADS.md)                                                    |
+
+Optional **source map upload** during `build:cf` (readable stack traces in Sentry): set `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` as build variables or GitHub secrets visible to Workers Builds — not as Worker runtime secrets.
+
+### OpenNext + Sentry build patch
+
+Sentry pulls in `@opentelemetry/api`, which breaks OpenNext middleware bundling for `proxy.ts`. [`kitchen/scripts/patch-opennext-otel.mjs`](../kitchen/scripts/patch-opennext-otel.mjs) runs on `postinstall` and aliases OpenTelemetry to Next's compiled copy. **Do not skip `postinstall`** (`npm ci --ignore-scripts` will break `build:cf`). There is no `instrumentation.ts` — OpenNext on Cloudflare cannot load Next's instrumentation hook with Sentry; server errors reach Sentry only through explicit `reportError()` calls in [`kitchen/src/lib/log.ts`](../kitchen/src/lib/log.ts).
 
 ## Secrets & environment variables
 
@@ -99,6 +112,7 @@ Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 | `DEMO_USER_EMAIL`       | No                 | Demo sign-in email (Try demo)                         |
 | `DEMO_USER_PASSWORD`    | **Yes**            | Demo account password; set before `db:seed:demo`      |
 | `ANTHROPIC_API_KEY`     | **Yes** (optional) | Card transcription and AI structuring of imports      |
+| `SENTRY_DSN`            | **Yes**            | Server-side error reporting to Sentry                 |
 
 List what's configured (names only, not values):
 
@@ -110,7 +124,7 @@ Rotate a secret: run `wrangler secret put <NAME>` again with the new value.
 
 ### What is NOT secret
 
-- `wrangler.jsonc` `vars` (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS`) are public config.
+- `wrangler.jsonc` `vars` (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS_*`, `SENTRY_ENVIRONMENT`) are public config.
 - Marketing `PUBLIC_KITCHEN_URL` is compiled into static HTML — that's fine; it's a public URL.
 - The **router Worker** (`lovethelaus`) has no secrets — it only routes traffic and serves public static files.
 
@@ -167,19 +181,89 @@ Afterwards, `npm run smoke` from `kitchen/`, or the **Smoke** workflow in Action
 
 ## Knowing when something breaks
 
-Workers Logs keeps everything this Worker writes (`observability` in `kitchen/wrangler.jsonc`, sampling 1). Collection was never the gap — the gap was that several failure paths returned a status code and said nothing. Those now emit one JSON line each, through `kitchen/src/lib/log.ts`:
-
-| Event                           | Means                                                                                                                                                                         |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stripe.webhook.bad_signature`  | Signature verification failed. Usually the signing secret was rotated on one side only — payment succeeds, the account stays free.                                            |
-| `stripe.webhook.not_configured` | `STRIPE_WEBHOOK_SECRET` is unset on the Worker.                                                                                                                               |
-| `photo.object_missing`          | A `recipe_photo` row points at an R2 object that is not there.                                                                                                                |
-| `import.ai_unavailable`         | Claude could not be reached during an import; the user still got their draft.                                                                                                 |
-| `onboarding.stale_session`      | A user finished setup but the cached session still said otherwise. Harmless — the fresh re-read caught it — but a run of these means the cookie cache is not being rewritten. |
+Workers Logs keeps everything this Worker writes (`observability` in `kitchen/wrangler.jsonc`, sampling 1). Collection was never the gap — the gap was that several failure paths returned a status code and said nothing. Those now emit one JSON line each, through `kitchen/src/lib/log.ts`. Unexpected server failures also reach **Sentry** when `SENTRY_DSN` is set (`reportError` in `log.ts`). **User-facing** text (redirects, form alerts) is sanitized via `userSafeMessage` in `errors.ts`; Sentry receives the raw exception for triage, with cookies/auth headers stripped in `beforeSend`.
 
 Filter on `event` in **Workers → kitchen → Logs**. Never log a payload, a signature or a key: `safeFields` redacts values under credential-shaped names as a backstop, but it is a safety net for mistakes, not a reason to pass raw objects.
 
-To be told rather than have to look, add a notification: **Cloudflare dashboard → Notifications → Add → Workers → Script Errors**, scoped to `kitchen`, delivered to email. That covers the errors the runtime itself sees. Nothing yet alerts on a specific `event`, so the webhook rows are worth a glance after any Stripe change.
+### Event catalog
+
+| Event                                          | Level | Sentry? | Means                                                                                                                              |
+| ---------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Stripe**                                     |       |         |                                                                                                                                    |
+| `stripe.webhook.bad_signature`                 | error | no      | Signature verification failed. Usually the signing secret was rotated on one side only — payment succeeds, the account stays free. |
+| `stripe.webhook.not_configured`                | error | no      | `STRIPE_WEBHOOK_SECRET` is unset on the Worker.                                                                                    |
+| `stripe.webhook.handler_failed`                | error | yes     | Webhook verified but applying subscription state threw (DB, Stripe API). Stripe retries on 500.                                    |
+| **Auth (expected failures — Cloudflare only)** |       |         |                                                                                                                                    |
+| `auth.sign_up_failed`                          | warn  | no      | Sign-up rejected (duplicate email, weak password, etc.).                                                                           |
+| `auth.sign_in_failed`                          | warn  | no      | Wrong email/password.                                                                                                              |
+| `auth.magic_link_failed`                       | warn  | no      | Magic-link request failed.                                                                                                         |
+| `auth.password_reset_failed`                   | warn  | no      | Reset request or token save failed.                                                                                                |
+| `auth.demo_unavailable`                        | warn  | no      | Demo password not configured on the Worker.                                                                                        |
+| `auth.demo_failed`                             | error | yes     | Demo sign-in threw after credentials were present.                                                                                 |
+| `auth.sign_out_failed`                         | error | yes     | Sign-out threw unexpectedly.                                                                                                       |
+| `auth.email_failed`                            | error | yes     | Resend rejected or errored sending transactional mail.                                                                             |
+| **Client error boundaries**                    |       |         |                                                                                                                                    |
+| `app.error_boundary`                           | —     | yes     | React error in signed-in app (`(app)/error.tsx`).                                                                                  |
+| `public.error_boundary`                        | —     | yes     | React error on public pages (`(public)/error.tsx`).                                                                                |
+| `global.error_boundary`                        | —     | yes     | Root layout failure (`global-error.tsx`).                                                                                          |
+| **Billing & settings**                         |       |         |                                                                                                                                    |
+| `billing.checkout_failed`                      | error | yes     | Stripe Checkout session could not be created.                                                                                      |
+| `billing.portal_failed`                        | error | yes     | Customer Portal session failed.                                                                                                    |
+| `billing.refresh_failed`                       | error | yes     | Post-checkout session refresh failed.                                                                                              |
+| `settings.profile_update_failed`               | error | yes     | Profile or kitchen prefs save failed.                                                                                              |
+| **Import**                                     |       |         |                                                                                                                                    |
+| `import.start_failed`                          | error | yes     | URL import could not start (fetch, limit, DB).                                                                                     |
+| `import.confirm_failed`                        | error | yes     | Confirming a draft into a recipe failed.                                                                                           |
+| `import.ai_unavailable`                        | warn  | no      | Claude could not be reached during an import; the user still got their draft.                                                      |
+| **Recipes**                                    |       |         |                                                                                                                                    |
+| `recipes.create_failed`                        | error | yes     | New recipe save failed.                                                                                                            |
+| `recipes.update_failed`                        | error | yes     | Recipe edit failed.                                                                                                                |
+| `recipes.note_failed`                          | error | yes     | Adding a note failed.                                                                                                              |
+| `recipes.copy_failed`                          | error | yes     | Copy to my book failed.                                                                                                            |
+| `recipes.memory_failed`                        | error | yes     | “I made this” failed.                                                                                                              |
+| `recipes.memory_remove_failed`                 | error | yes     | Removing a memory failed.                                                                                                          |
+| `recipes.transcript_apply_failed`              | error | yes     | Applying card transcript to recipe failed.                                                                                         |
+| `recipes.favorite_failed`                      | error | yes     | Favorite toggle failed (optimistic UI rolls back).                                                                                 |
+| **Photos & media**                             |       |         |                                                                                                                                    |
+| `photos.upload_failed`                         | error | yes     | Recipe photo upload failed.                                                                                                        |
+| `photos.delete_failed`                         | error | yes     | Photo delete failed.                                                                                                               |
+| `photos.cover_failed`                          | error | yes     | Set cover failed.                                                                                                                  |
+| `photos.alt_failed`                            | error | yes     | Alt text save failed.                                                                                                              |
+| `media.scan_upload_failed`                     | error | yes     | Card scan upload failed.                                                                                                           |
+| `media.voice_upload_failed`                    | error | yes     | Voice memo upload failed.                                                                                                          |
+| `media.remove_failed`                          | error | yes     | Heritage media delete failed.                                                                                                      |
+| `media.caption_failed`                         | error | yes     | Media caption save failed.                                                                                                         |
+| `transcribe.scan_failed`                       | error | yes     | Claude card read failed.                                                                                                           |
+| `photo.object_missing`                         | error | no      | A `recipe_photo` row points at an R2 object that is not there.                                                                     |
+| **Cookbooks & sharing**                        |       |         |                                                                                                                                    |
+| `cookbooks.create_failed`                      | error | yes     | New cookbook failed.                                                                                                               |
+| `cookbooks.settings_failed`                    | error | yes     | Cookbook settings save failed.                                                                                                     |
+| `cookbooks.invite_failed`                      | error | yes     | Invite link creation failed.                                                                                                       |
+| `cookbooks.join_failed`                        | error | yes     | Accepting an invite failed.                                                                                                        |
+| `cookbooks.add_recipe_failed`                  | error | yes     | Adding a recipe to a cookbook failed.                                                                                              |
+| `cookbooks.grant_batch_failed`                 | error | yes     | Batch email invite failed.                                                                                                         |
+| `cookbooks.revoke_failed`                      | error | yes     | Removing a member failed.                                                                                                          |
+| `cookbooks.favorite_failed`                    | error | yes     | Cookbook favorite toggle failed.                                                                                                   |
+| `cookbooks.invite_link_failed`                 | error | yes     | Share-dialog invite URL failed.                                                                                                    |
+| `collaborators.grant_failed`                   | error | yes     | Single recipe share failed.                                                                                                        |
+| `collaborators.grant_batch_failed`             | error | yes     | Batch recipe share failed.                                                                                                         |
+| `collaborators.revoke_failed`                  | error | yes     | Recipe collaborator remove failed.                                                                                                 |
+| **Family & onboarding**                        |       |         |                                                                                                                                    |
+| `people.create_failed`                         | error | yes     | New family person failed.                                                                                                          |
+| `people.update_failed`                         | error | yes     | Person edit failed.                                                                                                                |
+| `people.remove_failed`                         | error | yes     | Person delete failed.                                                                                                              |
+| `people.create_inline_failed`                  | error | yes     | Inline “Add someone” in recipe editor failed.                                                                                      |
+| `onboarding.save_failed`                       | error | yes     | First-run setup failed.                                                                                                            |
+| `onboarding.stale_session`                     | warn  | no      | Finished onboarding but cached session was stale (harmless if rare).                                                               |
+| `interview.save_failed`                        | error | yes     | Mom interview save failed.                                                                                                         |
+
+To be told rather than have to look:
+
+1. **Cloudflare dashboard → Notifications → Workers → Script Errors** (scoped to `kitchen`).
+2. **Sentry → Alerts → Create Alert** → "Issues" → "A new issue is created" → notify email or Slack. Scope to the `kitchen` project. Repeat for regression spikes if desired.
+3. After any Stripe change, glance at `stripe.webhook.*` in Workers Logs.
+
+Without `SENTRY_AUTH_TOKEN` in the build environment, Sentry issues show minified stack traces — set org/project/token per [`CREDENTIALS.md`](CREDENTIALS.md) §6.
 
 ## Local dev
 

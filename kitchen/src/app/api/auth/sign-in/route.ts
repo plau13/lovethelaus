@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { authErrorMessage, signIn } from "@/lib/auth";
+import { signIn } from "@/lib/auth";
 import { appPath, errorRedirect, formReturnTo, redirectWithCookies, withQuery } from "@/lib/route-helpers";
 import { safeReturnTo } from "@/lib/post-auth";
 
@@ -20,6 +20,6 @@ export async function POST(request: NextRequest) {
     const callback = next ? withQuery(appPath("/auth/callback"), "returnTo", next) : appPath("/auth/callback");
     return redirectWithCookies(request, callback, setCookies);
   } catch (error) {
-    return errorRedirect(request, returnTo, authErrorMessage(error));
+    return errorRedirect(request, returnTo, error, "auth.sign_in_failed", { report: false });
   }
 }

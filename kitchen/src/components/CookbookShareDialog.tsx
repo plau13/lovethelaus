@@ -7,6 +7,7 @@ import {
   revokeCookbookAccess,
 } from "@/app/actions/cookbooks";
 import { EmailPillInput } from "@/components/EmailPillInput";
+import { FormAlert } from "@/components/FormAlert";
 
 type Member = {
   id: string;
@@ -50,6 +51,7 @@ export function CookbookShareDialog({
   const [copied, setCopied] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [pendingInvite, setPendingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -81,6 +83,7 @@ export function CookbookShareDialog({
       setCopied(false);
       setInviteCopied(false);
       setInviteUrl(null);
+      setInviteError(null);
     }
   }
 
@@ -99,9 +102,13 @@ export function CookbookShareDialog({
 
   async function createInviteLink() {
     setPendingInvite(true);
+    setInviteError(null);
     try {
       const url = await createCookbookInviteLink(cookbookId, "viewer");
       setInviteUrl(url);
+    } catch {
+      setInviteError("Could not create an invite link. Try again in a moment.");
+      setInviteUrl(null);
     } finally {
       setPendingInvite(false);
     }
@@ -156,6 +163,7 @@ export function CookbookShareDialog({
         {canManage ? (
           <div className="mb-5 grid gap-3 border-t border-line pt-4">
             <p className="text-sm text-muted">Create an invite link anyone can use to join this cookbook.</p>
+            <FormAlert message={inviteError} />
             <button
               type="button"
               onClick={createInviteLink}

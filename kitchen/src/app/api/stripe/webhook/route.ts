@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { periodEndFromSeconds, tierFromSubscriptionStatus } from "@/lib/billing";
-import { errorMessage, logError } from "@/lib/log";
+import { errorMessage, logError, reportError } from "@/lib/log";
 import { getStripe, webhookCryptoProvider } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -52,29 +52,34 @@ export async function POST(request: Request) {
     return new Response("Bad signature", { status: 400 });
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object;
-      const customerId = customerIdOf(session.customer);
-      if (session.mode === "subscription" && customerId && session.subscription) {
-        const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
-        const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
-        await applySubscription(customerId, subscription);
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const customerId = customerIdOf(session.customer);
+        if (session.mode === "subscription" && customerId && session.subscription) {
+          const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
+          const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
+          await applySubscription(customerId, subscription);
+        }
+        break;
       }
-      break;
-    }
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
-    case "customer.subscription.deleted": {
-      const subscription = event.data.object;
-      const customerId = customerIdOf(subscription.customer);
-      if (customerId) {
-        await applySubscription(customerId, subscription);
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+        const customerId = customerIdOf(subscription.customer);
+        if (customerId) {
+          await applySubscription(customerId, subscription);
+        }
+        break;
       }
-      break;
+      default:
+        break;
     }
-    default:
-      break;
+  } catch (error) {
+    reportError("stripe.webhook.handler_failed", error, { eventType: event.type });
+    return new Response("Handler error", { status: 500 });
   }
 
   return Response.json({ received: true });

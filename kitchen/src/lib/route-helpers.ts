@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { userSafeMessage } from "@/lib/errors";
+import { errorMessage, logWarn, reportError } from "@/lib/log";
 import { appPath } from "@/lib/paths";
 import { safeReturnTo, withQuery } from "@/lib/post-auth";
 
@@ -21,8 +23,24 @@ export function formReturnTo(formData: FormData, fallback: string): string {
   return safeReturnTo(String(formData.get("returnTo") ?? "")) ?? fallback;
 }
 
-export function errorRedirect(request: Request, returnTo: string, message: string): NextResponse {
-  return NextResponse.redirect(originUrl(request, withQuery(returnTo, "error", message)), 303);
+type ErrorRedirectOptions = {
+  /** When false, log to Cloudflare only (expected auth failures). Default true (Sentry + Cloudflare). */
+  report?: boolean;
+};
+
+export function errorRedirect(
+  request: Request,
+  returnTo: string,
+  error: unknown,
+  event: string,
+  options?: ErrorRedirectOptions
+): NextResponse {
+  if (options?.report === false) {
+    logWarn(event, { detail: errorMessage(error) });
+  } else {
+    reportError(event, error);
+  }
+  return NextResponse.redirect(originUrl(request, withQuery(returnTo, "error", userSafeMessage(error))), 303);
 }
 
 export { appPath, withQuery };

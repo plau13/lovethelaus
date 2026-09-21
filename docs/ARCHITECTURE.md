@@ -95,8 +95,25 @@ The recipe box name is deliberately **not** a column on `user`: the default cook
 
 Worker `vars` (non-secret): `APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY`, `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`.
 Worker secrets: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`, optional `ANTHROPIC_API_KEY`.
-Cloudflare **build** variables, set under Workers → `kitchen` → Settings → Build (baked into the browser bundle by `opennextjs-cloudflare build`, so a Worker secret would arrive too late and a runtime lookup would find nothing): `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GA_ID`.
+Cloudflare **build** variables, set under Workers → `kitchen` → Settings → Build (baked into the browser bundle by `opennextjs-cloudflare build`, so a Worker secret would arrive too late and a runtime lookup would find nothing): `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GA_ID`. Optional build-only: `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` for source map upload.
 Never on the Worker: `DATABASE_URL_UNPOOLED`, which `drizzle-kit migrate` uses from a checkout or from the **Database** workflow.
+
+## Observability
+
+Kitchen uses two systems on purpose:
+
+| System                      | Gets what                                                                                                  | Entry points                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Cloudflare Workers Logs** | Every structured `event` line (`logWarn`, `logError`, `reportError`)                                       | Filter on `event` in the dashboard                                 |
+| **Sentry**                  | Unexpected server failures (`reportError`), client React errors (error boundaries), demo/sign-out failures | `SENTRY_DSN` (Worker secret), `NEXT_PUBLIC_SENTRY_DSN` (build var) |
+
+Server path: `reportError()` in `kitchen/src/lib/log.ts` → Workers Logs + lazy `Sentry.init` in `kitchen/src/lib/sentry.ts`. Expected auth failures use `logWarn` only (`report: false` on `errorRedirect` / `redirectActionError`).
+
+Client path: `kitchen/src/instrumentation-client.ts` initializes browser Sentry; `(app)/error.tsx`, `(public)/error.tsx`, and `global-error.tsx` capture React render failures with `event` tags.
+
+There is **no** `instrumentation.ts`. OpenNext on Cloudflare cannot load Next's instrumentation hook alongside Sentry — uncaught server exceptions outside explicit `reportError()` paths may not reach Sentry. See the OpenNext + Sentry patch in [`CLOUDFLARE.md`](CLOUDFLARE.md).
+
+User-facing errors are sanitized in `kitchen/src/lib/errors.ts` (`userSafeMessage`); full-page failures redirect with `?error=` and render via `QueryFlash` / `FormAlert`.
 
 ## Deployment
 
