@@ -18,7 +18,7 @@ function parseHost(url) {
 function check(name, ok, detail) {
   const line = ok ? `ok   ${name}` : `FAIL ${name}`;
   console.log(detail ? `${line} — ${detail}` : line);
-  return ok;
+  return ok ? 0 : 1;
 }
 
 function isNeonHost(host) {
