@@ -102,10 +102,10 @@ Never on the Worker: `DATABASE_URL_UNPOOLED`, which `drizzle-kit migrate` uses f
 
 Kitchen uses two systems on purpose:
 
-| System | Gets what | Entry points |
-| ------ | --------- | ------------ |
-| **Cloudflare Workers Logs** | Every structured `event` line (`logWarn`, `logError`, `reportError`) | Filter on `event` in the dashboard |
-| **Sentry** | Unexpected server failures (`reportError`), client React errors (error boundaries), demo/sign-out failures | `SENTRY_DSN` (Worker secret), `NEXT_PUBLIC_SENTRY_DSN` (build var) |
+| System                      | Gets what                                                                                                  | Entry points                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Cloudflare Workers Logs** | Every structured `event` line (`logWarn`, `logError`, `reportError`)                                       | Filter on `event` in the dashboard                                 |
+| **Sentry**                  | Unexpected server failures (`reportError`), client React errors (error boundaries), demo/sign-out failures | `SENTRY_DSN` (Worker secret), `NEXT_PUBLIC_SENTRY_DSN` (build var) |
 
 Server path: `reportError()` in `kitchen/src/lib/log.ts` → Workers Logs + lazy `Sentry.init` in `kitchen/src/lib/sentry.ts`. Expected auth failures use `logWarn` only (`report: false` on `errorRedirect` / `redirectActionError`).
 

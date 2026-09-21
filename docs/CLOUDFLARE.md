@@ -64,21 +64,21 @@ After changing bindings run `npm run cf-typegen` locally to regenerate `cloudfla
 
 ### One-time provider setup
 
-| Provider   | Steps                                                                                                                                                                                                                                                                                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Neon**   | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only).                                                                                                                                                                                               |
-| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner.                                                                                                                                                                                 |
+| Provider   | Steps                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Neon**   | Create project `kitchen`; branches `main` (prod) and `dev`. Pooled URL → `DATABASE_URL`; direct URL → `DATABASE_URL_UNPOOLED` (local/CI migrations only).                                                                                                                                                                                                                                                                                  |
+| **Resend** | Verify `lovethelaus.com` (SPF + DKIM); create an API key; set `EMAIL_FROM` in `wrangler.jsonc`. Until the domain is verified Resend only delivers to the account owner.                                                                                                                                                                                                                                                                    |
 | **Stripe** | Product "Kitchen Plus" with monthly and annual recurring prices → `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` and `STRIPE_PRICE_KITCHEN_PLUS_YEARLY` in `wrangler.jsonc`. Webhook endpoint `https://lovethelaus.com/kitchen/api/stripe/webhook` with events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted` → `STRIPE_WEBHOOK_SECRET`. Enable the Customer Portal. |
 
 ### Build-time public config (ads, analytics, Sentry client)
 
 `NEXT_PUBLIC_*` values are compiled into the client bundle, so they belong in **Workers → kitchen → Settings → Build → Build variables** (what Workers Builds reads during `npm run build:cf`). They are not Worker secrets — a runtime secret of that name does nothing — and changing one requires a rebuild.
 
-| Variable | Purpose |
-| -------- | ------- |
-| `NEXT_PUBLIC_SENTRY_DSN` | Browser error reporting (same DSN as `SENTRY_DSN`; see [`CREDENTIALS.md`](CREDENTIALS.md) §6) |
-| `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | Optional; browser Sentry environment tag (defaults to `NODE_ENV`) |
-| `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GA_ID` | Ads and analytics — see [`ADS.md`](ADS.md) |
+| Variable                                     | Purpose                                                                                       |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SENTRY_DSN`                     | Browser error reporting (same DSN as `SENTRY_DSN`; see [`CREDENTIALS.md`](CREDENTIALS.md) §6) |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT`             | Optional; browser Sentry environment tag (defaults to `NODE_ENV`)                             |
+| `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GA_ID` | Ads and analytics — see [`ADS.md`](ADS.md)                                                    |
 
 Optional **source map upload** during `build:cf` (readable stack traces in Sentry): set `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` as build variables or GitHub secrets visible to Workers Builds — not as Worker runtime secrets.
 
@@ -187,75 +187,75 @@ Filter on `event` in **Workers → kitchen → Logs**. Never log a payload, a si
 
 ### Event catalog
 
-| Event | Level | Sentry? | Means |
-| ----- | ----- | ------- | ----- |
-| **Stripe** | | | |
-| `stripe.webhook.bad_signature` | error | no | Signature verification failed. Usually the signing secret was rotated on one side only — payment succeeds, the account stays free. |
-| `stripe.webhook.not_configured` | error | no | `STRIPE_WEBHOOK_SECRET` is unset on the Worker. |
-| `stripe.webhook.handler_failed` | error | yes | Webhook verified but applying subscription state threw (DB, Stripe API). Stripe retries on 500. |
-| **Auth (expected failures — Cloudflare only)** | | | |
-| `auth.sign_up_failed` | warn | no | Sign-up rejected (duplicate email, weak password, etc.). |
-| `auth.sign_in_failed` | warn | no | Wrong email/password. |
-| `auth.magic_link_failed` | warn | no | Magic-link request failed. |
-| `auth.password_reset_failed` | warn | no | Reset request or token save failed. |
-| `auth.demo_unavailable` | warn | no | Demo password not configured on the Worker. |
-| `auth.demo_failed` | error | yes | Demo sign-in threw after credentials were present. |
-| `auth.sign_out_failed` | error | yes | Sign-out threw unexpectedly. |
-| `auth.email_failed` | error | yes | Resend rejected or errored sending transactional mail. |
-| **Client error boundaries** | | | |
-| `app.error_boundary` | — | yes | React error in signed-in app (`(app)/error.tsx`). |
-| `public.error_boundary` | — | yes | React error on public pages (`(public)/error.tsx`). |
-| `global.error_boundary` | — | yes | Root layout failure (`global-error.tsx`). |
-| **Billing & settings** | | | |
-| `billing.checkout_failed` | error | yes | Stripe Checkout session could not be created. |
-| `billing.portal_failed` | error | yes | Customer Portal session failed. |
-| `billing.refresh_failed` | error | yes | Post-checkout session refresh failed. |
-| `settings.profile_update_failed` | error | yes | Profile or kitchen prefs save failed. |
-| **Import** | | | |
-| `import.start_failed` | error | yes | URL import could not start (fetch, limit, DB). |
-| `import.confirm_failed` | error | yes | Confirming a draft into a recipe failed. |
-| `import.ai_unavailable` | warn | no | Claude could not be reached during an import; the user still got their draft. |
-| **Recipes** | | | |
-| `recipes.create_failed` | error | yes | New recipe save failed. |
-| `recipes.update_failed` | error | yes | Recipe edit failed. |
-| `recipes.note_failed` | error | yes | Adding a note failed. |
-| `recipes.copy_failed` | error | yes | Copy to my book failed. |
-| `recipes.memory_failed` | error | yes | “I made this” failed. |
-| `recipes.memory_remove_failed` | error | yes | Removing a memory failed. |
-| `recipes.transcript_apply_failed` | error | yes | Applying card transcript to recipe failed. |
-| `recipes.favorite_failed` | error | yes | Favorite toggle failed (optimistic UI rolls back). |
-| **Photos & media** | | | |
-| `photos.upload_failed` | error | yes | Recipe photo upload failed. |
-| `photos.delete_failed` | error | yes | Photo delete failed. |
-| `photos.cover_failed` | error | yes | Set cover failed. |
-| `photos.alt_failed` | error | yes | Alt text save failed. |
-| `media.scan_upload_failed` | error | yes | Card scan upload failed. |
-| `media.voice_upload_failed` | error | yes | Voice memo upload failed. |
-| `media.remove_failed` | error | yes | Heritage media delete failed. |
-| `media.caption_failed` | error | yes | Media caption save failed. |
-| `transcribe.scan_failed` | error | yes | Claude card read failed. |
-| `photo.object_missing` | error | no | A `recipe_photo` row points at an R2 object that is not there. |
-| **Cookbooks & sharing** | | | |
-| `cookbooks.create_failed` | error | yes | New cookbook failed. |
-| `cookbooks.settings_failed` | error | yes | Cookbook settings save failed. |
-| `cookbooks.invite_failed` | error | yes | Invite link creation failed. |
-| `cookbooks.join_failed` | error | yes | Accepting an invite failed. |
-| `cookbooks.add_recipe_failed` | error | yes | Adding a recipe to a cookbook failed. |
-| `cookbooks.grant_batch_failed` | error | yes | Batch email invite failed. |
-| `cookbooks.revoke_failed` | error | yes | Removing a member failed. |
-| `cookbooks.favorite_failed` | error | yes | Cookbook favorite toggle failed. |
-| `cookbooks.invite_link_failed` | error | yes | Share-dialog invite URL failed. |
-| `collaborators.grant_failed` | error | yes | Single recipe share failed. |
-| `collaborators.grant_batch_failed` | error | yes | Batch recipe share failed. |
-| `collaborators.revoke_failed` | error | yes | Recipe collaborator remove failed. |
-| **Family & onboarding** | | | |
-| `people.create_failed` | error | yes | New family person failed. |
-| `people.update_failed` | error | yes | Person edit failed. |
-| `people.remove_failed` | error | yes | Person delete failed. |
-| `people.create_inline_failed` | error | yes | Inline “Add someone” in recipe editor failed. |
-| `onboarding.save_failed` | error | yes | First-run setup failed. |
-| `onboarding.stale_session` | warn | no | Finished onboarding but cached session was stale (harmless if rare). |
-| `interview.save_failed` | error | yes | Mom interview save failed. |
+| Event                                          | Level | Sentry? | Means                                                                                                                              |
+| ---------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Stripe**                                     |       |         |                                                                                                                                    |
+| `stripe.webhook.bad_signature`                 | error | no      | Signature verification failed. Usually the signing secret was rotated on one side only — payment succeeds, the account stays free. |
+| `stripe.webhook.not_configured`                | error | no      | `STRIPE_WEBHOOK_SECRET` is unset on the Worker.                                                                                    |
+| `stripe.webhook.handler_failed`                | error | yes     | Webhook verified but applying subscription state threw (DB, Stripe API). Stripe retries on 500.                                    |
+| **Auth (expected failures — Cloudflare only)** |       |         |                                                                                                                                    |
+| `auth.sign_up_failed`                          | warn  | no      | Sign-up rejected (duplicate email, weak password, etc.).                                                                           |
+| `auth.sign_in_failed`                          | warn  | no      | Wrong email/password.                                                                                                              |
+| `auth.magic_link_failed`                       | warn  | no      | Magic-link request failed.                                                                                                         |
+| `auth.password_reset_failed`                   | warn  | no      | Reset request or token save failed.                                                                                                |
+| `auth.demo_unavailable`                        | warn  | no      | Demo password not configured on the Worker.                                                                                        |
+| `auth.demo_failed`                             | error | yes     | Demo sign-in threw after credentials were present.                                                                                 |
+| `auth.sign_out_failed`                         | error | yes     | Sign-out threw unexpectedly.                                                                                                       |
+| `auth.email_failed`                            | error | yes     | Resend rejected or errored sending transactional mail.                                                                             |
+| **Client error boundaries**                    |       |         |                                                                                                                                    |
+| `app.error_boundary`                           | —     | yes     | React error in signed-in app (`(app)/error.tsx`).                                                                                  |
+| `public.error_boundary`                        | —     | yes     | React error on public pages (`(public)/error.tsx`).                                                                                |
+| `global.error_boundary`                        | —     | yes     | Root layout failure (`global-error.tsx`).                                                                                          |
+| **Billing & settings**                         |       |         |                                                                                                                                    |
+| `billing.checkout_failed`                      | error | yes     | Stripe Checkout session could not be created.                                                                                      |
+| `billing.portal_failed`                        | error | yes     | Customer Portal session failed.                                                                                                    |
+| `billing.refresh_failed`                       | error | yes     | Post-checkout session refresh failed.                                                                                              |
+| `settings.profile_update_failed`               | error | yes     | Profile or kitchen prefs save failed.                                                                                              |
+| **Import**                                     |       |         |                                                                                                                                    |
+| `import.start_failed`                          | error | yes     | URL import could not start (fetch, limit, DB).                                                                                     |
+| `import.confirm_failed`                        | error | yes     | Confirming a draft into a recipe failed.                                                                                           |
+| `import.ai_unavailable`                        | warn  | no      | Claude could not be reached during an import; the user still got their draft.                                                      |
+| **Recipes**                                    |       |         |                                                                                                                                    |
+| `recipes.create_failed`                        | error | yes     | New recipe save failed.                                                                                                            |
+| `recipes.update_failed`                        | error | yes     | Recipe edit failed.                                                                                                                |
+| `recipes.note_failed`                          | error | yes     | Adding a note failed.                                                                                                              |
+| `recipes.copy_failed`                          | error | yes     | Copy to my book failed.                                                                                                            |
+| `recipes.memory_failed`                        | error | yes     | “I made this” failed.                                                                                                              |
+| `recipes.memory_remove_failed`                 | error | yes     | Removing a memory failed.                                                                                                          |
+| `recipes.transcript_apply_failed`              | error | yes     | Applying card transcript to recipe failed.                                                                                         |
+| `recipes.favorite_failed`                      | error | yes     | Favorite toggle failed (optimistic UI rolls back).                                                                                 |
+| **Photos & media**                             |       |         |                                                                                                                                    |
+| `photos.upload_failed`                         | error | yes     | Recipe photo upload failed.                                                                                                        |
+| `photos.delete_failed`                         | error | yes     | Photo delete failed.                                                                                                               |
+| `photos.cover_failed`                          | error | yes     | Set cover failed.                                                                                                                  |
+| `photos.alt_failed`                            | error | yes     | Alt text save failed.                                                                                                              |
+| `media.scan_upload_failed`                     | error | yes     | Card scan upload failed.                                                                                                           |
+| `media.voice_upload_failed`                    | error | yes     | Voice memo upload failed.                                                                                                          |
+| `media.remove_failed`                          | error | yes     | Heritage media delete failed.                                                                                                      |
+| `media.caption_failed`                         | error | yes     | Media caption save failed.                                                                                                         |
+| `transcribe.scan_failed`                       | error | yes     | Claude card read failed.                                                                                                           |
+| `photo.object_missing`                         | error | no      | A `recipe_photo` row points at an R2 object that is not there.                                                                     |
+| **Cookbooks & sharing**                        |       |         |                                                                                                                                    |
+| `cookbooks.create_failed`                      | error | yes     | New cookbook failed.                                                                                                               |
+| `cookbooks.settings_failed`                    | error | yes     | Cookbook settings save failed.                                                                                                     |
+| `cookbooks.invite_failed`                      | error | yes     | Invite link creation failed.                                                                                                       |
+| `cookbooks.join_failed`                        | error | yes     | Accepting an invite failed.                                                                                                        |
+| `cookbooks.add_recipe_failed`                  | error | yes     | Adding a recipe to a cookbook failed.                                                                                              |
+| `cookbooks.grant_batch_failed`                 | error | yes     | Batch email invite failed.                                                                                                         |
+| `cookbooks.revoke_failed`                      | error | yes     | Removing a member failed.                                                                                                          |
+| `cookbooks.favorite_failed`                    | error | yes     | Cookbook favorite toggle failed.                                                                                                   |
+| `cookbooks.invite_link_failed`                 | error | yes     | Share-dialog invite URL failed.                                                                                                    |
+| `collaborators.grant_failed`                   | error | yes     | Single recipe share failed.                                                                                                        |
+| `collaborators.grant_batch_failed`             | error | yes     | Batch recipe share failed.                                                                                                         |
+| `collaborators.revoke_failed`                  | error | yes     | Recipe collaborator remove failed.                                                                                                 |
+| **Family & onboarding**                        |       |         |                                                                                                                                    |
+| `people.create_failed`                         | error | yes     | New family person failed.                                                                                                          |
+| `people.update_failed`                         | error | yes     | Person edit failed.                                                                                                                |
+| `people.remove_failed`                         | error | yes     | Person delete failed.                                                                                                              |
+| `people.create_inline_failed`                  | error | yes     | Inline “Add someone” in recipe editor failed.                                                                                      |
+| `onboarding.save_failed`                       | error | yes     | First-run setup failed.                                                                                                            |
+| `onboarding.stale_session`                     | warn  | no      | Finished onboarding but cached session was stale (harmless if rare).                                                               |
+| `interview.save_failed`                        | error | yes     | Mom interview save failed.                                                                                                         |
 
 To be told rather than have to look:
 

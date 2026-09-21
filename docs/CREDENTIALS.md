@@ -10,31 +10,31 @@ cd kitchen && grep -rho "process\.env\.[A-Z_][A-Z0-9_]*" src scripts | sed 's/pr
 
 ## At a glance
 
-| Value                               | Needed for            | Secret? | Lives in                             |
-| ----------------------------------- | --------------------- | ------- | ------------------------------------ |
-| `DATABASE_URL`                      | **Everything**        | Yes     | Worker secret + `kitchen/.env`       |
-| `DATABASE_URL_UNPOOLED`             | Migrations only       | Yes     | `kitchen/.env` only — never a secret |
-| `BETTER_AUTH_SECRET`                | **Everything**        | Yes     | Worker secret + `kitchen/.env`       |
-| `RESEND_API_KEY`                    | Email                 | Yes     | Worker secret + `kitchen/.env`       |
-| `DEMO_USER_PASSWORD`                | Demo account          | Yes     | Worker secret + `kitchen/.env`       |
-| `DEMO_USER_EMAIL`                   | Demo account          | No      | Worker secret + `kitchen/.env`       |
-| `DEMO_USER_NAME`                    | Seed script           | No      | `kitchen/.env` only                  |
-| `STRIPE_SECRET_KEY`                 | Kitchen Plus          | Yes     | Worker secret + `kitchen/.env`       |
-| `STRIPE_WEBHOOK_SECRET`             | Kitchen Plus          | Yes     | Worker secret + `kitchen/.env`       |
-| `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
-| `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`  | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
-| `ANTHROPIC_API_KEY`                 | Card reading, imports | Yes     | Worker secret + `kitchen/.env`       |
-| `SENTRY_DSN`                        | Error reporting       | Yes     | Worker secret + `kitchen/.env`       |
-| `NEXT_PUBLIC_SENTRY_DSN`            | Browser errors        | No      | Build variables + `kitchen/.env`     |
-| `SENTRY_ENVIRONMENT`                | Sentry environment tag | No   | `wrangler.jsonc` `vars` + `.env`     |
-| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps (optional) | Yes (token) | CI/build only, not Worker secrets |
-| `APP_URL`                           | Auth callbacks, links | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `EMAIL_FROM`                        | Email sender          | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `SUPPORT_EMAIL`                     | Settings, reply-to    | No      | `wrangler.jsonc` `vars` + `.env`     |
-| `NEXT_PUBLIC_ADSENSE_CLIENT`        | Ads                   | No      | Cloudflare **build** variables       |
-| `NEXT_PUBLIC_ADSENSE_SLOT_*`        | Ads                   | No      | Cloudflare **build** variables       |
-| `NEXT_PUBLIC_GA_ID`                 | Analytics             | No      | Cloudflare **build** variables       |
-| `PUBLIC_KITCHEN_URL`                | Marketing site links  | No      | Set by `npm run build:prod`          |
+| Value                                                 | Needed for             | Secret?     | Lives in                             |
+| ----------------------------------------------------- | ---------------------- | ----------- | ------------------------------------ |
+| `DATABASE_URL`                                        | **Everything**         | Yes         | Worker secret + `kitchen/.env`       |
+| `DATABASE_URL_UNPOOLED`                               | Migrations only        | Yes         | `kitchen/.env` only — never a secret |
+| `BETTER_AUTH_SECRET`                                  | **Everything**         | Yes         | Worker secret + `kitchen/.env`       |
+| `RESEND_API_KEY`                                      | Email                  | Yes         | Worker secret + `kitchen/.env`       |
+| `DEMO_USER_PASSWORD`                                  | Demo account           | Yes         | Worker secret + `kitchen/.env`       |
+| `DEMO_USER_EMAIL`                                     | Demo account           | No          | Worker secret + `kitchen/.env`       |
+| `DEMO_USER_NAME`                                      | Seed script            | No          | `kitchen/.env` only                  |
+| `STRIPE_SECRET_KEY`                                   | Kitchen Plus           | Yes         | Worker secret + `kitchen/.env`       |
+| `STRIPE_WEBHOOK_SECRET`                               | Kitchen Plus           | Yes         | Worker secret + `kitchen/.env`       |
+| `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY`                   | Kitchen Plus           | No          | `wrangler.jsonc` `vars`              |
+| `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`                    | Kitchen Plus           | No          | `wrangler.jsonc` `vars`              |
+| `ANTHROPIC_API_KEY`                                   | Card reading, imports  | Yes         | Worker secret + `kitchen/.env`       |
+| `SENTRY_DSN`                                          | Error reporting        | Yes         | Worker secret + `kitchen/.env`       |
+| `NEXT_PUBLIC_SENTRY_DSN`                              | Browser errors         | No          | Build variables + `kitchen/.env`     |
+| `SENTRY_ENVIRONMENT`                                  | Sentry environment tag | No          | `wrangler.jsonc` `vars` + `.env`     |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps (optional) | Yes (token) | CI/build only, not Worker secrets    |
+| `APP_URL`                                             | Auth callbacks, links  | No          | `wrangler.jsonc` `vars` + `.env`     |
+| `EMAIL_FROM`                                          | Email sender           | No          | `wrangler.jsonc` `vars` + `.env`     |
+| `SUPPORT_EMAIL`                                       | Settings, reply-to     | No          | `wrangler.jsonc` `vars` + `.env`     |
+| `NEXT_PUBLIC_ADSENSE_CLIENT`                          | Ads                    | No          | Cloudflare **build** variables       |
+| `NEXT_PUBLIC_ADSENSE_SLOT_*`                          | Ads                    | No          | Cloudflare **build** variables       |
+| `NEXT_PUBLIC_GA_ID`                                   | Analytics              | No          | Cloudflare **build** variables       |
+| `PUBLIC_KITCHEN_URL`                                  | Marketing site links   | No          | Set by `npm run build:prod`          |
 
 Three different places, and the difference matters:
 
