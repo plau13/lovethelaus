@@ -1,7 +1,7 @@
 ---
 import AuthLayout from '~/layouts/AuthLayout.astro';
+import AuthUrlFlash from '~/components/auth/AuthUrlFlash.astro';
 
-const error = Astro.url.searchParams.get('error');
 const metadata = {
   title: 'Sign in — Kitchen',
   description: 'Sign in to your family Kitchen recipe box.',
@@ -9,9 +9,9 @@ const metadata = {
 ---
 
 <AuthLayout metadata={metadata} title="Sign in" description="Welcome back. Sign in with your email and password.">
-  {error ? <p class="auth-error">{error}</p> : null}
+  <AuthUrlFlash />
   <form action="/kitchen/api/auth/sign-in" method="post" class="grid gap-4">
-    <input type="hidden" name="returnTo" value="/sign-in" />
+    <input type="hidden" name="returnTo" value="/kitchen/sign-in" />
     <label class="auth-label">
       <span>Email</span>
       <input class="auth-input" type="email" name="email" required autocomplete="email" placeholder="you@example.com" />
