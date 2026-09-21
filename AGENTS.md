@@ -16,7 +16,7 @@ Applies to the whole repo (root marketing site and `kitchen/`).
 2. **Commit** — stage relevant changes only; never commit `.env`, secrets, or `.wrangler/` state. Write a concise commit message focused on why.
 3. **Deploy** — both Workers deploy themselves. Workers Builds has a project for each (`kitchen` from `kitchen/`; `lovethelaus` from the repo root, which publishes the Astro build as the router's static assets), so **a merge to `main` is the deploy**, whichever half you changed. Watch the two `Workers Builds:` checks on the pull request.
 
-Then `cd kitchen && npm run smoke`, or the **Smoke** workflow in Actions, to confirm the live site came back up.
+Then confirm the live site came back up: `cd kitchen && npm run smoke`, or Actions → **Smoke**. Prefer the workflow from a sandboxed environment — `smoke.mjs` talks to `lovethelaus.com`, so a network policy that blocks the domain reports all 18 assertions as 403 and looks exactly like a total outage. Check the proxy before believing it (`curl -sS "$HTTPS_PROXY/__agentproxy/status"`).
 
 `npm run deploy:all` from a checkout is the fallback if an integration is disconnected; it needs `wrangler login` and Cloudflare access. See [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md).
 
@@ -137,10 +137,10 @@ Astro's native CSP is intentionally **not** enabled in this version: it is incom
 
 After changes, run the relevant section in [`docs/TESTING.md`](docs/TESTING.md). **Auth/email changes require the full Auth & email matrix** — not just the flow you edited.
 
-Design changes should follow [`docs/BRAND.md`](docs/BRAND.md). Stack decisions and gotchas are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the phased plan is in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Design changes should follow [`docs/BRAND.md`](docs/BRAND.md). Stack decisions and gotchas are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); auth in particular has its own document, [`docs/AUTH.md`](docs/AUTH.md), including how to debug a sign-in that fails. The phased plan and current status are in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Default automated checks:
 
 1. `npm run build` succeeds (or `npm run build:prod` + `npm run check` if marketing changed)
-2. `cd kitchen && npm run build` when Kitchen changed
+2. `cd kitchen && npm test && npm run build` when Kitchen changed (`npm run build` is `next build`, for verification; `build:cf` is what Workers Builds runs to produce a Worker)
 3. Visual check per [`docs/TESTING.md`](docs/TESTING.md) for the domains touched

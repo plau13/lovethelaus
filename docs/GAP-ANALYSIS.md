@@ -2,6 +2,8 @@
 
 Audit date: 2026-09-17. Scope: `kitchen/` (product) and the marketing site. Everything below was confirmed by reading the code, not guessed. See [`ROADMAP.md`](ROADMAP.md) for sequencing and [`ARCHITECTURE.md`](ARCHITECTURE.md) for the stack decisions that clear the tech-debt items.
 
+> **This is a dated snapshot, kept as the record of why the roadmap exists.** Do not read it as current state — most of it has since been built. [Status as of 2026-09-21](#status-as-of-2026-09-21) at the bottom says what is closed and what is still open. `ROADMAP.md` is the live view.
+
 ## Where Kitchen already stands out
 
 - **Living, collaborative recipes.** Per-recipe collaborators with `view / comment / edit / co-author` roles, family notes, and automatic version snapshots on every edit. Most consumer recipe apps have none of this.
@@ -40,4 +42,29 @@ Audit date: 2026-09-17. Scope: `kitchen/` (product) and the marketing site. Ever
 
 ## What "unique" should mean here
 
-Competitors treat a recipe as data. The interview script and onboarding questions show the actual job: preserving a family's cooking so it cannot be lost. The differentiation is **heritage and story** — provenance, lineage, scanned cards, voice memos, a family timeline — specified in [`HERITAGE.md`](HERITAGE.md).
+Competitors treat a recipe as data. The interview script shows the actual job: preserving a family's cooking so it cannot be lost. The differentiation is **heritage and story** — provenance, lineage, scanned cards, voice memos, a family timeline — specified in [`HERITAGE.md`](HERITAGE.md).
+
+## Status as of 2026-09-21
+
+Closed since the audit:
+
+| Gap                          | Closed by                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| No public discovery surface  | Phase 2 — `(public)` route group, `generateMetadata`, JSON-LD, sitemap, robots                    |
+| No public single-recipe page | `/r/[slug]`                                                                                       |
+| Search doesn't scale         | Phase 4a — generated `tsvector` + GIN index, `websearch_to_tsquery`, `ts_rank`, pagination in SQL |
+| Sharing friction             | Phase 1 — Resend actually sends invite email; pending invites auto-accept on signup               |
+| No payments                  | Phase 1 — Stripe Checkout, Customer Portal, webhook                                               |
+| PWA                          | Phase 4b — maskable PNGs and app shortcuts                                                        |
+| Photo gallery / cover        | Phase 4b — gallery, chosen cover (`coverPhotoId`), delete                                         |
+| Legal placeholders           | Phase 5 — operator name and contact address filled in                                             |
+| Tech debt (whole section)    | Phase 1 — the stack migration landed; Prisma, Supabase and the disk-path fallback are gone        |
+
+Still open, and still accurate as written above:
+
+- **Free-text ingredients.** No structured quantities, no unit conversion. `preferredUnits` is now collected at onboarding but **still has no reader** — the gap moved from "never asked" to "asked and unused", which is not an improvement until conversion lands.
+- **Offline is write-only.** `OfflineCookCache` and `sw.js` are unchanged; the paid "offline cook mode" still does not work offline.
+- **Table stakes remainder:** meal plan, grocery list, step timers, nutrition, cookbook reorder, dark mode.
+- **Import edges.** Instagram's legacy oEmbed endpoint is still dead and `enrichWithVideoAnalysis` is still a stub.
+
+One gap the audit did not catch, found at launch: **onboarding collected nine open-ended answers nothing read, and its completion check trusted a stale cookie**, so "Finish setup" appeared to do nothing. Fixed in Phase 5; the reasoning is in [`ARCHITECTURE.md`](ARCHITECTURE.md#onboarding-and-preferences) and [`AUTH.md`](AUTH.md).

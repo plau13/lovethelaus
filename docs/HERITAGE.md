@@ -1,6 +1,8 @@
 # Heritage and story — what makes a Kitchen recipe different
 
-The interview script ([`kitchen/docs/mom-interview.md`](../kitchen/docs/mom-interview.md)) and the onboarding questions show the real job: preserving a family's cooking so it cannot be lost. Competitors treat a recipe as data. Kitchen treats it as an heirloom with provenance.
+The interview script ([`kitchen/docs/mom-interview.md`](../kitchen/docs/mom-interview.md)) shows the real job: preserving a family's cooking so it cannot be lost. Competitors treat a recipe as data. Kitchen treats it as an heirloom with provenance.
+
+(Onboarding used to ask nine questions in the same spirit, but stored the answers where nothing read them. They were removed in favour of four preferences that configure the app — see [`ARCHITECTURE.md`](ARCHITECTURE.md#onboarding-and-preferences). The standalone `/interview` page and its `interview_response` table are a separate feature and still exist.)
 
 ## Data model (already in the schema)
 
