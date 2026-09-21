@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { putRecipeInCookbook } from "@/app/actions/cookbooks";
 import { CookbookDetailClient } from "@/components/CookbookDetailClient";
+import { QueryFlash } from "@/components/QueryFlash";
 import { RecipeListItem } from "@/components/RecipeListItem";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
@@ -9,9 +10,15 @@ import { canEditCookbookContents, canManageCookbook } from "@/lib/permissions";
 import { appUrl } from "@/lib/paths";
 import { listRecipeTitleOptions } from "@/lib/recipes";
 
-export default async function CookbookPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CookbookPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await requireOnboardedUser();
-  const { id } = await params;
+  const [{ id }, { error }] = await Promise.all([params, searchParams]);
   const cookbook = await getCookbookForUser(id, user.id);
   if (!cookbook) {
     notFound();
@@ -37,6 +44,7 @@ export default async function CookbookPage({ params }: { params: Promise<{ id: s
       exportHref={`/api/export?format=json&cookbookId=${cookbook.id}`}
       bookHref={canEditCookbookContents(role) ? `/cookbooks/${cookbook.id}/book` : null}
     >
+      <QueryFlash error={error} />
       <h1 className="font-serif text-4xl">{cookbook.title}</h1>
       <p className="text-muted">
         {cookbook.visibility} · your role: {role ?? "viewer"}

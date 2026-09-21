@@ -141,6 +141,38 @@ Known and intentional: **`preferredUnits` currently changes nothing.** It is sto
 
 ---
 
+## 3c. Error logging and user-facing failures
+
+### When to run
+
+Changes to `kitchen/src/lib/{errors,log,sentry,action-result,route-helpers}.ts`, `components/{FormAlert,QueryFlash}.tsx`, `app/error.tsx`, `global-error.tsx`, server actions that call `redirectActionError` / `actionFail` / `reportError`, or Sentry config.
+
+### Automated
+
+```bash
+cd kitchen && npm test && npm run build:cf
+```
+
+`errors.test.ts` covers message sanitization (DB errors must not reach the browser). `build:cf` verifies the OpenNext + Sentry OTEL patch (`postinstall` → `patch-opennext-otel.mjs`) — a failure on `@opentelemetry/api` during middleware bundling means the patch did not run.
+
+### Manual
+
+- [ ] Trigger a validation error (e.g. import with an empty URL) → lands with `?error=` and a readable message in a red alert, not a stack trace
+- [ ] Settings → save with an invalid value if applicable → same pattern
+- [ ] `/recipes` and `/cookbooks` list pages show `QueryFlash` when redirected with `?error=` (fallback targets for photo/media/collaborator failures)
+- [ ] Cookbook share dialog → "Create invite link" failure shows an inline alert, not a silent spinner stop
+- [ ] Auth callback with no session → sign-in page shows a readable message, not the literal string `auth`
+- [ ] With `SENTRY_DSN` unset locally, confirm Workers Logs (or dev console) still shows a JSON line with the matching `event` name
+- [ ] With `SENTRY_DSN` set, confirm the same failure creates a Sentry issue tagged with that event
+- [ ] Auth failures (wrong password) log `auth.sign_in_failed` at **warn** only — not Sentry
+- [ ] Stripe webhook handler failure returns 500 and logs `stripe.webhook.handler_failed`; bad signature returns 400 and does **not** create a Sentry issue
+- [ ] Client: with `NEXT_PUBLIC_SENTRY_DSN` in the build, trigger a client error boundary (or check Sentry for `app.error_boundary` / `public.error_boundary` tags after a real incident)
+- [ ] Production build includes client DSN: view page source or network tab — Sentry ingest requests only when DSN is baked in
+
+Event names are catalogued in [`CLOUDFLARE.md`](CLOUDFLARE.md#event-catalog).
+
+---
+
 ## 4. Billing
 
 ### When to run

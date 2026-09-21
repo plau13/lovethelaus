@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { redirectActionError } from "@/lib/action-result";
 import {
-  authErrorMessage,
   getCurrentUser,
   requestPasswordReset,
   resetPassword,
@@ -24,20 +24,21 @@ export async function signUpAction(formData: FormData) {
     await signUp(
       String(formData.get("name") ?? ""),
       String(formData.get("email") ?? ""),
-      String(formData.get("password") ?? "")
+      String(formData.get("password") ?? ""),
     );
   } catch (error) {
-    redirect(withQuery("/sign-up", "error", authErrorMessage(error)));
+    redirectActionError("/sign-up", error, "auth.sign_up_failed", undefined, { report: false });
   }
   await afterAuth(returnTo);
 }
 
 export async function signInAction(formData: FormData) {
   const returnTo = safeReturnTo(String(formData.get("returnTo") ?? ""));
+  const errorPath = returnTo ? withQuery("/sign-in", "returnTo", returnTo) : "/sign-in";
   try {
     await signIn(String(formData.get("email") ?? ""), String(formData.get("password") ?? ""));
   } catch (error) {
-    redirect(withQuery(returnTo ? withQuery("/sign-in", "returnTo", returnTo) : "/sign-in", "error", authErrorMessage(error)));
+    redirectActionError(errorPath, error, "auth.sign_in_failed", undefined, { report: false });
   }
   await afterAuth(returnTo);
 }
@@ -48,7 +49,7 @@ export async function magicLinkAction(formData: FormData) {
   try {
     await signInWithMagicLink(String(formData.get("email") ?? ""), next);
   } catch (error) {
-    redirect(withQuery(back, "error", authErrorMessage(error)));
+    redirectActionError(back, error, "auth.magic_link_failed", undefined, { report: false });
   }
   redirect(withQuery(back, "sent", "magic-link"));
 }
@@ -57,7 +58,7 @@ export async function requestPasswordResetAction(formData: FormData) {
   try {
     await requestPasswordReset(String(formData.get("email") ?? ""));
   } catch (error) {
-    redirect(withQuery("/forgot-password", "error", authErrorMessage(error)));
+    redirectActionError("/forgot-password", error, "auth.password_reset_failed", undefined, { report: false });
   }
   redirect("/forgot-password?sent=1");
 }
@@ -75,12 +76,22 @@ export async function resetPasswordAction(formData: FormData) {
   try {
     await resetPassword(token, password);
   } catch (error) {
-    redirect(withQuery(withQuery("/reset-password", "token", token), "error", authErrorMessage(error)));
+    redirectActionError(
+      withQuery("/reset-password", "token", token),
+      error,
+      "auth.password_reset_failed",
+      undefined,
+      { report: false },
+    );
   }
   redirect("/sign-in?reset=1");
 }
 
 export async function logOut() {
-  await signOut();
+  try {
+    await signOut();
+  } catch (error) {
+    redirectActionError("/settings", error, "auth.sign_out_failed");
+  }
   redirect("/sign-in");
 }

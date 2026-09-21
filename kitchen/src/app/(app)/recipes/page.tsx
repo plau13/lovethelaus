@@ -1,4 +1,5 @@
 import { Pager } from "@/components/Pager";
+import { QueryFlash } from "@/components/QueryFlash";
 import { RecipeFiltersBar } from "@/components/RecipeFiltersBar";
 import { RecipeListItem } from "@/components/RecipeListItem";
 import { requireOnboardedUser } from "@/lib/auth";
@@ -27,10 +28,12 @@ export default async function RecipesPage({
     tag?: string;
     favorites?: string;
     page?: string;
+    error?: string;
   }>;
 }) {
   const user = await requireOnboardedUser();
   const {
+    error,
     q = "",
     cookbook: cookbookId = "",
     category: categoryRaw = "",
@@ -83,6 +86,7 @@ export default async function RecipesPage({
 
   return (
     <main className="grid gap-6">
+      <QueryFlash error={error} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-serif text-4xl">Recipes</h1>
         <Link

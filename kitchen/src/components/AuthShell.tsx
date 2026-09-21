@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FormAlert, FormNotice } from "@/components/FormAlert";
 
 type AuthShellProps = {
   title: string;
@@ -51,15 +52,9 @@ export const authOutlineButtonClass =
   "inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-line bg-white px-5 py-3 text-lg text-clay no-underline hover:border-clay";
 
 export function AuthError({ message }: { message?: string }) {
-  if (!message) {
-    return null;
-  }
-  return <p className="rounded-xl border border-line bg-white p-3 text-clay leading-relaxed">{message}</p>;
+  return <FormAlert message={message} />;
 }
 
 export function AuthNotice({ message }: { message?: string }) {
-  if (!message) {
-    return null;
-  }
-  return <p className="rounded-xl border border-line bg-white p-3 leading-relaxed">{message}</p>;
+  return <FormNotice message={message} />;
 }

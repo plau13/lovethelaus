@@ -3,6 +3,7 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db/client";
+import { redirectActionError } from "@/lib/action-result";
 import { refreshSessionCache, requireUser } from "@/lib/auth";
 import { readKitchenPrefs } from "@/lib/kitchen-prefs";
 
@@ -12,27 +13,31 @@ import { readKitchenPrefs } from "@/lib/kitchen-prefs";
  * units recipes are shown in, and who a new cookbook is visible to.
  */
 export async function saveOnboarding(formData: FormData) {
-  const user = await requireUser();
-  const prefs = readKitchenPrefs(formData);
-  const db = getDb();
+  let userId: string | undefined;
+  try {
+    const user = await requireUser();
+    userId = user.id;
+    const prefs = readKitchenPrefs(formData);
+    const db = getDb();
 
-  await db
-    .update(schema.user)
-    .set({
-      defaultServings: prefs.defaultServings,
-      preferredUnits: prefs.preferredUnits,
-      defaultCookbookVisibility: prefs.defaultCookbookVisibility,
-      onboardingCompletedAt: new Date(),
-    })
-    .where(eq(schema.user.id, user.id));
+    await db
+      .update(schema.user)
+      .set({
+        defaultServings: prefs.defaultServings,
+        preferredUnits: prefs.preferredUnits,
+        defaultCookbookVisibility: prefs.defaultCookbookVisibility,
+        onboardingCompletedAt: new Date(),
+      })
+      .where(eq(schema.user.id, user.id));
 
-  // The default cookbook is created at signup and titled "My recipes"; this is
-  // where it gets the name its owner chose.
-  await db
-    .update(schema.cookbook)
-    .set({ title: prefs.recipeBoxName })
-    .where(and(eq(schema.cookbook.ownerId, user.id), eq(schema.cookbook.isDefault, true)));
+    await db
+      .update(schema.cookbook)
+      .set({ title: prefs.recipeBoxName })
+      .where(and(eq(schema.cookbook.ownerId, user.id), eq(schema.cookbook.isDefault, true)));
 
-  await refreshSessionCache();
-  redirect("/recipes");
+    await refreshSessionCache();
+    redirect("/recipes");
+  } catch (error) {
+    redirectActionError("/onboarding", error, "onboarding.save_failed", userId);
+  }
 }

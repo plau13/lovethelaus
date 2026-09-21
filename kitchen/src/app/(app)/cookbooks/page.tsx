@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { QueryFlash } from "@/components/QueryFlash";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listFavoriteCookbookIds } from "@/lib/cookbook-favorites";
 import { PUBLIC_COOKBOOKS_PER_PAGE, countPublicCookbooks, listCookbooksForUser } from "@/lib/cookbooks";
@@ -70,10 +71,10 @@ function cookbooksUrl(q: string, filter: CookbookListFilter, page: number): stri
 export default async function CookbooksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; filter?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; filter?: string; page?: string; error?: string }>;
 }) {
   const user = await requireOnboardedUser();
-  const { q = "", filter: filterRaw = "all", page: pageRaw } = await searchParams;
+  const { q = "", filter: filterRaw = "all", page: pageRaw, error } = await searchParams;
   const filter = COOKBOOK_LIST_FILTERS.includes(filterRaw as CookbookListFilter)
     ? (filterRaw as CookbookListFilter)
     : "all";
@@ -97,6 +98,7 @@ export default async function CookbooksPage({
 
   return (
     <main className="grid gap-6">
+      <QueryFlash error={error} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-serif text-4xl">Cookbooks</h1>
         <Link

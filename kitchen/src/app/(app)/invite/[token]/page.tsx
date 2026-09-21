@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { joinFromInviteForm } from "@/app/actions/cookbooks";
+import { QueryFlash } from "@/components/QueryFlash";
 import { getCurrentUser } from "@/lib/auth";
 import { getInvite } from "@/lib/cookbooks";
 
-export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
+export default async function InvitePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const [{ token }, { error }] = await Promise.all([params, searchParams]);
   const invite = await getInvite(token);
   if (!invite) {
     notFound();
@@ -19,6 +26,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">Join {invite.cookbook.title}</h1>
+      <QueryFlash error={error} />
       <p>
         {invite.invitedBy?.name ? `${invite.invitedBy.name} invited you` : "You are invited"} as {invite.role}.
       </p>

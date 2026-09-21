@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
-import { authErrorMessage, signIn } from "@/lib/auth";
+import { signIn } from "@/lib/auth";
+import { AppError } from "@/lib/errors";
 import { demoEmail, demoPassword } from "@/lib/demo-account";
 import { appPath, errorRedirect, redirectWithCookies } from "@/lib/route-helpers";
 
@@ -16,13 +17,19 @@ export async function GET(request: NextRequest) {
   const password = demoPassword(process.env);
 
   if (!password) {
-    return errorRedirect(request, appPath("/sign-in"), "The demo account is not set up right now.");
+    return errorRedirect(
+      request,
+      appPath("/sign-in"),
+      new AppError("auth.demo_unavailable", "The demo account is not set up right now."),
+      "auth.demo_unavailable",
+      { report: false }
+    );
   }
 
   try {
     const { setCookies } = await signIn(email, password, request.headers);
     return redirectWithCookies(request, appPath("/recipes"), setCookies);
   } catch (error) {
-    return errorRedirect(request, appPath("/sign-in"), authErrorMessage(error));
+    return errorRedirect(request, appPath("/sign-in"), error, "auth.demo_failed");
   }
 }

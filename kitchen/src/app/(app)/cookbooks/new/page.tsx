@@ -1,13 +1,15 @@
 import { saveCookbook } from "@/app/actions/cookbooks";
+import { QueryFlash } from "@/components/QueryFlash";
 import { requireOnboardedUser } from "@/lib/auth";
 import { VISIBILITY_LABELS } from "@/lib/kitchen-prefs";
 import { VISIBILITIES } from "@/lib/types";
 
-export default async function NewCookbookPage() {
-  const user = await requireOnboardedUser();
+export default async function NewCookbookPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const [{ error }, user] = await Promise.all([searchParams, requireOnboardedUser()]);
   return (
     <main className="grid gap-6">
       <h1 className="font-serif text-4xl">New cookbook</h1>
+      <QueryFlash error={error} />
       <form action={saveCookbook} className="grid gap-4">
         <label className="grid gap-1">
           <span>Title</span>

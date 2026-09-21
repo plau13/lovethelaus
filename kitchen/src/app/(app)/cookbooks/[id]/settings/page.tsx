@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { saveCookbookSettings } from "@/app/actions/cookbooks";
+import { QueryFlash } from "@/components/QueryFlash";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getCookbookForUser, memberRole } from "@/lib/cookbooks";
 import { appUrl } from "@/lib/paths";
 import { canManageCookbook } from "@/lib/permissions";
 
-export default async function CookbookSettingsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CookbookSettingsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string; invite?: string }>;
+}) {
   const user = await requireOnboardedUser();
-  const { id } = await params;
+  const [{ id }, { error, invite }] = await Promise.all([params, searchParams]);
   const cookbook = await getCookbookForUser(id, user.id);
   const role = await memberRole(id, user.id);
   if (!cookbook || !canManageCookbook(role)) {
@@ -22,6 +29,7 @@ export default async function CookbookSettingsPage({ params }: { params: Promise
         <Link href={`/cookbooks/${cookbook.id}`}>Back to {cookbook.title}</Link>
       </p>
       <h1 className="font-serif text-4xl">Cookbook settings</h1>
+      <QueryFlash error={error} invite={invite} />
       <p className="text-muted">Invite family from the share button on the cookbook page.</p>
       <form action={saveCookbookSettings} className="grid gap-4">
         <input type="hidden" name="cookbookId" value={cookbook.id} />

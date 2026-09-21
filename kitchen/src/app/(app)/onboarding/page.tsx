@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { saveOnboarding } from "@/app/actions/onboarding";
+import { QueryFlash } from "@/components/QueryFlash";
 import { getDb, schema } from "@/db/client";
 import { requireUser } from "@/lib/auth";
 import {
@@ -14,7 +15,8 @@ import { PREFERRED_UNITS, VISIBILITIES } from "@/lib/types";
 
 const fieldClass = "rounded-xl border border-line bg-white px-3 py-3";
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   // Fresh, not cached: this page is where a finished user lands if anything
   // upstream still believes onboarding is incomplete, and showing them the
   // form again is the bug this guards against.
@@ -34,6 +36,7 @@ export default async function OnboardingPage() {
       <div className="grid gap-2">
         <h1 className="font-serif text-4xl">Welcome to Kitchen</h1>
         <p className="text-muted">Four quick choices. You can change any of them later in Settings.</p>
+        <QueryFlash error={error} />
       </div>
 
       <form action={saveOnboarding} className="grid gap-6 rounded-2xl border border-line bg-white p-5">

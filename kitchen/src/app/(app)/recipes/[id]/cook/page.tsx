@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { OfflineCookCache } from "@/components/OfflineCookCache";
 import { KitchenView } from "@/components/KitchenView";
 import { MadeThisButton } from "@/components/MadeThisButton";
+import { QueryFlash } from "@/components/QueryFlash";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getRecipeForUser } from "@/lib/recipes";
 import { isSubscriber } from "@/lib/subscription";
@@ -12,10 +13,10 @@ export default async function CookPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ made?: string }>;
+  searchParams: Promise<{ made?: string; error?: string }>;
 }) {
   const user = await requireOnboardedUser();
-  const [{ id }, { made }] = await Promise.all([params, searchParams]);
+  const [{ id }, { made, error }] = await Promise.all([params, searchParams]);
   const recipe = await getRecipeForUser(id, user.id);
   if (!recipe) {
     notFound();
@@ -24,6 +25,7 @@ export default async function CookPage({
 
   return (
     <main className="grid gap-6">
+      <QueryFlash error={error} made={made} />
       <OfflineCookCache
         enabled={offlineEnabled}
         recipe={{
@@ -48,7 +50,6 @@ export default async function CookPage({
         voice={recipe.media.find((entry) => entry.kind === "voice") ?? null}
       />
       <div className="no-print grid gap-2 border-t border-line pt-6">
-        {made === "1" ? <p className="text-clay">Saved to the family timeline.</p> : null}
         <MadeThisButton recipeId={recipe.id} returnTo="cook" large />
       </div>
     </main>

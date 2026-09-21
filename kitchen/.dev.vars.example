@@ -9,3 +9,6 @@ STRIPE_SECRET_KEY=""
 STRIPE_WEBHOOK_SECRET=""
 DEMO_USER_EMAIL=demo@lovethelaus.com
 DEMO_USER_PASSWORD=your-demo-password
+# Optional — server-side Sentry (same DSN as NEXT_PUBLIC_SENTRY_DSN for preview)
+SENTRY_DSN=""
+SENTRY_ENVIRONMENT=development

@@ -24,6 +24,10 @@ cd kitchen && grep -rho "process\.env\.[A-Z_][A-Z0-9_]*" src scripts | sed 's/pr
 | `STRIPE_PRICE_KITCHEN_PLUS_MONTHLY` | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
 | `STRIPE_PRICE_KITCHEN_PLUS_YEARLY`  | Kitchen Plus          | No      | `wrangler.jsonc` `vars`              |
 | `ANTHROPIC_API_KEY`                 | Card reading, imports | Yes     | Worker secret + `kitchen/.env`       |
+| `SENTRY_DSN`                        | Error reporting       | Yes     | Worker secret + `kitchen/.env`       |
+| `NEXT_PUBLIC_SENTRY_DSN`            | Browser errors        | No      | Build variables + `kitchen/.env`     |
+| `SENTRY_ENVIRONMENT`                | Sentry environment tag | No   | `wrangler.jsonc` `vars` + `.env`     |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps (optional) | Yes (token) | CI/build only, not Worker secrets |
 | `APP_URL`                           | Auth callbacks, links | No      | `wrangler.jsonc` `vars` + `.env`     |
 | `EMAIL_FROM`                        | Email sender          | No      | `wrangler.jsonc` `vars` + `.env`     |
 | `SUPPORT_EMAIL`                     | Settings, reply-to    | No      | `wrangler.jsonc` `vars` + `.env`     |
@@ -126,7 +130,27 @@ It prints a `whsec_` value for that session. Use that one in `kitchen/.env`.
 
 Without this key the app degrades quietly and deliberately: "Read this card" is hidden rather than broken, and URL imports save the raw draft instead of a structured one. Nothing errors.
 
-## 6. Google AdSense — `NEXT_PUBLIC_ADSENSE_*` (optional)
+## 6. Sentry — `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN`
+
+Required for production triage. Without a DSN the app still runs — `reportError` writes to Workers Logs only.
+
+1. Sign up at [sentry.io](https://sentry.io) and create a project (platform: **Next.js**, not Cloudflare Workers alone).
+2. **Settings → Client Keys (DSN)**. Copy the DSN.
+3. **Worker secret:** `SENTRY_DSN` (server-side via `reportError`).
+4. **Build variable:** `NEXT_PUBLIC_SENTRY_DSN` — same DSN, compiled into the browser bundle. Also set in `kitchen/.env` for local dev.
+5. `SENTRY_ENVIRONMENT` is `production` in `kitchen/wrangler.jsonc` `vars`; use `development` locally.
+
+**Do not run the Sentry wizard** on this repo — Sentry is wired manually for OpenNext on Cloudflare. There is no `instrumentation.ts`; see [`CLOUDFLARE.md`](CLOUDFLARE.md) for the OTEL `postinstall` patch.
+
+**Source maps** (readable stack traces): create a Sentry auth token with `project:releases`, then set `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` in **Workers → kitchen → Settings → Build** (build-time only, not Worker secrets).
+
+**Alerts:** Sentry → Alerts → new issue on the `kitchen` project. See [`CLOUDFLARE.md`](CLOUDFLARE.md).
+
+```bash
+npx wrangler secret put SENTRY_DSN   # from kitchen/
+```
+
+## 7. Google AdSense — `NEXT_PUBLIC_ADSENSE_*` (optional)
 
 Approval takes days to weeks and needs real content already live, so deploy first and come back to this.
 
@@ -147,11 +171,11 @@ Approval takes days to weeks and needs real content already live, so deploy firs
 
 Nothing renders until `NEXT_PUBLIC_ADSENSE_CLIENT` is set, so the code ships safely before approval. See [`ADS.md`](ADS.md).
 
-## 7. Google Analytics — `NEXT_PUBLIC_GA_ID` (optional)
+## 8. Google Analytics — `NEXT_PUBLIC_GA_ID` (optional)
 
 [analytics.google.com](https://analytics.google.com) → **Admin → Data streams → Add stream → Web**. The Measurement ID is `G-XXXXXXXXXX`. Only loads on the public pages.
 
-## 8. Demo account — `DEMO_USER_*`
+## 9. Demo account — `DEMO_USER_*`
 
 You invent these; there is no provider.
 
@@ -187,6 +211,7 @@ npx wrangler secret put STRIPE_WEBHOOK_SECRET
 npx wrangler secret put DEMO_USER_EMAIL
 npx wrangler secret put DEMO_USER_PASSWORD
 npx wrangler secret put ANTHROPIC_API_KEY     # optional
+npx wrangler secret put SENTRY_DSN              # optional
 ```
 
 `DATABASE_URL_UNPOOLED` is deliberately absent: migrations never run on the Worker.

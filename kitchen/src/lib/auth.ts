@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { APIError } from "better-auth/api";
 import type { schema } from "@/db/client";
+import { APIError } from "better-auth/api";
 import { getAuth, type SessionUser } from "@/lib/better-auth";
+import { userSafeMessage } from "@/lib/errors";
 import { logWarn } from "@/lib/log";
 import { appPath } from "@/lib/paths";
 
@@ -186,28 +187,11 @@ export async function resetPassword(token: string, newPassword: string): Promise
   await getAuth().api.resetPassword({ body: { token, newPassword }, headers: requestHeaders });
 }
 
-const FRIENDLY: Record<string, string> = {
-  INVALID_EMAIL_OR_PASSWORD: "That email and password do not match.",
-  USER_ALREADY_EXISTS: "An account with that email already exists. Sign in instead.",
-  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "An account with that email already exists. Sign in instead.",
-  INVALID_TOKEN: "That link is invalid or expired. Request a new one.",
-  PASSWORD_TOO_SHORT: "Use at least 8 characters for your password.",
-  EMAIL_NOT_VERIFIED: "Check your email to verify your address first.",
-  USER_NOT_FOUND: "No account found for that email.",
-};
-
 export function authErrorMessage(error: unknown): string {
   if (error instanceof APIError) {
-    const code = (error.body as { code?: string } | undefined)?.code;
-    if (code && FRIENDLY[code]) {
-      return FRIENDLY[code];
-    }
-    return error.message || "Something went wrong. Try again.";
+    return userSafeMessage(error);
   }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "Something went wrong. Try again.";
+  return userSafeMessage(error);
 }
 
 export { ensureDefaultCookbook } from "@/lib/default-cookbook";
