@@ -4,7 +4,7 @@ Standard verification for Love the Laus (marketing + Kitchen). Run the **relevan
 
 **Definition of done:** Code/build passes, manual checks for the triggered section complete, results noted in commit/PR (e.g. “Auth matrix: 1–9 pass on prod”).
 
-Related docs: [`BRAND.md`](BRAND.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`CLOUDFLARE.md`](CLOUDFLARE.md).
+Related docs: [`BRAND.md`](BRAND.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`AUTH.md`](AUTH.md), [`CLOUDFLARE.md`](CLOUDFLARE.md).
 
 ---
 
@@ -106,11 +106,38 @@ cd kitchen && npm test && npm run build
 - [ ] Navigation — Recipes ↔ Cookbooks ↔ recipe detail shows loading skeleton briefly (not a blank stall)
 - [ ] `/kitchen/cookbooks` — cookbook list cards (visibility · recipe count · role); favorites section when starred; cookbook detail toolbar (heart · share · download · ⋯ settings)
 - [ ] Cookbook share modal — email pills, invite link, member list; `/kitchen/loved-ones` redirects to cookbooks
-- [ ] Settings — first/last name, units, onboarding answers (read-only), email support for account deletion (no self-serve delete)
-- [ ] New user sign-up → `/kitchen/onboarding` → recipes; answers visible in Settings
+- [ ] Settings — first/last name, all four kitchen preferences (recipe box name, default servings, units, new-cookbook sharing) present, editable, and showing the stored values; email support for account deletion (no self-serve delete)
 - [ ] Add/edit recipe — category, cook time, and difficulty save
 - [ ] Header nav centered: Home, Recipes, Cookbooks
 - [ ] Favicon on `/kitchen/recipes`
+
+---
+
+## 3b. Onboarding and preferences
+
+### When to run
+
+Changes to `src/lib/kitchen-prefs.ts`, the onboarding page or action, the Settings preferences form, or anything reading `defaultServings` / `preferredUnits` / `defaultCookbookVisibility`.
+
+### Automated
+
+```bash
+cd kitchen && npm test          # kitchen-prefs.test.ts covers the validator
+```
+
+### Manual — on a genuinely new account
+
+The point of this matrix is that a preference must **change something**. A field that saves but alters no behaviour is the defect it is written to catch.
+
+- [ ] Sign up → lands on `/kitchen/onboarding` showing **four** preferences (not a list of open-ended questions)
+- [ ] **"Finish setup" lands on `/kitchen/recipes` and stays there.** Bouncing back to the form is the stale-session regression — see [`AUTH.md`](AUTH.md); check Workers Logs for `onboarding.stale_session`
+- [ ] New recipe → servings prefilled with the chosen number
+- [ ] New cookbook → visibility select defaults to the chosen sharing setting
+- [ ] Cookbooks page → the default cookbook carries the chosen recipe box name, not "My recipes"
+- [ ] Settings → all four show the chosen values; changing one and saving takes effect immediately (the session cache is refreshed, not waited out)
+- [ ] Revisiting `/kitchen/onboarding` after completing it redirects to recipes rather than re-asking
+
+Known and intentional: **`preferredUnits` currently changes nothing.** It is stored and echoed back but has no reader until unit conversion ships, so there is no behaviour to assert for it yet.
 
 ---
 
@@ -254,7 +281,7 @@ cd kitchen && npm run smoke                 # production
 npm run smoke -- https://example.com/kitchen  # anywhere else
 ```
 
-Actions → **Smoke** → Run workflow does the same thing from a phone. It covers the marketing pages, the app's public pages, the manifest's `start_url`, the PWA icons, and `/kitchen/sitemap.xml` — which renders only if the database is reachable and migrated. Page checks follow redirects on purpose: Cloudflare serves a folder index like `dist/privacy/index.html` at `/privacy/` and redirects `/privacy` to it, so a strict 200 check on the unslashed path calls a healthy page broken.
+Actions → **Smoke** → Run workflow does the same thing from a phone, and is the only option from an environment whose network policy blocks the live domain — a sandbox that cannot open `lovethelaus.com` reports every assertion as a 403, which is the proxy talking, not the site. It covers the marketing pages, the app's public pages, the manifest's `start_url`, the PWA icons, and `/kitchen/sitemap.xml` — which renders only if the database is reachable and migrated. Page checks follow redirects on purpose: Cloudflare serves a folder index like `dist/privacy/index.html` at `/privacy/` and redirects `/privacy` to it, so a strict 200 check on the unslashed path calls a healthy page broken.
 
 What it cannot see, check by hand: every section you changed, on production. Auth changes require the full **Section 1** matrix there.
 
@@ -263,6 +290,8 @@ Migrations do not run as part of a deploy. Apply them first, from Actions → **
 ---
 
 ## Quick reference: auth file map
+
+Full detail, including how to tell apart the three sign-in failures that show the same message, is in [`AUTH.md`](AUTH.md).
 
 | Flow                 | Key files                                                                   |
 | -------------------- | --------------------------------------------------------------------------- |

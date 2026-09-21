@@ -27,13 +27,13 @@ The app shell is a single `max-w-3xl` column. Public pages get their own route g
 
 - `public/ads.txt` on the Astro site (must be served at the domain root).
 - Consent: Google's built-in CMP (AdSense "Privacy & messaging", GDPR + US state messages). No custom banner code.
-- `src/pages/privacy.md`: add an "Advertising and cookies" section (Google AdSense, personalised ads, opt-out links). Fill the `[Company Legal Name]` placeholders.
+- `src/pages/privacy.md`: "Advertising and cookies" section (Google AdSense, personalised ads, opt-out links) — **done**, with the operator named as `PAL CAPITAL, LLC` and `privacy@lovethelaus.com` as the contact.
 - Security headers for the public shell in `kitchen/public/_headers` (HSTS, `X-Content-Type-Options`, `Referrer-Policy`). CSP deferred: AdSense and Stripe need a permissive one.
 - Cache: public pages use `revalidate = 3600` and on-demand `revalidateTag` from recipe/cookbook save actions; the OpenNext R2 incremental cache already exists.
 
 ## Configuration (build time)
 
-These are `NEXT_PUBLIC_*` variables, so they are compiled into the client bundle when `opennextjs-cloudflare build` runs. Put them in `kitchen/.env` before `npm run deploy`; they are not Worker secrets.
+These are `NEXT_PUBLIC_*` variables, so they are compiled into the client bundle when `opennextjs-cloudflare build` runs. **In production that build happens in Workers Builds, not on your machine, so they belong in Cloudflare → Workers → `kitchen` → Settings → Build → Variables.** A Worker _secret_ would arrive too late to be compiled in, and a runtime lookup finds nothing. Locally, `kitchen/.env` serves the same purpose for `npm run dev` and `npm run deploy`.
 
 | Variable                             | Where to find it                                                  |
 | ------------------------------------ | ----------------------------------------------------------------- |
