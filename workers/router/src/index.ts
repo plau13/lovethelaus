@@ -1,19 +1,48 @@
+function logLine(event: string, fields: Record<string, string | number | boolean | undefined> = {}): void {
+  console.log(JSON.stringify({ level: 'info', event, ...fields }));
+}
+
+function logError(event: string, fields: Record<string, string | number | boolean | undefined> = {}): void {
+  console.error(JSON.stringify({ level: 'error', event, ...fields }));
+}
+
+function withRequestId(request: Request): Request {
+  if (request.headers.get('x-request-id')) {
+    return request;
+  }
+  const headers = new Headers(request.headers);
+  headers.set('x-request-id', crypto.randomUUID());
+  return new Request(request, { headers });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const requestId = withRequestId(request).headers.get('x-request-id') ?? undefined;
+    const cfRay = request.headers.get('cf-ray') ?? undefined;
+    const baseFields = { path: url.pathname, requestId, cfRay };
 
     if (url.pathname === '/favicon.ico') {
+      logLine('router.favicon_rewrite', baseFields);
       return env.ASSETS.fetch(new Request(`${url.origin}/favicon.svg`, request));
     }
 
     if (url.pathname === '/kitchen/favicon.ico') {
+      logLine('router.favicon_rewrite', { ...baseFields, target: 'kitchen-icon' });
       return env.KITCHEN.fetch(new Request(`${url.origin}/kitchen/icon.svg`, request));
     }
 
     if (url.pathname === '/kitchen' || url.pathname.startsWith('/kitchen/')) {
-      return env.KITCHEN.fetch(request);
+      logLine('router.kitchen_proxy', baseFields);
+      const proxied = withRequestId(request);
+      const response = await env.KITCHEN.fetch(proxied);
+      if (response.status >= 500) {
+        logError('router.kitchen_upstream_error', { ...baseFields, status: response.status });
+      }
+      return response;
     }
 
+    logLine('router.static_asset', baseFields);
     return env.ASSETS.fetch(request);
   },
 };

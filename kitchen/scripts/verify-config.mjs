@@ -117,5 +117,27 @@ if (publicSentryDsn) {
   console.log("warn NEXT_PUBLIC_SENTRY_DSN unset — browser errors will not reach Sentry until build variable is set");
 }
 
+if (sentryDsn && publicSentryDsn && sentryDsn !== publicSentryDsn) {
+  console.log("warn SENTRY_DSN and NEXT_PUBLIC_SENTRY_DSN differ — usually they should match");
+}
+
+const sentryOrg = process.env.SENTRY_ORG?.trim() || "";
+const sentryProject = process.env.SENTRY_PROJECT?.trim() || "";
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim() || "";
+if (sentryOrg && sentryProject && sentryAuthToken) {
+  console.log(`ok Sentry source maps configured (${sentryOrg}/${sentryProject})`);
+} else if (process.env.WORKERS_CI === "1" || process.env.CI === "true") {
+  console.log(
+    "warn SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN unset — build will succeed but Sentry stacks stay minified",
+  );
+}
+
+const sentryRelease = process.env.SENTRY_RELEASE?.trim() || "";
+if (sentryRelease) {
+  failures += check("SENTRY_RELEASE format", sentryRelease.startsWith("kitchen@"), sentryRelease);
+} else {
+  console.log("note SENTRY_RELEASE unset locally — build:cf sets kitchen@<git-sha> automatically");
+}
+
 console.log(`\n${failures === 0 ? "All checks passed" : `${failures} check(s) failed`}`);
 process.exit(failures === 0 ? 0 : 1);

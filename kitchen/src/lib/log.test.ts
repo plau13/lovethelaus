@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { errorMessage, logLine, safeFields } from "./log";
 
+describe("logLine correlation", () => {
+  it("includes cfRay and requestId when provided", () => {
+    const line = JSON.parse(
+      logLine("error", "test.event", { detail: "x" }, { cfRay: "abc", requestId: "req-1", route: "/kitchen/recipes" }),
+    );
+    expect(line.cfRay).toBe("abc");
+    expect(line.requestId).toBe("req-1");
+    expect(line.route).toBe("/kitchen/recipes");
+  });
+});
+
 describe("safeFields", () => {
   it("keeps ordinary diagnostic values", () => {
     expect(safeFields({ eventType: "checkout.session.completed", attempt: 2, configured: false })).toEqual({

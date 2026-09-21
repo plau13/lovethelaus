@@ -15,6 +15,8 @@
  * verbatim, and Workers Logs is readable by anyone with dashboard access.
  */
 
+import { requestLogContext, type RequestLogContext } from "@/lib/worker-context";
+
 /** Keys whose values are never safe to log, however they are spelled. */
 const UNSAFE_KEY = /secret|signature|token|password|authorization|cookie|payload|apikey|api_key/i;
 
@@ -22,6 +24,10 @@ const UNSAFE_KEY = /secret|signature|token|password|authorization|cookie|payload
 const MAX_VALUE_LENGTH = 200;
 
 export type LogFields = Record<string, string | number | boolean | null | undefined>;
+
+export function isUnsafeFieldKey(key: string): boolean {
+  return UNSAFE_KEY.test(key);
+}
 
 /** Drops values that must not be logged and truncates ones that are suspiciously long. */
 export function safeFields(fields: LogFields): LogFields {
@@ -42,19 +48,39 @@ export function safeFields(fields: LogFields): LogFields {
   return safe;
 }
 
+function mergeContext(fields: LogFields, context?: RequestLogContext): LogFields {
+  if (!context) {
+    return fields;
+  }
+  const merged: LogFields = { ...fields };
+  if (context.cfRay) {
+    merged.cfRay = context.cfRay;
+  }
+  if (context.requestId) {
+    merged.requestId = context.requestId;
+  }
+  if (context.route) {
+    merged.route = context.route;
+  }
+  if (context.method) {
+    merged.method = context.method;
+  }
+  return merged;
+}
+
 /** The line that reaches Workers Logs. Pure, so the redaction rules are testable. */
-export function logLine(level: "warn" | "error", event: string, fields: LogFields = {}): string {
-  return JSON.stringify({ level, event, ...safeFields(fields) });
+export function logLine(level: "warn" | "error", event: string, fields: LogFields = {}, context?: RequestLogContext): string {
+  return JSON.stringify({ level, event, ...safeFields(mergeContext(fields, context)) });
 }
 
 /** Something is wrong but the request was handled; someone should look. */
-export function logWarn(event: string, fields: LogFields = {}): void {
-  console.warn(logLine("warn", event, fields));
+export function logWarn(event: string, fields: LogFields = {}, context?: RequestLogContext): void {
+  console.warn(logLine("warn", event, fields, context));
 }
 
 /** Something is broken: a payment not recorded, an object missing from R2. */
-export function logError(event: string, fields: LogFields = {}): void {
-  console.error(logLine("error", event, fields));
+export function logError(event: string, fields: LogFields = {}, context?: RequestLogContext): void {
+  console.error(logLine("error", event, fields, context));
 }
 
 /** An unknown `catch` binding, reduced to something worth logging. */
@@ -63,14 +89,26 @@ export function errorMessage(error: unknown): string {
 }
 
 /** Log a failure to Cloudflare and Sentry. Use for errors worth triage, not routine warns. */
-export function reportError(event: string, error: unknown, fields: LogFields = {}): void {
+export function reportError(
+  event: string,
+  error: unknown,
+  fields: LogFields = {},
+  context?: RequestLogContext,
+  request?: Request,
+): void {
   const detail = errorMessage(error);
-  logError(event, { ...fields, detail });
+  logError(event, { ...fields, detail }, context);
   void import("@/lib/sentry").then(({ captureException }) => {
     captureException(error, {
       event,
       userId: typeof fields.userId === "string" ? fields.userId : undefined,
       fields: safeFields(fields),
+      request,
     });
   });
+}
+
+/** reportError with request correlation from an incoming Request. */
+export function reportRequestError(event: string, error: unknown, request: Request, fields: LogFields = {}): void {
+  reportError(event, error, fields, requestLogContext(request), request);
 }

@@ -2,7 +2,8 @@ import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db/client";
 import { periodEndFromSeconds, tierFromSubscriptionStatus } from "@/lib/billing";
-import { errorMessage, logError, reportError } from "@/lib/log";
+import { errorMessage, logError, reportError, reportRequestError } from "@/lib/log";
+import { breadcrumb } from "@/lib/sentry-breadcrumb";
 import { getStripe, webhookCryptoProvider } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ function customerIdOf(value: string | Stripe.Customer | Stripe.DeletedCustomer |
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    logError("stripe.webhook.not_configured");
+    reportRequestError("stripe.webhook.not_configured", new Error("STRIPE_WEBHOOK_SECRET not set"), request);
     return new Response("Webhook not configured", { status: 500 });
   }
   const payload = await request.text();
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
     });
     return new Response("Bad signature", { status: 400 });
   }
+
+  breadcrumb("stripe.webhook", { eventType: event.type });
 
   try {
     switch (event.type) {
@@ -78,7 +81,7 @@ export async function POST(request: Request) {
         break;
     }
   } catch (error) {
-    reportError("stripe.webhook.handler_failed", error, { eventType: event.type });
+    reportRequestError("stripe.webhook.handler_failed", error, request, { eventType: event.type });
     return new Response("Handler error", { status: 500 });
   }
 

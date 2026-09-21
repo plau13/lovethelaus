@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { signIn } from "@/lib/auth";
 import { appPath, errorRedirect, formReturnTo, redirectWithCookies, withQuery } from "@/lib/route-helpers";
 import { safeReturnTo } from "@/lib/post-auth";
+import { breadcrumb } from "@/lib/sentry-breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
       String(formData.get("password") ?? ""),
       request.headers
     );
+    breadcrumb("auth.sign_in", { outcome: "success" });
     const callback = next ? withQuery(appPath("/auth/callback"), "returnTo", next) : appPath("/auth/callback");
     return redirectWithCookies(request, callback, setCookies);
   } catch (error) {

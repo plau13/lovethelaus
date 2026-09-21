@@ -3,6 +3,7 @@ import { logOut } from "@/app/actions/auth";
 import { openBillingPortal, refreshPlan, startCheckout } from "@/app/actions/billing";
 import { updateProfile } from "@/app/actions/settings";
 import { QueryFlash } from "@/components/QueryFlash";
+import { ReportProblemButton } from "@/components/ReportProblemButton";
 import { getDb, schema } from "@/db/client";
 import { requireOnboardedUser } from "@/lib/auth";
 import { subscriptionSummary } from "@/lib/billing";
@@ -225,6 +226,7 @@ export default async function SettingsPage({
           </a>
           .
         </p>
+        <ReportProblemButton />
       </section>
     </main>
   );

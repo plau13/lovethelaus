@@ -1,15 +1,12 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { useEffect } from "react";
+import { captureBoundaryError } from "@/lib/sentry-boundary";
 
 export default function AppError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    Sentry.withScope((scope) => {
-      scope.setTag("event", "app.error_boundary");
-      Sentry.captureException(error);
-    });
+    captureBoundaryError(error, "app.error_boundary");
   }, [error]);
 
   return (

@@ -58,7 +58,9 @@
 - [x] Onboarding finishes, and sets four preferences that each change behaviour
 - [ ] AdSense pub id into `public/ads.txt`, then `NEXT_PUBLIC_ADSENSE_*` as build variables (owner)
 - [ ] Forward `privacy@lovethelaus.com` (Cloudflare Email Routing) (owner)
-- [ ] Workers → `kitchen` → Notifications → Script Errors alert (owner)
+- [ ] Workers → `kitchen` + `lovethelaus` → Notifications → Script Errors alert (owner; see [`OBSERVABILITY.md`](OBSERVABILITY.md))
+- [ ] Sentry → Alerts → new issue on `kitchen` (owner; see [`OBSERVABILITY.md`](OBSERVABILITY.md))
+- [ ] Workers Builds → `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` for source maps (owner)
 
 ## Next
 

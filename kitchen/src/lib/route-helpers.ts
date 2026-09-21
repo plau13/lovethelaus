@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { userSafeMessage } from "@/lib/errors";
-import { errorMessage, logWarn, reportError } from "@/lib/log";
+import { errorMessage, logWarn, reportRequestError } from "@/lib/log";
+import { breadcrumb } from "@/lib/sentry-breadcrumb";
 import { appPath } from "@/lib/paths";
 import { safeReturnTo, withQuery } from "@/lib/post-auth";
 
@@ -35,10 +36,11 @@ export function errorRedirect(
   event: string,
   options?: ErrorRedirectOptions
 ): NextResponse {
+  breadcrumb(event, { outcome: options?.report === false ? "expected" : "error" });
   if (options?.report === false) {
     logWarn(event, { detail: errorMessage(error) });
   } else {
-    reportError(event, error);
+    reportRequestError(event, error, request);
   }
   return NextResponse.redirect(originUrl(request, withQuery(returnTo, "error", userSafeMessage(error))), 303);
 }
