@@ -1,0 +1,30 @@
+name: Verify config
+
+# Manual check: sanitized host/mode verification for Cloudflare + GitHub secrets.
+# Does not print passwords or full connection strings.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify secrets shape
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kitchen
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify GitHub Actions secrets (sanitized)
+        run: node scripts/verify-config.mjs
