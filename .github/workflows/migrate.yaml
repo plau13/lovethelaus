@@ -57,6 +57,9 @@ jobs:
             exit 1
           fi
 
+      - name: Verify secret shape (sanitized)
+        run: node scripts/verify-config.mjs
+
       - name: Apply migrations
         run: npm run db:migrate
 
