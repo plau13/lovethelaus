@@ -39,6 +39,17 @@ export default {
       return env.KITCHEN.fetch(new Request(`${url.origin}/kitchen/icon.svg`, request));
     }
 
+    if (url.pathname === "/kitchen/api/auth/dash/validate") {
+      const rewriteUrl = new URL(url);
+      rewriteUrl.pathname = "/kitchen/api/auth/dash-validate";
+      logLine("router.dash_validate_rewrite", { ...baseFields, target: rewriteUrl.pathname });
+      const response = await env.KITCHEN.fetch(kitchenRequest(new Request(rewriteUrl, request), requestId));
+      if (response.status >= 500) {
+        logError("router.kitchen_upstream_error", { ...baseFields, status: response.status, target: rewriteUrl.pathname });
+      }
+      return response;
+    }
+
     if (url.pathname === "/kitchen" || url.pathname.startsWith("/kitchen/")) {
       logLine("router.kitchen_proxy", baseFields);
       const response = await env.KITCHEN.fetch(kitchenRequest(request, requestId));

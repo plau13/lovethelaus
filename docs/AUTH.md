@@ -112,4 +112,4 @@ The `dash()` plugin in `kitchen/src/lib/better-auth.ts` connects Kitchen to [das
 
 When connecting an existing project, use **Base URL** `https://lovethelaus.com` and **Base Path** `/kitchen/api/auth` (not the default `/api/auth`). Do not typo the domain (`lovethelaus.com`, not `lovethelauds.com`).
 
-OpenNext does not reliably route `[...all]` catch-alls on Cloudflare, so dash endpoints are forwarded from explicit routes under `kitchen/src/app/api/auth/dash/` (starting with `validate/route.ts` for dashboard onboarding). After deploy, `GET /kitchen/api/auth/dash/validate` should return **401** (route exists) rather than **404**.
+OpenNext on Cloudflare does not reliably route nested `/api/auth/dash/*` paths in production. Kitchen serves the validate handler at `/kitchen/api/auth/dash-validate` (`kitchen/src/app/api/auth/dash-validate/route.ts`), and the router Worker rewrites `/kitchen/api/auth/dash/validate` to that alias before proxying. After deploy, `GET /kitchen/api/auth/dash/validate` should return **401** with `{"message":"Invalid API key"}` rather than **404**.
