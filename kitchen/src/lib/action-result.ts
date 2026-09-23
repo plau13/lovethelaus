@@ -1,3 +1,4 @@
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { userSafeMessage } from "@/lib/errors";
 import { errorMessage, logWarn, reportError } from "@/lib/log";
@@ -20,6 +21,9 @@ export function actionFail(
   userId?: string,
   options?: ActionErrorOptions,
 ): ActionResult {
+  if (isRedirectError(error)) {
+    throw error;
+  }
   const fields = userId ? { userId } : undefined;
   if (options?.report === false) {
     logWarn(event, { detail: errorMessage(error), ...fields });
@@ -37,6 +41,9 @@ export function redirectActionError(
   userId?: string,
   options?: ActionErrorOptions,
 ): never {
+  if (isRedirectError(error)) {
+    throw error;
+  }
   const fields = userId ? { userId } : undefined;
   if (options?.report === false) {
     logWarn(event, { detail: errorMessage(error), ...fields });
