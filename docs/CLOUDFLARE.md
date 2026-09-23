@@ -112,6 +112,7 @@ Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 | `STRIPE_WEBHOOK_SECRET` | **Yes**            | Verifies webhook signatures                           |
 | `DEMO_USER_EMAIL`       | No                 | Demo sign-in email (Try demo)                         |
 | `DEMO_USER_PASSWORD`    | **Yes**            | Demo account password; set before `db:seed:demo`      |
+| `DEMO_ROUTE_SECRET`     | **Yes** (optional) | Gates `/kitchen/api/auth/demo?key=…` for owner QA only; not linked in the UI |
 | `ANTHROPIC_API_KEY`     | **Yes** (optional) | Card transcription and AI structuring of imports      |
 | `SENTRY_DSN`            | **Yes**            | Server-side error reporting to Sentry                 |
 

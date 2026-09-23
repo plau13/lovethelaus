@@ -6,10 +6,9 @@ import Steps from '~/components/widgets/Steps.astro';
 import Content from '~/components/widgets/Content.astro';
 import FAQs from '~/components/widgets/FAQs.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
-import { getDemoUrl, getKitchenUrl } from '~/utils/kitchen-url';
+import { getKitchenUrl } from '~/utils/kitchen-url';
 
 const kitchenUrl = getKitchenUrl();
-const demoUrl = getDemoUrl();
 
 const metadata = {
   title: 'Kitchen — family recipes',
@@ -28,7 +27,6 @@ const metadata = {
         href: kitchenUrl,
         icon: 'tabler:chef-hat',
       },
-      { text: 'Try the demo', href: demoUrl },
       { text: 'See how it works', href: '#how-it-works' },
     ]}
   >
@@ -185,7 +183,6 @@ const metadata = {
         href: kitchenUrl,
         icon: 'tabler:chef-hat',
       },
-      { text: 'Try the demo', href: demoUrl },
     ]}
   >
     <Fragment slot="title">Ready to save the recipes that matter?</Fragment>

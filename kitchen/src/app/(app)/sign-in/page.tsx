@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { signInAction } from "@/app/actions/auth";
 import { AuthError, AuthField, AuthNotice, AuthShell, authInputClass, authOutlineButtonClass } from "@/components/AuthShell";
 import { getCurrentUser } from "@/lib/auth";
-import { demoPassword } from "@/lib/demo-account";
-import { appPath } from "@/lib/paths";
 import { postAuthPath, safeReturnTo } from "@/lib/post-auth";
 
 export default async function SignInPage({
@@ -18,10 +16,6 @@ export default async function SignInPage({
   if (user) {
     redirect(postAuthPath(user, returnTo));
   }
-  // Same helper the route uses, so the button cannot appear when pressing it
-  // would only redirect back here with an error.
-  const demoAvailable = demoPassword(process.env).length > 0;
-
   return (
     <AuthShell
       title="Sign in"
@@ -66,14 +60,6 @@ export default async function SignInPage({
         <Link href={returnTo ? `/sign-in/one-time?returnTo=${encodeURIComponent(returnTo)}` : "/sign-in/one-time"} className={authOutlineButtonClass}>
           Send one-time login
         </Link>
-        {demoAvailable ? (
-          // A plain anchor, not <Link>: this route signs you in on GET, and Next
-          // prefetches Link targets on hover and in the viewport. Bypassing the
-          // router also bypasses basePath, so the href comes from appPath().
-          <a href={appPath("/api/auth/demo")} className={authOutlineButtonClass}>
-            Try the demo
-          </a>
-        ) : null}
       </form>
     </AuthShell>
   );

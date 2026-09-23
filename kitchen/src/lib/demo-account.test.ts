@@ -5,6 +5,7 @@ import {
   demoEmail,
   demoName,
   demoPassword,
+  demoRouteAccessAllowed,
   looksLikeEmail,
 } from "./demo-account";
 
@@ -44,6 +45,20 @@ describe("demoPassword", () => {
 
   it("trims a password that is set", () => {
     expect(demoPassword({ DEMO_USER_PASSWORD: " hunter2 " })).toBe("hunter2");
+  });
+});
+
+describe("demoRouteAccessAllowed", () => {
+  it("denies access when no secret is configured", () => {
+    expect(demoRouteAccessAllowed({}, "anything")).toBe(false);
+    expect(demoRouteAccessAllowed({ DEMO_ROUTE_SECRET: "  " }, "anything")).toBe(false);
+  });
+
+  it("requires an exact key match when a secret is set", () => {
+    const env = { DEMO_ROUTE_SECRET: "qa-only" };
+    expect(demoRouteAccessAllowed(env, "qa-only")).toBe(true);
+    expect(demoRouteAccessAllowed(env, "wrong")).toBe(false);
+    expect(demoRouteAccessAllowed(env, null)).toBe(false);
   });
 });
 

@@ -20,6 +20,7 @@ export type DemoEnv = {
   readonly DEMO_USER_EMAIL?: string;
   readonly DEMO_USER_NAME?: string;
   readonly DEMO_USER_PASSWORD?: string;
+  readonly DEMO_ROUTE_SECRET?: string;
   readonly [key: string]: string | undefined;
 };
 
@@ -39,6 +40,19 @@ export function demoName(env: DemoEnv): string {
 /** The demo password, or "" when none is configured. Callers decide what that means. */
 export function demoPassword(env: DemoEnv): string {
   return env.DEMO_USER_PASSWORD?.trim() || "";
+}
+
+/**
+ * Whether a GET to `/api/auth/demo` may run. When `DEMO_ROUTE_SECRET` is set,
+ * callers must pass the same value as the `key` query param — the route is not
+ * linked anywhere public, so this is an owner QA bookmark, not a product CTA.
+ */
+export function demoRouteAccessAllowed(env: DemoEnv, key: string | null | undefined): boolean {
+  const secret = env.DEMO_ROUTE_SECRET?.trim() || "";
+  if (!secret) {
+    return false;
+  }
+  return key === secret;
 }
 
 /**

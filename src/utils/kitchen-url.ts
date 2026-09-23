@@ -20,7 +20,3 @@ export function getSignInUrl(): string {
   return getPermalink('/sign-in');
 }
 
-/** Kitchen demo sign-in — GET route that logs into the seeded demo account. */
-export function getDemoUrl(): string {
-  return `${getKitchenUrl().replace(/\/$/, '')}/api/auth/demo`;
-}

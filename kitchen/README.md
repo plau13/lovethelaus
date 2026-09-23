@@ -13,7 +13,7 @@ Family recipe box. This is the product. The marketing site in the parent folder 
 7. `npm test`
 8. `npm run smoke [url]` — checks a **deployed** site, not the dev server
 
-Sign in with email + password at `/kitchen/sign-in`, or visit `/kitchen/api/auth/demo` directly for local demo testing.
+Sign in with email + password at `/kitchen/sign-in`. Owner QA demo login (not linked in the UI): `/kitchen/api/auth/demo?key=<DEMO_ROUTE_SECRET>` when `DEMO_ROUTE_SECRET` and `DEMO_USER_PASSWORD` are set.
 
 ## Database, auth, email, billing
 

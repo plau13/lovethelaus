@@ -19,7 +19,7 @@ Read [`ARCHITECTURE.md`](ARCHITECTURE.md) first for the stack decision. This doc
 
 1. **Email + password** — `signInAction` → `signIn()` in `src/lib/auth.ts` → `auth.api.signInEmail`.
 2. **Magic link** — `magicLinkAction` → `auth.api.signInMagicLink`; Resend sends it; Better Auth's catch-all at `/kitchen/api/auth/*` verifies and redirects to `/kitchen/auth/callback`.
-3. **Demo** — `GET /kitchen/api/auth/demo` signs in with the seeded account. Address and password both resolve through `src/lib/demo-account.ts`, so the seed and the button cannot disagree about who the demo user is. With no `DEMO_USER_PASSWORD` the route says the demo is unavailable instead of failing silently, and the sign-in page hides the button.
+3. **Demo (owner QA only)** — `GET /kitchen/api/auth/demo?key=<DEMO_ROUTE_SECRET>` signs in with the seeded account when both secrets are set. Not linked in the marketing site or sign-in UI; bookmark the URL for manual testing. Address and password resolve through `src/lib/demo-account.ts` so the seed and route cannot disagree.
 4. **Invite acceptance** — signing up with an invited address auto-accepts pending `cookbook_invite` rows via the `databaseHooks.user.create.after` hook.
 
 All four converge on `postAuthPath()` (`src/lib/post-auth.ts`): incomplete onboarding → `/onboarding`, otherwise `returnTo` (site-relative only) or `/recipes`. That rule exists in exactly one place on purpose — it used to be duplicated four or five times, and the copies drifted.
