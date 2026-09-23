@@ -5,7 +5,14 @@ import type { schema } from "@/db/client";
 import { APIError } from "better-auth/api";
 import { getAuth, type SessionUser } from "@/lib/better-auth";
 import { userSafeMessage } from "@/lib/errors";
-import { logWarn } from "@/lib/log";
+import {
+  DEFAULT_SERVINGS,
+  isPreferredUnits,
+  isVisibility,
+  MAX_SERVINGS,
+  MIN_SERVINGS,
+} from "@/lib/kitchen-prefs";
+import { errorMessage, logWarn } from "@/lib/log";
 import { appPath } from "@/lib/paths";
 
 /**
@@ -30,11 +37,22 @@ function asDate(value: unknown): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function coerceServings(value: unknown): number {
+  const servings = typeof value === "number" ? value : Number(value);
+  if (Number.isInteger(servings) && servings >= MIN_SERVINGS && servings <= MAX_SERVINGS) {
+    return servings;
+  }
+  return DEFAULT_SERVINGS;
+}
+
 /**
  * Better Auth types optional additional fields as `T | null | undefined`, and the cookie cache
  * round-trips through JSON. Apply the column defaults and turn date strings back into Dates.
  */
 function normalizeUser(user: SessionUser): CurrentUser {
+  const preferredUnitsRaw = user.preferredUnits ?? "us";
+  const visibilityRaw = user.defaultCookbookVisibility ?? "private";
+
   return {
     id: user.id,
     name: user.name,
@@ -45,9 +63,9 @@ function normalizeUser(user: SessionUser): CurrentUser {
     updatedAt: asDate(user.updatedAt) ?? new Date(0),
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
-    defaultServings: user.defaultServings ?? 4,
-    preferredUnits: user.preferredUnits ?? "us",
-    defaultCookbookVisibility: user.defaultCookbookVisibility ?? "private",
+    defaultServings: coerceServings(user.defaultServings),
+    preferredUnits: isPreferredUnits(preferredUnitsRaw) ? preferredUnitsRaw : "us",
+    defaultCookbookVisibility: isVisibility(visibilityRaw) ? visibilityRaw : "private",
     onboardingCompletedAt: asDate(user.onboardingCompletedAt),
     subscriptionTier: user.subscriptionTier ?? "free",
     socialImportCount: user.socialImportCount ?? 0,
@@ -62,11 +80,22 @@ async function loadUser(fresh: boolean): Promise<CurrentUser | null> {
   // Read request headers first: during static prerender this bails out to dynamic rendering
   // before the auth/database instance (which needs env) is constructed.
   const requestHeaders = await headers();
-  const session = await getAuth().api.getSession({
-    headers: requestHeaders,
-    query: fresh ? { disableCookieCache: true } : undefined,
-  });
-  return session?.user ? normalizeUser(session.user) : null;
+  try {
+    const session = await getAuth().api.getSession({
+      headers: requestHeaders,
+      query: fresh ? { disableCookieCache: true } : undefined,
+    });
+    return session?.user ? normalizeUser(session.user) : null;
+  } catch (error) {
+    if (!fresh) {
+      throw error;
+    }
+    // Cookie cache can still serve a valid session when the authoritative DB read
+    // fails (missing migration, transient Neon error). Throwing here only shows the
+    // error boundary — the onboarding form can render from cache instead.
+    logWarn("auth.fresh_session_failed", { detail: errorMessage(error) });
+    return loadCachedUser();
+  }
 }
 
 const loadCachedUser = cache(() => loadUser(false));

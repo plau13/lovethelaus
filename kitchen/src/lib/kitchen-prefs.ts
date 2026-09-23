@@ -34,7 +34,7 @@ export const MAX_SERVINGS = 99;
 /** Long enough for "The Lau Family Cookbook", short enough for a heading. */
 const MAX_NAME_LENGTH = 60;
 
-function isPreferredUnits(value: string): value is PreferredUnits {
+export function isPreferredUnits(value: string): value is PreferredUnits {
   return (PREFERRED_UNITS as readonly string[]).includes(value);
 }
 

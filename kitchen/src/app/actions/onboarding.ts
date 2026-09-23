@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db/client";
 import { redirectActionError } from "@/lib/action-result";
-import { refreshSessionCache, requireUser } from "@/lib/auth";
+import { ensureDefaultCookbook, refreshSessionCache, requireUser } from "@/lib/auth";
 import { readKitchenPrefs } from "@/lib/kitchen-prefs";
 
 /**
@@ -30,6 +30,7 @@ export async function saveOnboarding(formData: FormData) {
       })
       .where(eq(schema.user.id, user.id));
 
+    await ensureDefaultCookbook(user.id, user.name);
     await db
       .update(schema.cookbook)
       .set({ title: prefs.recipeBoxName })
