@@ -19,4 +19,3 @@ export function getKitchenUrl(): string {
 export function getSignInUrl(): string {
   return getPermalink('/sign-in');
 }
-
