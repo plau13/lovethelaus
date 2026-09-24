@@ -102,19 +102,19 @@ Sentry pulls in `@opentelemetry/api`, which breaks OpenNext middleware bundling 
 
 Set via `npx wrangler secret put <NAME>` from `kitchen/`:
 
-| Secret                  | Sensitive?         | Notes                                                 |
-| ----------------------- | ------------------ | ----------------------------------------------------- |
-| `DATABASE_URL`          | **Yes**            | Neon pooled connection string; never in repo          |
-| `BETTER_AUTH_SECRET`    | **Yes**            | Signs session cookies; rotating it signs everyone out |
+| Secret                  | Sensitive?         | Notes                                                                         |
+| ----------------------- | ------------------ | ----------------------------------------------------------------------------- |
+| `DATABASE_URL`          | **Yes**            | Neon pooled connection string; never in repo                                  |
+| `BETTER_AUTH_SECRET`    | **Yes**            | Signs session cookies; rotating it signs everyone out                         |
 | `BETTER_AUTH_API_KEY`   | **Yes** (optional) | Better Auth Infrastructure dashboard (`dash()` plugin); auth works without it |
-| `RESEND_API_KEY`        | **Yes**            | Transactional email                                   |
-| `STRIPE_SECRET_KEY`     | **Yes**            | Server-side Stripe API                                |
-| `STRIPE_WEBHOOK_SECRET` | **Yes**            | Verifies webhook signatures                           |
-| `DEMO_USER_EMAIL`       | No                 | Demo sign-in email (Try demo)                         |
-| `DEMO_USER_PASSWORD`    | **Yes**            | Demo account password; set before `db:seed:demo`      |
-| `DEMO_ROUTE_SECRET`     | **Yes** (optional) | Gates `/kitchen/api/auth/demo?key=…` for owner QA only; not linked in the UI |
-| `ANTHROPIC_API_KEY`     | **Yes** (optional) | Card transcription and AI structuring of imports      |
-| `SENTRY_DSN`            | **Yes**            | Server-side error reporting to Sentry                 |
+| `RESEND_API_KEY`        | **Yes**            | Transactional email                                                           |
+| `STRIPE_SECRET_KEY`     | **Yes**            | Server-side Stripe API                                                        |
+| `STRIPE_WEBHOOK_SECRET` | **Yes**            | Verifies webhook signatures                                                   |
+| `DEMO_USER_EMAIL`       | No                 | Demo sign-in email (Try demo)                                                 |
+| `DEMO_USER_PASSWORD`    | **Yes**            | Demo account password; set before `db:seed:demo`                              |
+| `DEMO_ROUTE_SECRET`     | **Yes** (optional) | Gates `/kitchen/api/auth/demo?key=…` for owner QA only; not linked in the UI  |
+| `ANTHROPIC_API_KEY`     | **Yes** (optional) | Card transcription and AI structuring of imports                              |
+| `SENTRY_DSN`            | **Yes**            | Server-side error reporting to Sentry                                         |
 
 List what's configured (names only, not values):
 
