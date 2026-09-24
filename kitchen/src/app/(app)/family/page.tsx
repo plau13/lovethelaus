@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { QueryFlash } from "@/components/QueryFlash";
 import { requireOnboardedUser } from "@/lib/auth";
+import { reportError } from "@/lib/log";
 import { formatMadeOn, lifespan } from "@/lib/heritage";
 import { familyTimeline } from "@/lib/memories";
 import { peopleWithRecipeCounts } from "@/lib/people";
@@ -8,7 +9,11 @@ import { peopleWithRecipeCounts } from "@/lib/people";
 export default async function FamilyPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
   const user = await requireOnboardedUser();
-  const [people, timeline] = await Promise.all([peopleWithRecipeCounts(user.id), familyTimeline(user.id)]);
+  // No instrumentation.ts on OpenNext: a throw here only reaches Sentry if reported explicitly.
+  const [people, timeline] = await Promise.all([peopleWithRecipeCounts(user.id), familyTimeline(user.id)]).catch((error: unknown) => {
+    reportError("family.load_failed", error, { userId: user.id });
+    throw error;
+  });
 
   return (
     <main className="grid gap-8">

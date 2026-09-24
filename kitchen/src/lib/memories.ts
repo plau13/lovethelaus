@@ -63,23 +63,26 @@ export type TimelineEntry =
 /** Memories on recipes the user can see, plus recipe origins with a year, newest first. */
 export async function familyTimeline(userId: string, limit = 100): Promise<TimelineEntry[]> {
   const db = getDb();
-  const visible = exists(
-    db
-      .select({ one: sql`1` })
-      .from(recipe)
-      .where(
-        and(
-          eq(recipe.id, recipeMemory.recipeId),
-          sql`(${recipe.ownerId} = ${userId}
-            OR EXISTS (SELECT 1 FROM ${recipeCollaborator} WHERE ${recipeCollaborator.recipeId} = ${recipe.id} AND ${recipeCollaborator.userId} = ${userId})
-            OR EXISTS (SELECT 1 FROM ${cookbookRecipe} JOIN ${cookbookMember} ON ${cookbookMember.cookbookId} = ${cookbookRecipe.cookbookId}
-                       WHERE ${cookbookRecipe.recipeId} = ${recipe.id} AND ${cookbookMember.userId} = ${userId}))`
+  // Relational queries alias the root table ("recipeMemory"), so the correlated subquery must
+  // reference the aliased column passed to the where callback, not schema.recipeMemory.
+  const visible = (memory: typeof recipeMemory._.columns) =>
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(recipe)
+        .where(
+          and(
+            eq(recipe.id, memory.recipeId),
+            sql`(${recipe.ownerId} = ${userId}
+              OR EXISTS (SELECT 1 FROM ${recipeCollaborator} WHERE ${recipeCollaborator.recipeId} = ${recipe.id} AND ${recipeCollaborator.userId} = ${userId})
+              OR EXISTS (SELECT 1 FROM ${cookbookRecipe} JOIN ${cookbookMember} ON ${cookbookMember.cookbookId} = ${cookbookRecipe.cookbookId}
+                         WHERE ${cookbookRecipe.recipeId} = ${recipe.id} AND ${cookbookMember.userId} = ${userId}))`
+          )
         )
-      )
-  );
+    );
   const [memories, origins] = await Promise.all([
     db.query.recipeMemory.findMany({
-      where: visible,
+      where: (memory) => visible(memory),
       with: { user: { columns: { name: true } }, recipe: { columns: { id: true, title: true } } },
       orderBy: [desc(recipeMemory.madeOn)],
       limit,
