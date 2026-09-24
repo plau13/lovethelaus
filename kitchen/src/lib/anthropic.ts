@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /** Every AI feature runs on this model; see docs/HERITAGE.md and docs/ARCHITECTURE.md. */
-export const AI_MODEL = "claude-opus-5";
+export const AI_MODEL = "claude-sonnet-5";
 
 let client: Anthropic | undefined;
 
